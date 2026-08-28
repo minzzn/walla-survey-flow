@@ -855,15 +855,21 @@
 </div>
 
 <script>
-  function switchCanvasTab(el, showLegend){
-    el.parentElement.querySelectorAll('.ctab').forEach(t=>t.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('flowLegend').style.display = showLegend ? '' : 'none';
-  }
-  function switchRpTab(el, isLogic){
-    el.parentElement.querySelectorAll('.rtab').forEach(t=>{t.classList.remove('active');t.classList.add('inactive');});
-    el.classList.remove('inactive');
-    el.classList.add('active');
+  // Shared mode switch: keeps the canvas-top tabs (편집/로직) and the
+  // right-panel tabs (문항 설정/로직) in sync, since both represent the
+  // same underlying center-canvas mode.
+  function setEditMode(isLogic){
+    var ctabs = document.querySelectorAll('.canvas-tabs .ctab');
+    ctabs.forEach(function(t){ t.classList.remove('active'); });
+    ctabs[isLogic ? 1 : 0].classList.add('active');
+
+    var rtabs = document.querySelectorAll('.rp-tabs .rtab');
+    rtabs.forEach(function(t){ t.classList.remove('active'); t.classList.add('inactive'); });
+    var activeRtab = rtabs[isLogic ? 1 : 0];
+    activeRtab.classList.remove('inactive');
+    activeRtab.classList.add('active');
+
+    document.getElementById('flowLegend').style.display = isLogic ? '' : 'none';
 
     var canvasContent = document.getElementById('canvasContent');
     var questionEditPanel = document.getElementById('questionEditPanel');
@@ -874,6 +880,12 @@
       canvasContent.classList.add('hidden');
       questionEditPanel.classList.remove('hidden');
     }
+  }
+  function switchCanvasTab(el, isLogic){
+    setEditMode(isLogic);
+  }
+  function switchRpTab(el, isLogic){
+    setEditMode(isLogic);
   }
 
   function toggleDropdown(evt, id){
