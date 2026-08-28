@@ -427,6 +427,9 @@
   .qep-title{font-weight:700;font-size:18px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .qep-title-row{display:flex;align-items:center;gap:22px;width:100%;}
   .qep-title-row .qep-title{flex:1;min-width:0;}
+  /* 문항 제목/옵션 텍스트의 번호(Qn., 1. 등)는 고정이고 그 뒤의 텍스트만 고칠 수 있다. */
+  .qep-title-text,.qep-option-edit{outline:none;border-radius:4px;padding:0 2px;margin:0 -2px;cursor:text;}
+  .qep-title-text:focus,.qep-option-edit:focus{background:var(--skyblue-100);}
   .qep-badge{
     background:var(--skyblue-100);color:var(--skyblue-500);font-weight:700;font-size:14px;
     padding:2px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0;
@@ -639,10 +642,10 @@
 
           <!-- Q5 -->
           <div class="qep-block selected" data-question="Q5" onclick="selectQuestion('Q5')">
-            <p class="qep-title">Q5. 지금까지 참여한 클래스 전반에 얼마나 만족하시나요</p>
+            <p class="qep-title"><span class="qep-num">Q5.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q5" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">원데이 클래스 참여 경험이 어느 정도인가요?</span></p>
             <div class="qep-options">
               <div class="qep-option">
-                <span class="qep-option-text">1. 처음이에요</span>
+                <span class="qep-option-text"><span class="qep-num">1.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">처음이에요</span></span>
                 <div class="qep-dest-pill">
                   <img class="route-icon" src="assets/icon-route.svg" alt="">
                   <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
@@ -653,7 +656,7 @@
                 </div>
               </div>
               <div class="qep-option">
-                <span class="qep-option-text">2. 가끔 참여해요</span>
+                <span class="qep-option-text"><span class="qep-num">2.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">가끔 참여해요</span></span>
                 <div class="qep-dest-pill">
                   <img class="route-icon" src="assets/icon-route.svg" alt="">
                   <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
@@ -664,7 +667,7 @@
                 </div>
               </div>
               <div class="qep-option">
-                <span class="qep-option-text">3. 자주 참여해요</span>
+                <span class="qep-option-text"><span class="qep-num">3.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">자주 참여해요</span></span>
                 <div class="qep-dest-pill">
                   <img class="route-icon" src="assets/icon-route.svg" alt="">
                   <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
@@ -686,31 +689,31 @@
 
           <!-- Q6 -->
           <div class="qep-block" data-question="Q6" onclick="selectQuestion('Q6')">
-            <p class="qep-title">Q6.아래 분야의 선호도를 알려주세요</p>
+            <p class="qep-title"><span class="qep-num">Q6.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q6" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">아래 분야의 선호도를 알려주세요</span></p>
             <div class="qep-options">
               <div class="qep-option">
-                <span class="qep-option-text">1. 온라인 베이킹</span>
+                <span class="qep-option-text"><span class="qep-num">1.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">온라인 베이킹</span></span>
                 <div class="qep-option-actions">
                   <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
-                <span class="qep-option-text">1. 드로잉</span>
+                <span class="qep-option-text"><span class="qep-num">2.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">드로잉</span></span>
                 <div class="qep-option-actions">
                   <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
-                <span class="qep-option-text">3. 가죽공예</span>
+                <span class="qep-option-text"><span class="qep-num">3.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">가죽공예</span></span>
                 <div class="qep-option-actions">
                   <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
-                <span class="qep-option-text">4. 향수·캔들</span>
+                <span class="qep-option-text"><span class="qep-num">4.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">향수·캔들</span></span>
                 <div class="qep-option-actions">
                   <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
@@ -728,7 +731,7 @@
 
           <!-- Q7 -->
           <div class="qep-block" data-question="Q7" onclick="selectQuestion('Q7')">
-            <p class="qep-title">Q7.지금까지 참여한 클래스는 전반에 얼마나 만족하시나요</p>
+            <p class="qep-title"><span class="qep-num">Q7.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q7" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">지금까지 참여한 클래스는 전반에 얼마나 만족하시나요</span></p>
             <div class="qep-rating">
               <div class="qep-rating-range">
                 <div class="qep-range-btn"><span>1</span><img src="assets/icon-range-chevron.svg" alt=""></div>
@@ -758,33 +761,33 @@
           <!-- Q8 -->
           <div class="qep-block" data-question="Q8" onclick="selectQuestion('Q8')">
             <div class="qep-title-row">
-              <p class="qep-title">Q8.보통 어떤 경로로 클래스를 찾나요?</p>
+              <p class="qep-title"><span class="qep-num">Q8.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q8" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">보통 어떤 경로로 클래스를 찾나요?</span></p>
               <span class="qep-badge">다중 선택형</span>
             </div>
             <div class="qep-options">
               <div class="qep-option">
-                <span class="qep-option-text">1. SNS</span>
+                <span class="qep-option-text"><span class="qep-num">1.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">SNS</span></span>
                 <div class="qep-option-actions">
                   <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
-                <span class="qep-option-text">2. 지인추천</span>
+                <span class="qep-option-text"><span class="qep-num">2.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">지인추천</span></span>
                 <div class="qep-option-actions">
                   <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
-                <span class="qep-option-text">3. 포털검색</span>
+                <span class="qep-option-text"><span class="qep-num">3.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">포털검색</span></span>
                 <div class="qep-option-actions">
                   <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
-                <span class="qep-option-text">4. 플랫폼 앱</span>
+                <span class="qep-option-text"><span class="qep-num">4.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">플랫폼 앱</span></span>
                 <div class="qep-option-actions">
                   <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
@@ -983,6 +986,10 @@
     setRpMode(isLogic);
   }
 
+  // 중앙 편집 패널의 문항 제목/옵션 텍스트를 사용자가 직접 고칠 수 있으므로, 이 값들은
+  // 더 이상 고정 상수가 아니라 항상 현재 DOM(.qep-title-text / .qep-option-edit)에서
+  // 읽어온다. 아래 두 객체는 해당 DOM이 없는 경우(Q7 척도형 문항의 답변 옵션 등)에만
+  // 쓰이는 기본값이다.
   var QUESTION_TITLES = {
     Q5: '원데이 클래스 참여 경험이 어느 정도인가요?',
     Q6: '아래 분야의 선호도를 알려주세요.',
@@ -991,6 +998,77 @@
   };
   var QUESTION_ORDER = ['Q5', 'Q6', 'Q7', 'Q8'];
   var currentQuestionId = 'Q5';
+
+  function getQuestionTitle(qid){
+    var el = document.querySelector('.qep-block[data-question="' + qid + '"] .qep-title-text');
+    var text = el ? el.textContent.trim() : '';
+    return text || QUESTION_TITLES[qid] || qid;
+  }
+  function getQuestionOptionTexts(qid){
+    var block = document.querySelector('.qep-block[data-question="' + qid + '"]');
+    var editables = block ? block.querySelectorAll('.qep-option-edit') : [];
+    if (!editables.length) return QUESTION_OPTIONS[qid] || [];
+    return Array.from(editables).map(function(el){ return el.textContent.trim(); });
+  }
+
+  // ---------------- 문항 제목 / 옵션 텍스트 인라인 편집 ----------------
+  function handleEditableKeydown(evt){
+    if (evt.key === 'Enter'){
+      evt.preventDefault(); // 한 줄짜리 라벨이라 줄바꿈 대신 입력을 확정한다.
+      evt.target.blur();
+    }
+  }
+  function captureOldText(el){
+    el.setAttribute('data-prev-text', el.textContent.trim());
+  }
+  function commitTitleEdit(el){
+    var oldText = el.getAttribute('data-prev-text') || '';
+    var newText = el.textContent.trim();
+    if (!newText) newText = oldText; // 완전히 지우고 나가면 원래 텍스트로 되돌린다.
+    if (el.textContent !== newText) el.textContent = newText;
+    if (newText === oldText) return;
+    var qid = el.getAttribute('data-question');
+    if (qid) syncQuestionTitleEverywhere(qid, newText);
+  }
+  function commitOptionEdit(el){
+    var oldText = el.getAttribute('data-prev-text') || '';
+    var newText = el.textContent.trim();
+    if (!newText) newText = oldText;
+    if (el.textContent !== newText) el.textContent = newText;
+    if (newText === oldText) return;
+    var qBlock = el.closest('.qep-block');
+    var qid = qBlock ? qBlock.getAttribute('data-question') : null;
+    if (qid) syncOptionTextEverywhere(qid, oldText, newText);
+  }
+  // 문항 제목을 고치면 왼쪽 필드 목록 미리보기와, 우측 패널에서 이 문항을 참조 중인
+  // 로직 블록의 "문항"/"이동" 표시 텍스트를 같이 갱신한다.
+  function syncQuestionTitleEverywhere(qid, newTitle){
+    var fpRowP = document.querySelector('.fp-row[data-question="' + qid + '"] p');
+    if (fpRowP) fpRowP.textContent = newTitle;
+    document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(block){
+      if (getBlockQuestionRefId(block) === qid){
+        var title = block.querySelector('.ld-question-title');
+        if (title) title.textContent = newTitle;
+      }
+      if (getBlockMoveTargetId(block) === qid){
+        var moveTitle = block.querySelector('.ld-move-select-left p');
+        if (moveTitle) moveTitle.textContent = newTitle;
+      }
+    });
+  }
+  // 옵션 텍스트를 고치면, 그 문항을 참조하는 로직 블록 중 이 옵션을 답변으로 골라둔
+  // 칩의 표시 텍스트를 같이 갱신하고, 중앙 패널의 "→ Qn" 표시 동기화도 다시 맞춘다.
+  function syncOptionTextEverywhere(qid, oldText, newText){
+    document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(block){
+      if (getBlockQuestionRefId(block) !== qid) return;
+      var chipsWrap = getAnswerChipsWrap(block);
+      if (!chipsWrap) return;
+      chipsWrap.querySelectorAll('.ans-chip span').forEach(function(span){
+        if (span.textContent === oldText) span.textContent = newText;
+      });
+    });
+    syncOptionLogicPills();
+  }
 
   // target을 questionEditPanel 안에서만 세로 중앙으로 스크롤한다.
   // scrollIntoView는 상위 스크롤 조상(문서 전체)까지 같이 움직일 수 있어서
@@ -1131,7 +1209,7 @@
     var menu = document.querySelector('.ld-dd-menu');
     if (!aField || !menu || !aField.classList.contains('dd-open')) return;
     var qid = getBlockQuestionRefId(block);
-    var opts = QUESTION_OPTIONS[qid] || [];
+    var opts = getQuestionOptionTexts(qid);
     var selected = getSelectedAnswerTexts(block);
     menu.querySelectorAll('.ld-dd-item').forEach(function(item, i){
       if (opts[i] === undefined) return;
@@ -1165,8 +1243,8 @@
     if (!qBlock) return null;
     var opts = qBlock.querySelectorAll('.qep-option');
     for (var i = 0; i < opts.length; i++){
-      var textEl = opts[i].querySelector('.qep-option-text');
-      if (textEl && textEl.textContent.replace(/^\d+\.\s*/, '') === answerText) return opts[i];
+      var textEl = opts[i].querySelector('.qep-option-edit');
+      if (textEl && textEl.textContent.trim() === answerText) return opts[i];
     }
     return null;
   }
@@ -1204,7 +1282,7 @@
     var badge = block.querySelector('.ld-question-badge');
     var title = block.querySelector('.ld-question-title');
     if (badge) badge.textContent = qid;
-    if (title) title.textContent = QUESTION_TITLES[qid] || qid;
+    if (title) title.textContent = getQuestionTitle(qid);
     var headBadge = block.querySelector('.ld-head-chips .q-label b');
     if (headBadge) headBadge.textContent = qid;
     renderAnswerChips(block, []); // 참조 문항이 바뀌면 이전 문항의 답변 선택은 더 이상 유효하지 않다.
@@ -1219,7 +1297,7 @@
     var badge = block.querySelector('.ld-move-select-left .q-label b');
     var title = block.querySelector('.ld-move-select-left p');
     if (badge) badge.textContent = qid;
-    if (title) title.textContent = QUESTION_TITLES[qid] || qid;
+    if (title) title.textContent = getQuestionTitle(qid);
     var headBadges = block.querySelectorAll('.ld-head-chips .q-label b');
     if (headBadges.length > 1) headBadges[1].textContent = qid;
     syncOptionLogicPills();
@@ -1238,7 +1316,7 @@
     if (type === 'question'){
       var refQid = getBlockQuestionRefId(block);
       QUESTION_ORDER.forEach(function(qid){
-        var item = buildDropdownItem(qid + '. ' + (QUESTION_TITLES[qid] || ''), refQid === qid, function(){
+        var item = buildDropdownItem(qid + '. ' + getQuestionTitle(qid), refQid === qid, function(){
           setBlockQuestion(block, qid);
           closeFieldDropdown();
         });
@@ -1256,7 +1334,7 @@
     } else if (type === 'move'){
       var ownQid = block.getAttribute('data-question');
       QUESTION_ORDER.filter(function(q){ return q !== ownQid; }).forEach(function(qid){
-        var item = buildDropdownItem(qid + '. ' + (QUESTION_TITLES[qid] || ''), false, function(){
+        var item = buildDropdownItem(qid + '. ' + getQuestionTitle(qid), false, function(){
           setBlockMoveTarget(block, qid);
           closeFieldDropdown();
         });
@@ -1264,7 +1342,7 @@
       });
     } else if (type === 'answer'){
       var qid2 = getBlockQuestionRefId(block);
-      var opts = QUESTION_OPTIONS[qid2] || [];
+      var opts = getQuestionOptionTexts(qid2);
       var selected = getSelectedAnswerTexts(block);
       opts.forEach(function(opt, i){
         var item = buildDropdownItem((i + 1) + '. ' + opt, selected.indexOf(opt) !== -1, function(){
@@ -1302,8 +1380,8 @@
 
     var logicNum = rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]').length + 1;
     var moveTarget = nextQuestionAfter(qid);
-    var qTitle = QUESTION_TITLES[qid] || qid;
-    var moveTitle = QUESTION_TITLES[moveTarget] || moveTarget;
+    var qTitle = getQuestionTitle(qid);
+    var moveTitle = getQuestionTitle(moveTarget);
 
     var block = document.createElement('div');
     block.className = 'logic-detail';
