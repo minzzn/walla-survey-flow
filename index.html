@@ -57,7 +57,7 @@
     background:var(--white); position:relative; z-index:20;
   }
   .tb-left{display:flex;align-items:center;gap:17px;}
-  .tb-logo{width:30px;height:30px;}
+  .tb-logo{width:30px;height:23.08px;}
   .tb-crumb{display:flex;align-items:center;gap:12px;height:100%;}
   .tb-crumb span{font-size:14px;color:var(--azure-48);white-space:nowrap;}
   .tb-crumb img{width:11.8px;height:11.8px;}
@@ -426,7 +426,9 @@
   .qep-add-btn img{width:18px;height:18px;}
   .qep-add-btn span{font-size:11.8px;font-weight:500;color:#0080ff;white-space:nowrap;}
   .qep-more-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
-  .qep-more-btn img{width:16px;height:16px;}
+  /* 원본 SVG가 14.41x3.38(가로로 넓고 얇음) 비율인데 16x16 정사각형으로 강제 확대되어
+     점 3개가 세로 막대처럼 찌그러지던 버그 수정 (비율 유지) */
+  .qep-more-btn img{width:16px;height:3.75px;}
 
   /* Q7 rating scale */
   .qep-rating{display:flex;flex-direction:column;gap:16px;width:100%;}
