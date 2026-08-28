@@ -93,7 +93,14 @@
   .center-canvas{
     position:absolute;inset:0;overflow:hidden;
     background-image:url('assets/canvas-bg.png');
-    background-repeat:repeat;background-size:551px 478px;background-position:top left;
+    background-repeat:repeat;background-size:551px 478px;background-position:0px 0px;
+    cursor:grab;
+  }
+  .center-canvas.panning{cursor:grabbing;}
+  .canvas-content{
+    position:absolute;inset:0;
+    transform:translate(0px,0px);
+    will-change:transform;
   }
 
   /* toolbar (동시 편집 + 편집/로직 tabs) */
@@ -417,6 +424,9 @@
         </div>
       </div>
 
+      <!-- pannable canvas content -->
+      <div class="canvas-content" id="canvasContent">
+
       <!-- 시작 / 제출하기 -->
       <div class="terminal-node" style="left:618px;top:54px;"><span>시작</span></div>
       <div class="terminal-node" style="left:618px;top:865px;"><span>제출하기</span></div>
@@ -498,6 +508,9 @@
           </div>
         </div>
       </div>
+
+      </div>
+      <!-- /pannable canvas content -->
 
       <!-- Left panel -->
       <div class="left-panel-wrap">
@@ -663,6 +676,63 @@
     evt.stopPropagation();
     // Placeholder: visual affordance only in this static build.
   }
+
+  // ---------------- Pannable center canvas ----------------
+  (function(){
+    var canvas = document.querySelector('.center-canvas');
+    var content = document.getElementById('canvasContent');
+    var panX = 0, panY = 0;
+    var dragging = false;
+    var startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+    var PAN_LIMIT = 900;
+
+    function applyPan(){
+      content.style.transform = 'translate(' + panX + 'px,' + panY + 'px)';
+      canvas.style.backgroundPosition = panX + 'px ' + panY + 'px';
+    }
+
+    function clamp(v){
+      return Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, v));
+    }
+
+    canvas.addEventListener('mousedown', function(e){
+      if (e.target !== canvas && e.target !== content) return; // only pan on empty space
+      dragging = true;
+      canvas.classList.add('panning');
+      startX = e.clientX;
+      startY = e.clientY;
+      startPanX = panX;
+      startPanY = panY;
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function(e){
+      if (!dragging) return;
+      panX = clamp(startPanX + (e.clientX - startX));
+      panY = clamp(startPanY + (e.clientY - startY));
+      applyPan();
+    });
+
+    window.addEventListener('mouseup', function(){
+      if (!dragging) return;
+      dragging = false;
+      canvas.classList.remove('panning');
+    });
+
+    canvas.addEventListener('mouseleave', function(){
+      if (dragging){
+        dragging = false;
+        canvas.classList.remove('panning');
+      }
+    });
+
+    canvas.addEventListener('wheel', function(e){
+      e.preventDefault();
+      panX = clamp(panX - e.deltaX);
+      panY = clamp(panY - e.deltaY);
+      applyPan();
+    }, { passive:false });
+  })();
 </script>
 
 </body>
