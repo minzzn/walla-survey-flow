@@ -292,24 +292,20 @@
 
   .rp-logic-list{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;}
 
-  .rp-summary{
-    width:333px;height:48px;border:1px solid var(--neutral-200);border-radius:10px;
-    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
-  }
-  .rp-summary-left{display:flex;align-items:center;gap:6px;}
-  .rp-summary-num{display:flex;align-items:center;gap:0;}
-  .rp-summary-num-inner{display:flex;align-items:center;padding:2px 8px;}
-  .rp-summary-num span{font-size:14px;font-weight:700;color:var(--neutral-500);}
-  .rp-summary-chips{display:flex;align-items:center;gap:4px;}
-  .rp-summary-chips img{width:16px;height:16px;}
-  .rp-summary > img{width:16px;height:16px;}
-
   .logic-detail{
     width:333px;background:var(--white);border:1px solid var(--skyblue-500);border-radius:10px;overflow:hidden;
   }
+  /* 선택되지 않은(기본) 로직 블록: 헤더만 보이는 회색 테두리 요약 행.
+     선택하면 .collapsed가 빠지면서 파란 테두리 + 전체 편집 폼이 펼쳐진다. */
+  .logic-detail.collapsed{border-color:var(--neutral-200);}
+  .logic-detail.collapsed .ld-head{border-bottom:none;}
+  .logic-detail.collapsed .ld-spacer,
+  .logic-detail.collapsed .ld-content,
+  .logic-detail.collapsed .ld-add-condition,
+  .logic-detail.collapsed .ld-move{display:none;}
   .ld-head{
     height:59px;background:var(--white);border-bottom:1px solid var(--neutral-100);
-    display:flex;align-items:center;justify-content:space-between;padding:0 12px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
   }
   .ld-head-left{display:flex;align-items:center;gap:6px;}
   .ld-head-num{display:flex;align-items:center;}
@@ -870,20 +866,8 @@
       </div>
 
       <div class="rp-logic-list" id="rpLogicList">
-      <div class="rp-summary" id="rpSummary" data-question="Q5">
-        <div class="rp-summary-left">
-          <div class="rp-summary-num"><div class="rp-summary-num-inner"><span>로직1</span></div></div>
-          <div class="rp-summary-chips">
-            <div class="q-label grey"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
-            <img src="assets/icon-arrow-flow.svg" alt="">
-            <div class="q-label grey"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
-          </div>
-        </div>
-        <img src="assets/icon-chevron-down.svg" alt="">
-      </div>
-
-      <div class="logic-detail" id="logicDetail" data-question="Q5">
-        <div class="ld-head">
+      <div class="logic-detail collapsed" id="logicDetail" data-question="Q5">
+        <div class="ld-head" onclick="toggleLogicBlock(this)">
           <div class="ld-head-left">
             <div class="ld-arrow-icon"><img src="assets/icon-arrow-header.svg" alt=""></div>
             <div class="ld-head-num-inner"><span>로직1</span></div>
@@ -893,10 +877,10 @@
               <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
             </div>
           </div>
-          <div class="ld-trash" onclick="event.stopPropagation()"><img src="assets/icon-trash.svg" alt=""></div>
+          <div class="ld-trash" onclick="event.stopPropagation(); removeLogicBlock(this)"><img src="assets/icon-trash.svg" alt=""></div>
         </div>
 
-        <div style="height:12px;"></div>
+        <div class="ld-spacer" style="height:12px;"></div>
         <div class="ld-content">
           <div class="ld-field-row">
             <p>문항</p>
@@ -1059,6 +1043,21 @@
       if (match) anyVisible = true;
     });
     rpLogicList.classList.toggle('hidden', !anyVisible);
+  }
+
+  // ---------------- 로직 블록 아코디언: 선택한 블록만 파란 테두리로 펼쳐지고
+  // 나머지는 헤더만 보이는 기본(회색 테두리) 상태로 접힌다. ----------------
+  function collapseAllLogicBlocks(){
+    document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(b){
+      b.classList.add('collapsed');
+    });
+  }
+  function toggleLogicBlock(headEl){
+    var block = headEl.closest('.logic-detail');
+    if (!block) return;
+    var wasCollapsed = block.classList.contains('collapsed');
+    collapseAllLogicBlocks();
+    if (wasCollapsed) block.classList.remove('collapsed'); // 접혀 있던 걸 클릭하면 펼치고, 펼쳐진 걸 다시 클릭하면 전부 기본 상태로 되돌아간다.
   }
   // 문항별 답변 옵션(중앙 편집 패널의 qep-option 텍스트와 동일하게 유지) + 조건 옵션 목록.
   var QUESTION_OPTIONS = {
@@ -1248,7 +1247,7 @@
     block.className = 'logic-detail';
     block.setAttribute('data-question', qid);
     block.innerHTML =
-      '<div class="ld-head">' +
+      '<div class="ld-head" onclick="toggleLogicBlock(this)">' +
         '<div class="ld-head-left">' +
           '<div class="ld-arrow-icon"><img src="assets/icon-arrow-header.svg" alt=""></div>' +
           '<div class="ld-head-num-inner"><span>로직' + logicNum + '</span></div>' +
@@ -1258,7 +1257,7 @@
         '</div>' +
         '<div class="ld-trash" onclick="event.stopPropagation(); removeLogicBlock(this)"><img src="assets/icon-trash.svg" alt=""></div>' +
       '</div>' +
-      '<div style="height:12px;"></div>' +
+      '<div class="ld-spacer" style="height:12px;"></div>' +
       '<div class="ld-content">' +
         '<div class="ld-field-row">' +
           '<p>문항</p>' +
@@ -1305,6 +1304,8 @@
 
     rpLogicList.appendChild(block);
     refreshRpLogicListForQuestion(qid);
+    collapseAllLogicBlocks(); // 새로 만든 로직은 바로 편집할 수 있게 펼친 채로 두고 나머지만 접는다.
+    block.classList.remove('collapsed');
   }
 
   // 새로 추가된(또는 기존) 로직 블록 삭제. 해당 문항의 블록이 하나도 안 남으면
