@@ -396,7 +396,10 @@
   .qep-option-text{font-size:16px;color:var(--grey-13);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .qep-dest-pill{display:flex;align-items:center;gap:7px;height:32px;padding:0 8px;border-radius:15px;flex-shrink:0;}
   .qep-dest-pill img.route-icon{width:16px;height:16px;}
-  .qep-option-actions{display:flex;gap:4px;flex-shrink:0;}
+  /* 이동/삭제 버튼은 옵션 행에 마우스를 올렸을 때만(또는 모바일에서 탭했을 때만) 보임 */
+  .qep-option-actions{display:none;gap:4px;flex-shrink:0;}
+  .qep-option:hover .qep-option-actions,
+  .qep-option.touch-active .qep-option-actions{display:flex;}
   .qep-action-btn{
     width:32px;height:32px;border:1px solid var(--neutral-200);border-radius:7px;
     background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
@@ -599,6 +602,10 @@
                   <img class="route-icon" src="assets/icon-route.svg" alt="">
                   <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
                 </div>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="이동 제거"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text">2. 가끔 참여해요</span>
@@ -617,6 +624,10 @@
                   <img class="route-icon" src="assets/icon-route.svg" alt="">
                   <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
                 </div>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="이동 제거"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
             </div>
             <div class="qep-row-actions">
@@ -634,15 +645,31 @@
             <div class="qep-options">
               <div class="qep-option">
                 <span class="qep-option-text">1. 온라인 베이킹</span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text">1. 드로잉</span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text">3. 가죽공예</span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text">4. 향수·캔들</span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
             </div>
             <div class="qep-row-actions">
@@ -692,15 +719,31 @@
             <div class="qep-options">
               <div class="qep-option">
                 <span class="qep-option-text">1. SNS</span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text">2. 지인추천</span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text">3. 포털검색</span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text">4. 플랫폼 앱</span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
               </div>
             </div>
             <div class="qep-row-actions">
@@ -954,6 +997,29 @@
     // Tap/click anywhere else closes it.
     document.addEventListener('click', function(evt){
       if (evt.target !== infoIcon && !legend.contains(evt.target)) hide();
+    });
+  })();
+
+  // ---------------- 문항 옵션의 이동/삭제 버튼: 데스크톱은 순수 CSS hover로 처리되고,
+  // 여기서는 hover가 없는 터치 기기에서 탭으로 토글되도록 보조한다. ----------------
+  (function(){
+    if (!window.matchMedia || !window.matchMedia('(hover: none)').matches) return; // 데스크톱은 CSS hover만으로 충분
+
+    var options = document.querySelectorAll('.qep-option');
+    options.forEach(function(opt){
+      if (!opt.querySelector('.qep-option-actions')) return; // 이동 대상이 없는 옵션은 대상 아님
+      opt.addEventListener('click', function(evt){
+        if (evt.target.closest('.qep-action-btn')) return; // 버튼 자체 클릭은 그대로 동작하게 둠
+        var wasActive = opt.classList.contains('touch-active');
+        options.forEach(function(o){ o.classList.remove('touch-active'); });
+        if (!wasActive) opt.classList.add('touch-active');
+      });
+    });
+
+    document.addEventListener('click', function(evt){
+      if (!evt.target.closest('.qep-option')){
+        options.forEach(function(o){ o.classList.remove('touch-active'); });
+      }
     });
   })();
 
