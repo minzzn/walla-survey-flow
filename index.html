@@ -94,7 +94,7 @@
     position:absolute;inset:0;overflow:hidden;
     background-image:url('assets/canvas-bg.png');
     background-repeat:repeat;background-size:551px 478px;background-position:0px 0px;
-    cursor:grab;
+    cursor:grab;touch-action:none;
   }
   .center-canvas.panning{cursor:grabbing;}
   .canvas-content{
@@ -695,43 +695,62 @@
       return Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, v));
     }
 
-    canvas.addEventListener('mousedown', function(e){
-      if (e.target !== canvas && e.target !== content) return; // only pan on empty space
+    function startDrag(target, x, y){
+      if (target !== canvas && target !== content) return false; // only pan on empty space
       dragging = true;
       canvas.classList.add('panning');
-      startX = e.clientX;
-      startY = e.clientY;
+      startX = x;
+      startY = y;
       startPanX = panX;
       startPanY = panY;
-      e.preventDefault();
-    });
+      return true;
+    }
 
-    window.addEventListener('mousemove', function(e){
+    function moveDrag(x, y){
       if (!dragging) return;
-      panX = clamp(startPanX + (e.clientX - startX));
-      panY = clamp(startPanY + (e.clientY - startY));
+      panX = clamp(startPanX + (x - startX));
+      panY = clamp(startPanY + (y - startY));
       applyPan();
-    });
+    }
 
-    window.addEventListener('mouseup', function(){
+    function endDrag(){
       if (!dragging) return;
       dragging = false;
       canvas.classList.remove('panning');
-    });
+    }
 
-    canvas.addEventListener('mouseleave', function(){
-      if (dragging){
-        dragging = false;
-        canvas.classList.remove('panning');
-      }
+    // ---- Mouse ----
+    canvas.addEventListener('mousedown', function(e){
+      if (startDrag(e.target, e.clientX, e.clientY)) e.preventDefault();
     });
-
+    window.addEventListener('mousemove', function(e){
+      moveDrag(e.clientX, e.clientY);
+    });
+    window.addEventListener('mouseup', endDrag);
+    canvas.addEventListener('mouseleave', endDrag);
     canvas.addEventListener('wheel', function(e){
       e.preventDefault();
       panX = clamp(panX - e.deltaX);
       panY = clamp(panY - e.deltaY);
       applyPan();
     }, { passive:false });
+
+    // ---- Touch (mobile) ----
+    canvas.addEventListener('touchstart', function(e){
+      if (e.touches.length !== 1) return;
+      var t = e.touches[0];
+      if (startDrag(e.target, t.clientX, t.clientY)) e.preventDefault();
+    }, { passive:false });
+
+    canvas.addEventListener('touchmove', function(e){
+      if (!dragging || e.touches.length !== 1) return;
+      var t = e.touches[0];
+      moveDrag(t.clientX, t.clientY);
+      e.preventDefault();
+    }, { passive:false });
+
+    canvas.addEventListener('touchend', endDrag);
+    canvas.addEventListener('touchcancel', endDrag);
   })();
 </script>
 
