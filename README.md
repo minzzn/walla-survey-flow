@@ -42,9 +42,10 @@ https://walla-survey-flow.netlify.app
 | 16 | 2026-08-29 02:51:24 | [`dc1aca3`](https://github.com/minzzn/walla-survey-flow/commit/dc1aca3) | `feat` | 우측 패널 "새 로직 추가" 버튼으로 로직 블록 생성 (문항별로 안 섞이게 하는 버그도 같이 수정) |
 | 17 | 2026-08-29 02:55:23 | [`1e07d02`](https://github.com/minzzn/walla-survey-flow/commit/1e07d02) | `fix` | 우측 패널을 고정 높이로 만들고, 로직이 늘어나면 패널 내부에서만 스크롤되도록 수정 |
 | 18 | 2026-08-29 02:58:36 | [`e65bd22`](https://github.com/minzzn/walla-survey-flow/commit/e65bd22) | `fix` | 로직이 많아지면 "새 로직 추가" 버튼 등이 찌그러지던 flex-shrink 버그 수정 |
+| 19 | 2026-08-29 03:25:21 | [`01b202e`](https://github.com/minzzn/walla-survey-flow/commit/01b202e) | `feat` | 우측 패널 문항/답변/조건/이동 필드를 실제 동작하는 드롭다운으로 구현 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~18번)입니다.
+2026-08-29 새벽(5~19번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
