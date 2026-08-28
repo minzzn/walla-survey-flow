@@ -97,6 +97,7 @@
     cursor:grab;touch-action:none;
   }
   .center-canvas.panning{cursor:grabbing;}
+  .center-canvas.locked{cursor:default;}
   .canvas-content{
     position:absolute;inset:0;
     transform:translate(0px,0px);
@@ -250,6 +251,8 @@
   }
   .ctrl-btn:last-child{border-bottom:none;}
   .ctrl-btn img{width:10px;height:10px;}
+  .ctrl-btn img.icon-zoom-out-img{height:1.56px;}
+  .ctrl-btn.disabled{cursor:not-allowed;opacity:.4;}
 
   /* ---------------- Right panel ---------------- */
   .right-panel{
@@ -550,10 +553,10 @@
         </div>
 
         <div class="control-panel" id="controlPanel">
-          <div class="ctrl-btn"><img src="assets/icon-zoom-in.svg" alt=""></div>
-          <div class="ctrl-btn"><img src="assets/icon-zoom-out.svg" alt=""></div>
-          <div class="ctrl-btn"><img src="assets/icon-fit-view.svg" alt=""></div>
-          <div class="ctrl-btn"><img src="assets/icon-lock.svg" alt=""></div>
+          <div class="ctrl-btn" id="btnZoomIn" title="확대"><img src="assets/icon-zoom-in.svg" alt=""></div>
+          <div class="ctrl-btn" id="btnZoomOut" title="축소"><img class="icon-zoom-out-img" src="assets/icon-zoom-out.svg" alt=""></div>
+          <div class="ctrl-btn" id="btnFitView" title="화면에 맞추기"><img src="assets/icon-fit-view.svg" alt=""></div>
+          <div class="ctrl-btn" id="btnToggleLock" title="캔버스 이동/확대 잠금"><img id="lockIcon" src="assets/icon-toggle-interactivity.svg" alt=""></div>
         </div>
       </div>
 
@@ -677,17 +680,26 @@
     // Placeholder: visual affordance only in this static build.
   }
 
-  // ---------------- Pannable center canvas ----------------
+  // ---------------- Pannable / zoomable center canvas ----------------
   (function(){
     var canvas = document.querySelector('.center-canvas');
     var content = document.getElementById('canvasContent');
     var panX = 0, panY = 0;
+    var scale = 1;
     var dragging = false;
+    var locked = false;
     var startX = 0, startY = 0, startPanX = 0, startPanY = 0;
     var PAN_LIMIT = 900;
+    var SCALE_MIN = 0.5, SCALE_MAX = 2, SCALE_STEP = 0.1;
+
+    var btnZoomIn = document.getElementById('btnZoomIn');
+    var btnZoomOut = document.getElementById('btnZoomOut');
+    var btnFitView = document.getElementById('btnFitView');
+    var btnToggleLock = document.getElementById('btnToggleLock');
+    var lockIcon = document.getElementById('lockIcon');
 
     function applyPan(){
-      content.style.transform = 'translate(' + panX + 'px,' + panY + 'px)';
+      content.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + scale + ')';
       canvas.style.backgroundPosition = panX + 'px ' + panY + 'px';
     }
 
@@ -695,7 +707,28 @@
       return Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, v));
     }
 
+    function clampScale(v){
+      return Math.max(SCALE_MIN, Math.min(SCALE_MAX, Math.round(v * 100) / 100));
+    }
+
+    function setScale(v){
+      scale = clampScale(v);
+      applyPan();
+      if (btnZoomIn) btnZoomIn.classList.toggle('disabled', scale >= SCALE_MAX);
+      if (btnZoomOut) btnZoomOut.classList.toggle('disabled', scale <= SCALE_MIN);
+    }
+
+    function setLocked(v){
+      locked = v;
+      canvas.classList.toggle('locked', locked);
+      if (lockIcon) lockIcon.src = locked ? 'assets/icon-lock-closed.svg' : 'assets/icon-toggle-interactivity.svg';
+      if (btnToggleLock) btnToggleLock.title = locked ? '캔버스 이동/확대 잠금 해제' : '캔버스 이동/확대 잠금';
+      if (btnZoomIn) btnZoomIn.classList.toggle('disabled', locked || scale >= SCALE_MAX);
+      if (btnZoomOut) btnZoomOut.classList.toggle('disabled', locked || scale <= SCALE_MIN);
+    }
+
     function startDrag(target, x, y){
+      if (locked) return false;
       if (target !== canvas && target !== content) return false; // only pan on empty space
       dragging = true;
       canvas.classList.add('panning');
@@ -729,6 +762,7 @@
     window.addEventListener('mouseup', endDrag);
     canvas.addEventListener('mouseleave', endDrag);
     canvas.addEventListener('wheel', function(e){
+      if (locked) return;
       e.preventDefault();
       panX = clamp(panX - e.deltaX);
       panY = clamp(panY - e.deltaY);
@@ -751,6 +785,27 @@
 
     canvas.addEventListener('touchend', endDrag);
     canvas.addEventListener('touchcancel', endDrag);
+
+    // ---- Bottom-left control panel ----
+    if (btnZoomIn) btnZoomIn.addEventListener('click', function(){
+      if (locked) return;
+      setScale(scale + SCALE_STEP);
+    });
+    if (btnZoomOut) btnZoomOut.addEventListener('click', function(){
+      if (locked) return;
+      setScale(scale - SCALE_STEP);
+    });
+    if (btnFitView) btnFitView.addEventListener('click', function(){
+      panX = 0;
+      panY = 0;
+      scale = 1;
+      applyPan();
+      if (btnZoomIn) btnZoomIn.classList.remove('disabled');
+      if (btnZoomOut) btnZoomOut.classList.remove('disabled');
+    });
+    if (btnToggleLock) btnToggleLock.addEventListener('click', function(){
+      setLocked(!locked);
+    });
   })();
 </script>
 
