@@ -377,7 +377,7 @@
   }
   .qep-block{
     width:100%;max-width:599px;display:flex;flex-direction:column;gap:22px;
-    padding:12px;border:1px solid transparent;border-radius:8px;
+    padding:12px;border:1px solid transparent;border-radius:8px;cursor:pointer;
     transition:border-color .15s ease;
   }
   .qep-block.selected{border-color:var(--skyblue-500);}
@@ -593,7 +593,7 @@
         <div class="qep-inner">
 
           <!-- Q5 -->
-          <div class="qep-block" data-question="Q5">
+          <div class="qep-block" data-question="Q5" onclick="selectQuestion('Q5')">
             <p class="qep-title">Q5. 지금까지 참여한 클래스 전반에 얼마나 만족하시나요</p>
             <div class="qep-options">
               <div class="qep-option">
@@ -640,7 +640,7 @@
           </div>
 
           <!-- Q6 -->
-          <div class="qep-block" data-question="Q6">
+          <div class="qep-block" data-question="Q6" onclick="selectQuestion('Q6')">
             <p class="qep-title">Q6.아래 분야의 선호도를 알려주세요</p>
             <div class="qep-options">
               <div class="qep-option">
@@ -682,7 +682,7 @@
           </div>
 
           <!-- Q7 -->
-          <div class="qep-block" data-question="Q7">
+          <div class="qep-block" data-question="Q7" onclick="selectQuestion('Q7')">
             <p class="qep-title">Q7.지금까지 참여한 클래스는 전반에 얼마나 만족하시나요</p>
             <div class="qep-rating">
               <div class="qep-rating-range">
@@ -711,7 +711,7 @@
           </div>
 
           <!-- Q8 -->
-          <div class="qep-block" data-question="Q8">
+          <div class="qep-block" data-question="Q8" onclick="selectQuestion('Q8')">
             <div class="qep-title-row">
               <p class="qep-title">Q8.보통 어떤 경로로 클래스를 찾나요?</p>
               <span class="qep-badge">다중 선택형</span>
@@ -769,19 +769,19 @@
             <div class="fp-list">
               <div class="page-divider"><div class="line"></div><span>페이지 구분</span><div class="line"></div></div>
 
-              <div class="fp-row selected" onclick="selectQuestion('Q5', this)">
+              <div class="fp-row selected" data-question="Q5" onclick="selectQuestion('Q5')">
                 <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
                 <p>원데이 클래스 참여 경험이 어느 정도 인가요?</p>
               </div>
-              <div class="fp-row" onclick="selectQuestion('Q6', this)">
+              <div class="fp-row" data-question="Q6" onclick="selectQuestion('Q6')">
                 <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
                 <p>아래 분야의 선호도를 알려주세요.</p>
               </div>
-              <div class="fp-row" onclick="selectQuestion('Q7', this)">
+              <div class="fp-row" data-question="Q7" onclick="selectQuestion('Q7')">
                 <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q7</b></div>
                 <p>지금까지 참여한 클래스 전</p>
               </div>
-              <div class="fp-row" onclick="selectQuestion('Q8', this)">
+              <div class="fp-row" data-question="Q8" onclick="selectQuestion('Q8')">
                 <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
                 <p>보통 어떤 경로로 클래스를...</p>
               </div>
@@ -948,9 +948,10 @@
   // 왼쪽 필드 목록에서 문항을 선택하면 문항 설정(편집) 화면으로 전환하고,
   // 중앙 편집 패널에서 해당 문항으로 스크롤 + 테두리 하이라이트,
   // 우측 로직 패널도 선택된 문항 기준으로 갱신한다.
-  function selectQuestion(qid, rowEl){
+  function selectQuestion(qid){
     document.querySelectorAll('.fp-row').forEach(function(r){ r.classList.remove('selected'); });
-    rowEl.classList.add('selected');
+    var rowEl = document.querySelector('.fp-row[data-question="' + qid + '"]');
+    if (rowEl) rowEl.classList.add('selected');
 
     setEditMode(false);
 
