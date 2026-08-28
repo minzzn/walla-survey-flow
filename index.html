@@ -260,9 +260,10 @@
 
   /* ---------------- Right panel ---------------- */
   .right-panel{
-    position:absolute;left:1055px;top:16px;width:369px;
+    position:absolute;left:1055px;top:16px;bottom:16px;width:369px;
     border:1px solid var(--neutral-100);border-top:none;border-radius:16px;
     box-shadow:1px 0 8px rgba(54,65,83,.12);background:var(--white);overflow:hidden;z-index:10;
+    display:flex;flex-direction:column;
   }
   .rp-tabs{display:flex;}
   .rp-tabs .rtab{
@@ -275,7 +276,10 @@
   .rp-tabs .rtab.inactive span{color:var(--neutral-400);}
   .rp-tabs .rtab.active span{color:var(--skyblue-500);}
 
-  .rp-body{padding:10px 0 16px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .rp-body{
+    padding:10px 0 16px;display:flex;flex-direction:column;align-items:center;gap:16px;
+    flex:1;min-height:0;overflow-y:auto;scroll-behavior:smooth;
+  }
   .rp-title-row{display:flex;align-items:center;justify-content:space-between;padding-top:18px;width:333px;}
   .rp-title-left{display:flex;align-items:center;gap:10px;}
   .rp-title-left > span{font-size:16px;font-weight:700;color:var(--neutral-600);}
