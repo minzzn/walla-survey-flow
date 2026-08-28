@@ -50,9 +50,10 @@ https://walla-survey-flow.netlify.app
 | 24 | 2026-08-29 04:18:01 | [`0270d02`](https://github.com/minzzn/walla-survey-flow/commit/0270d02) | `fix` | 우측 패널 로직 설정이 로직 탭 활성화 시에만 보이도록 수정 (문항 설정 탭에서 노출되던 버그) |
 | 25 | 2026-08-29 04:21:45 | [`45ba2fa`](https://github.com/minzzn/walla-survey-flow/commit/45ba2fa) | `fix` | 중앙 캔버스 탭과 우측 패널 탭을 독립적으로 분리 (한쪽 전환이 다른 쪽을 강제로 바꾸던 버그) |
 | 26 | 2026-08-29 04:44:02 | [`fb34d10`](https://github.com/minzzn/walla-survey-flow/commit/fb34d10) | `feat` | 문항 제목·옵션 텍스트를 번호 제외하고 직접 수정 가능하게 하고, 수정 시 우측 패널까지 자동 반영 |
+| 27 | 2026-08-29 04:49:43 | [`81f6e7c`](https://github.com/minzzn/walla-survey-flow/commit/81f6e7c) | `fix` | "새 로직 추가"로 만든 블록도 이동 대상을 고르면 헤더에 화살표+대상 문항 배지가 나타나도록 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~26번)입니다.
+2026-08-29 새벽(5~27번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
