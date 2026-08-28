@@ -856,7 +856,7 @@
         <div class="rtab active" onclick="switchRpTab(this,false)"><span>문항 설정</span></div>
         <div class="rtab inactive" onclick="switchRpTab(this,true)"><span>로직</span></div>
       </div>
-      <div class="rp-body">
+      <div class="rp-body hidden" id="rpBody">
       <div class="rp-title-row">
         <div class="rp-title-left">
           <span>로직</span>
@@ -963,14 +963,17 @@
     var canvasContent = document.getElementById('canvasContent');
     var questionEditPanel = document.getElementById('questionEditPanel');
     var controlPanel = document.getElementById('controlPanel');
+    var rpBody = document.getElementById('rpBody');
     if (isLogic){
       questionEditPanel.classList.add('hidden');
       canvasContent.classList.remove('hidden');
       if (controlPanel) controlPanel.classList.remove('hidden');
+      if (rpBody) rpBody.classList.remove('hidden');
     } else {
       canvasContent.classList.add('hidden');
       questionEditPanel.classList.remove('hidden');
       if (controlPanel) controlPanel.classList.add('hidden');
+      if (rpBody) rpBody.classList.add('hidden'); // 문항 설정 탭에서는 로직 설정(rp-body)이 보이면 안 된다.
     }
   }
   function switchCanvasTab(el, isLogic){
