@@ -361,6 +361,67 @@
 
   .hidden{display:none !important;}
 
+  /* ---------------- Question edit-list panel (문항 설정) ---------------- */
+  .question-edit-panel{
+    position:absolute;left:341px;right:385px;top:16px;bottom:16px;
+    background:var(--white);border-radius:16px;overflow-y:auto;
+    box-shadow:0 4px 6px rgba(0,0,0,.03);z-index:8;
+  }
+  .qep-inner{
+    display:flex;flex-direction:column;align-items:center;gap:100px;
+    padding:48px 62px;
+  }
+  .qep-block{width:100%;max-width:599px;display:flex;flex-direction:column;gap:22px;}
+  .qep-title{font-weight:700;font-size:18px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .qep-title-row{display:flex;align-items:center;gap:22px;width:100%;}
+  .qep-title-row .qep-title{flex:1;min-width:0;}
+  .qep-badge{
+    background:var(--skyblue-100);color:var(--skyblue-500);font-weight:700;font-size:14px;
+    padding:2px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0;
+  }
+  .qep-options{display:flex;flex-direction:column;gap:6px;width:100%;}
+  .qep-option{
+    background:#fbfbfb;min-height:50px;border-radius:14px;padding:0 8px 0 12px;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .qep-option-text{font-size:16px;color:var(--grey-13);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .qep-dest-pill{display:flex;align-items:center;gap:7px;height:32px;padding:0 8px;border-radius:15px;flex-shrink:0;}
+  .qep-dest-pill img.route-icon{width:16px;height:16px;}
+  .qep-option-actions{display:flex;gap:4px;flex-shrink:0;}
+  .qep-action-btn{
+    width:32px;height:32px;border:1px solid var(--neutral-200);border-radius:7px;
+    background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  }
+  .qep-action-btn img{width:20px;height:20px;}
+  .qep-action-btn.edit img{transform:rotate(90deg);}
+
+  .qep-row-actions{display:flex;align-items:center;justify-content:space-between;width:100%;}
+  .qep-add-group{display:flex;align-items:center;gap:6px;}
+  .qep-add-btn{display:flex;align-items:center;gap:2px;padding:6px 4px;border-radius:8px;background:var(--white);cursor:pointer;}
+  .qep-add-btn img{width:18px;height:18px;}
+  .qep-add-btn span{font-size:11.8px;font-weight:500;color:#0080ff;white-space:nowrap;}
+  .qep-more-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+  .qep-more-btn img{width:16px;height:16px;}
+
+  /* Q7 rating scale */
+  .qep-rating{display:flex;flex-direction:column;gap:16px;width:100%;}
+  .qep-rating-range{display:flex;justify-content:space-between;width:100%;}
+  .qep-range-btn{
+    background:#fbfbfb;height:40px;width:64px;border-radius:12.8px;
+    display:flex;align-items:center;justify-content:space-between;padding:8px 8px 8px 10px;cursor:pointer;
+  }
+  .qep-range-btn span{font-size:14px;color:var(--grey-13);}
+  .qep-range-btn img{width:16px;height:16px;}
+  .qep-rating-numbers{display:flex;gap:8px;justify-content:center;width:100%;}
+  .qep-rating-num{
+    background:#fbfbfb;height:40px;flex:1;max-width:40px;border-radius:10.8px;
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:var(--grey-13);
+  }
+  .qep-rating-labels{display:flex;justify-content:space-between;width:100%;gap:8px;}
+  .qep-rating-label{
+    background:#fbfbfb;height:40px;width:186px;max-width:45%;border-radius:12.8px;
+    display:flex;align-items:center;padding:0 10px;font-size:14px;color:var(--grey-13);
+  }
 </style>
 </head>
 <body>
@@ -514,6 +575,136 @@
 
       </div>
       <!-- /pannable canvas content -->
+
+      <!-- 문항 설정 : question edit-list panel -->
+      <div class="question-edit-panel hidden" id="questionEditPanel">
+        <div class="qep-inner">
+
+          <!-- Q5 -->
+          <div class="qep-block">
+            <p class="qep-title">Q5. 지금까지 참여한 클래스 전반에 얼마나 만족하시나요</p>
+            <div class="qep-options">
+              <div class="qep-option">
+                <span class="qep-option-text">1. 처음이에요</span>
+                <div class="qep-dest-pill">
+                  <img class="route-icon" src="assets/icon-route.svg" alt="">
+                  <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text">2. 가끔 참여해요</span>
+                <div class="qep-dest-pill">
+                  <img class="route-icon" src="assets/icon-route.svg" alt="">
+                  <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
+                </div>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="이동 제거"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text">3. 자주 참여해요</span>
+                <div class="qep-dest-pill">
+                  <img class="route-icon" src="assets/icon-route.svg" alt="">
+                  <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
+                </div>
+              </div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+          <!-- Q6 -->
+          <div class="qep-block">
+            <p class="qep-title">Q6.아래 분야의 선호도를 알려주세요</p>
+            <div class="qep-options">
+              <div class="qep-option">
+                <span class="qep-option-text">1. 온라인 베이킹</span>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text">1. 드로잉</span>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text">3. 가죽공예</span>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text">4. 향수·캔들</span>
+              </div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+          <!-- Q7 -->
+          <div class="qep-block">
+            <p class="qep-title">Q7.지금까지 참여한 클래스는 전반에 얼마나 만족하시나요</p>
+            <div class="qep-rating">
+              <div class="qep-rating-range">
+                <div class="qep-range-btn"><span>1</span><img src="assets/icon-range-chevron.svg" alt=""></div>
+                <div class="qep-range-btn"><span>5</span><img src="assets/icon-range-chevron.svg" alt=""></div>
+              </div>
+              <div class="qep-rating-numbers">
+                <div class="qep-rating-num">1</div>
+                <div class="qep-rating-num">2</div>
+                <div class="qep-rating-num">3</div>
+                <div class="qep-rating-num">4</div>
+                <div class="qep-rating-num">5</div>
+              </div>
+              <div class="qep-rating-labels">
+                <div class="qep-rating-label">매우 불만족</div>
+                <div class="qep-rating-label">만족</div>
+              </div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+          <!-- Q8 -->
+          <div class="qep-block">
+            <div class="qep-title-row">
+              <p class="qep-title">Q8.보통 어떤 경로로 클래스를 찾나요?</p>
+              <span class="qep-badge">다중 선택형</span>
+            </div>
+            <div class="qep-options">
+              <div class="qep-option">
+                <span class="qep-option-text">1. SNS</span>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text">2. 지인추천</span>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text">3. 포털검색</span>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text">4. 플랫폼 앱</span>
+              </div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
 
       <!-- Left panel -->
       <div class="left-panel-wrap">
@@ -673,6 +864,16 @@
     el.parentElement.querySelectorAll('.rtab').forEach(t=>{t.classList.remove('active');t.classList.add('inactive');});
     el.classList.remove('inactive');
     el.classList.add('active');
+
+    var canvasContent = document.getElementById('canvasContent');
+    var questionEditPanel = document.getElementById('questionEditPanel');
+    if (isLogic){
+      questionEditPanel.classList.add('hidden');
+      canvasContent.classList.remove('hidden');
+    } else {
+      canvasContent.classList.add('hidden');
+      questionEditPanel.classList.remove('hidden');
+    }
   }
 
   function toggleDropdown(evt, id){
@@ -763,6 +964,7 @@
     canvas.addEventListener('mouseleave', endDrag);
     canvas.addEventListener('wheel', function(e){
       if (locked) return;
+      if (e.target.closest('.question-edit-panel')) return; // let the panel scroll natively
       e.preventDefault();
       panX = clamp(panX - e.deltaX);
       panY = clamp(panY - e.deltaY);
