@@ -38,9 +38,13 @@ https://walla-survey-flow.netlify.app
 | 12 | 2026-08-29 02:32:24 | [`84ecfd8`](https://github.com/minzzn/walla-survey-flow/commit/84ecfd8) | `feat` | 첫 진입 시 문항 편집 화면을 기본값으로, 로직 전용 컨트롤 범위 지정 |
 | 13 | 2026-08-29 02:32:24 | [`8ee1d2e`](https://github.com/minzzn/walla-survey-flow/commit/8ee1d2e) | `chore` | Netlify 자동배포 워처(`watch-deploy.sh`) 추가 |
 | 14 | 2026-08-29 02:38:23 | [`51d6849`](https://github.com/minzzn/walla-survey-flow/commit/51d6849) | `docs` | README에 업데이트 내역 표 추가 |
+| 15 | 2026-08-29 02:41:22 | [`556bf29`](https://github.com/minzzn/walla-survey-flow/commit/556bf29) | `docs` | 업데이트 내역 표를 커밋 타임스탬프 기준으로 전환 |
+| 16 | 2026-08-29 02:51:24 | [`dc1aca3`](https://github.com/minzzn/walla-survey-flow/commit/dc1aca3) | `feat` | 우측 패널 "새 로직 추가" 버튼으로 로직 블록 생성 (문항별로 안 섞이게 하는 버그도 같이 수정) |
+| 17 | 2026-08-29 02:55:23 | [`1e07d02`](https://github.com/minzzn/walla-survey-flow/commit/1e07d02) | `fix` | 우측 패널을 고정 높이로 만들고, 로직이 늘어나면 패널 내부에서만 스크롤되도록 수정 |
+| 18 | 2026-08-29 02:58:36 | [`e65bd22`](https://github.com/minzzn/walla-survey-flow/commit/e65bd22) | `fix` | 로직이 많아지면 "새 로직 추가" 버튼 등이 찌그러지던 flex-shrink 버그 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~13번)입니다.
+2026-08-29 새벽(5~18번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
