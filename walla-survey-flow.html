@@ -1293,13 +1293,32 @@
     return (badge && badge.textContent) || block.getAttribute('data-question') || currentQuestionId;
   }
 
+  // "이동" 드롭다운에서 대상 문항을 고르면, 로직 블록 헤더의 "로직n" 라벨 옆에도
+  // 화살표 + 대상 문항 배지를 보여준다. 기존 정적 블록은 이미 그 자리가 있어 텍스트만
+  // 갱신하면 되지만, "새 로직 추가"로 만든 블록은 처음엔 그 자리가 없어서 여기서
+  // 처음 만들어 붙여준다.
   function setBlockMoveTarget(block, qid){
     var badge = block.querySelector('.ld-move-select-left .q-label b');
     var title = block.querySelector('.ld-move-select-left p');
     if (badge) badge.textContent = qid;
     if (title) title.textContent = getQuestionTitle(qid);
-    var headBadges = block.querySelectorAll('.ld-head-chips .q-label b');
-    if (headBadges.length > 1) headBadges[1].textContent = qid;
+
+    var headChips = block.querySelector('.ld-head-chips');
+    if (headChips){
+      var headBadges = headChips.querySelectorAll('.q-label b');
+      if (headBadges.length > 1){
+        headBadges[1].textContent = qid;
+      } else {
+        var arrow = document.createElement('img');
+        arrow.src = 'assets/icon-arrow-flow-2.svg';
+        arrow.alt = '';
+        var targetLabel = document.createElement('div');
+        targetLabel.className = 'q-label';
+        targetLabel.innerHTML = '<div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + qid + '</b>';
+        headChips.appendChild(arrow);
+        headChips.appendChild(targetLabel);
+      }
+    }
     syncOptionLogicPills();
   }
 
