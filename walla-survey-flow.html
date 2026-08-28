@@ -128,8 +128,10 @@
     position:absolute;right:396px;top:50px;background:var(--white);
     border:1px solid var(--neutral-200);border-radius:12px;
     box-shadow:0 4px 6px rgba(0,0,0,.03);
-    padding:16px;display:flex;flex-direction:column;gap:10px;z-index:9;
+    padding:16px;display:none;flex-direction:column;gap:10px;z-index:9;
   }
+  .flow-legend.show{display:flex;}
+  .logic-info-icon{cursor:pointer;}
   .flow-legend > p{font-size:14px;color:var(--neutral-800);}
   .legend-item{display:flex;align-items:center;gap:8px;}
   .legend-item span{font-size:14px;color:var(--azure-48);white-space:nowrap;}
@@ -470,7 +472,7 @@
           <div class="ctab active" onclick="switchCanvasTab(this,true)">
             <img src="assets/icon-logic-tab.svg" alt="" style="transform:rotate(90deg)">
             로직
-            <img src="assets/icon-chevron-small.svg" alt="">
+            <img src="assets/icon-chevron-small.svg" alt="로직 정보" class="logic-info-icon" id="logicInfoIcon">
           </div>
         </div>
       </div>
@@ -869,8 +871,6 @@
     activeRtab.classList.remove('inactive');
     activeRtab.classList.add('active');
 
-    document.getElementById('flowLegend').style.display = isLogic ? '' : 'none';
-
     var canvasContent = document.getElementById('canvasContent');
     var questionEditPanel = document.getElementById('questionEditPanel');
     if (isLogic){
@@ -892,6 +892,32 @@
     evt.stopPropagation();
     // Placeholder: visual affordance only in this static build.
   }
+
+  // ---------------- 로직 미리보기 popover: hover (desktop) + tap (mobile) ----------------
+  (function(){
+    var infoIcon = document.getElementById('logicInfoIcon');
+    var legend = document.getElementById('flowLegend');
+    if (!infoIcon || !legend) return;
+
+    function show(){ legend.classList.add('show'); }
+    function hide(){ legend.classList.remove('show'); }
+
+    // Desktop: real mouse hover
+    infoIcon.addEventListener('mouseenter', show);
+    infoIcon.addEventListener('mouseleave', hide);
+
+    // Mobile/touch: tap to toggle (no hover event on touch devices).
+    // stopPropagation so the tap doesn't also trigger the parent 편집/로직 tab click.
+    infoIcon.addEventListener('click', function(evt){
+      evt.stopPropagation();
+      legend.classList.toggle('show');
+    });
+
+    // Tap/click anywhere else closes it.
+    document.addEventListener('click', function(evt){
+      if (evt.target !== infoIcon && !legend.contains(evt.target)) hide();
+    });
+  })();
 
   // ---------------- Pannable / zoomable center canvas ----------------
   (function(){
