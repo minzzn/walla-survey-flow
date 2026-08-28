@@ -49,9 +49,10 @@ https://walla-survey-flow.netlify.app
 | 23 | 2026-08-29 04:13:00 | [`10beaae`](https://github.com/minzzn/walla-survey-flow/commit/10beaae) | `fix` | 답변 드롭다운 체크박스가 칩 추가/삭제(어느 경로든)와 항상 일치하도록 수정 |
 | 24 | 2026-08-29 04:18:01 | [`0270d02`](https://github.com/minzzn/walla-survey-flow/commit/0270d02) | `fix` | 우측 패널 로직 설정이 로직 탭 활성화 시에만 보이도록 수정 (문항 설정 탭에서 노출되던 버그) |
 | 25 | 2026-08-29 04:21:45 | [`45ba2fa`](https://github.com/minzzn/walla-survey-flow/commit/45ba2fa) | `fix` | 중앙 캔버스 탭과 우측 패널 탭을 독립적으로 분리 (한쪽 전환이 다른 쪽을 강제로 바꾸던 버그) |
+| 26 | 2026-08-29 04:44:02 | [`fb34d10`](https://github.com/minzzn/walla-survey-flow/commit/fb34d10) | `feat` | 문항 제목·옵션 텍스트를 번호 제외하고 직접 수정 가능하게 하고, 수정 시 우측 패널까지 자동 반영 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~25번)입니다.
+2026-08-29 새벽(5~26번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
