@@ -1113,11 +1113,12 @@
     if (!wrap) return;
     if (!selected.length){
       wrap.innerHTML = '<p class="ld-placeholder">답변을 선택해주세요</p>';
-      return;
+    } else {
+      wrap.innerHTML = selected.map(function(opt){
+        return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+      }).join('');
     }
-    wrap.innerHTML = selected.map(function(opt){
-      return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
-    }).join('');
+    syncOptionLogicPills();
   }
   function toggleAnswerOption(block, optionText){
     var selected = getSelectedAnswerTexts(block);
@@ -1131,6 +1132,49 @@
       return t !== imgEl.previousElementSibling.textContent;
     });
     renderAnswerChips(block, selected);
+  }
+
+  // ---------------- 옵션 → 로직 이동 표시(qep-dest-pill) 동기화 ----------------
+  // 우측 패널 로직 블록의 답변 선택 + 이동 대상을 훑어서, 중앙 편집 패널의 해당
+  // 옵션에 "→ Qn" 아이콘+텍스트를 붙이거나 뗀다. 매번 전부 지우고 다시 그려서
+  // 로직 추가/삭제/문항 변경/답변 변경 어느 경로로 와도 항상 실제 상태와 일치시킨다.
+  function getBlockMoveTargetId(block){
+    var badge = block.querySelector('.ld-move-select-left .q-label b');
+    return badge ? badge.textContent : '';
+  }
+  function findOptionEl(qid, answerText){
+    var qBlock = document.querySelector('.qep-block[data-question="' + qid + '"]');
+    if (!qBlock) return null;
+    var opts = qBlock.querySelectorAll('.qep-option');
+    for (var i = 0; i < opts.length; i++){
+      var textEl = opts[i].querySelector('.qep-option-text');
+      if (textEl && textEl.textContent.replace(/^\d+\.\s*/, '') === answerText) return opts[i];
+    }
+    return null;
+  }
+  function setOptionPill(optionEl, moveTarget){
+    var pill = optionEl.querySelector('.qep-dest-pill');
+    if (!pill){
+      pill = document.createElement('div');
+      pill.className = 'qep-dest-pill';
+      pill.innerHTML =
+        '<img class="route-icon" src="assets/icon-route.svg" alt="">' +
+        '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b></b></div>';
+      optionEl.insertBefore(pill, optionEl.querySelector('.qep-option-actions'));
+    }
+    pill.querySelector('b').textContent = moveTarget;
+  }
+  function syncOptionLogicPills(){
+    document.querySelectorAll('.qep-option .qep-dest-pill').forEach(function(p){ p.remove(); });
+    document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(block){
+      var qid = getBlockQuestionRefId(block);
+      var moveTarget = getBlockMoveTargetId(block);
+      if (!moveTarget) return;
+      getSelectedAnswerTexts(block).forEach(function(answerText){
+        var optionEl = findOptionEl(qid, answerText);
+        if (optionEl) setOptionPill(optionEl, moveTarget);
+      });
+    });
   }
 
   // 로직 블록이 우측 패널의 어느 문항 목록에 속하는지는 data-question(블록 소유 문항)이
@@ -1160,6 +1204,7 @@
     if (title) title.textContent = QUESTION_TITLES[qid] || qid;
     var headBadges = block.querySelectorAll('.ld-head-chips .q-label b');
     if (headBadges.length > 1) headBadges[1].textContent = qid;
+    syncOptionLogicPills();
   }
 
   function openFieldDropdown(evt, fieldEl, type){
@@ -1306,6 +1351,7 @@
     refreshRpLogicListForQuestion(qid);
     collapseAllLogicBlocks(); // 새로 만든 로직은 바로 편집할 수 있게 펼친 채로 두고 나머지만 접는다.
     block.classList.remove('collapsed');
+    syncOptionLogicPills();
   }
 
   // 새로 추가된(또는 기존) 로직 블록 삭제. 해당 문항의 블록이 하나도 안 남으면
@@ -1324,6 +1370,7 @@
     });
 
     refreshRpLogicListForQuestion(currentQuestionId);
+    syncOptionLogicPills();
   }
 
   // ---------------- 로직 미리보기 popover: hover (desktop) + tap (mobile) ----------------
@@ -1512,6 +1559,8 @@
       setLocked(!locked);
     });
   })();
+
+  syncOptionLogicPills(); // 우측 패널의 초기 로직 상태를 기준으로 중앙 패널 옵션 표시를 맞춘다.
 </script>
 
 </body>
