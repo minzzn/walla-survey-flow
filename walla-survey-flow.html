@@ -346,6 +346,38 @@
   .ans-chip span{font-size:14px;color:var(--neutral-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
   .ans-chip img{width:16px;height:16px;flex-shrink:0;cursor:pointer;}
 
+  .ld-select-left{display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
+  .ld-select-left p{font-size:14px;color:var(--neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ld-placeholder{color:var(--neutral-400);font-size:14px;}
+
+  /* 문항/답변/조건/이동 필드가 열렸을 때의 활성 테두리 강조 */
+  .ld-select.dd-open,.ld-answer.dd-open,.ld-move-select.dd-open{border-color:var(--skyblue-500);}
+
+  /* 필드 드롭다운 메뉴: overflow:hidden인 상위 컨테이너(logic-detail, right-panel)에
+     잘리지 않도록 document.body에 직접 붙이고 position:fixed로 필드 아래에 위치시킨다. */
+  .ld-dd-menu{
+    position:fixed;background:var(--white);border:1px solid var(--neutral-200);border-radius:10px;
+    box-shadow:0 8px 20px rgba(0,0,0,.14);z-index:1000;overflow:hidden;
+  }
+  .ld-dd-list{max-height:220px;overflow-y:auto;}
+  .ld-dd-item{
+    display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:14px;color:var(--neutral-800);
+    cursor:pointer;border-bottom:1px solid var(--neutral-100);
+  }
+  .ld-dd-item:last-child{border-bottom:none;}
+  .ld-dd-item:hover{background:var(--neutral-100);}
+  .ld-dd-item span:last-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ld-dd-check{
+    width:16px;height:16px;flex-shrink:0;border:1.5px solid var(--neutral-300);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+  }
+  .ld-dd-item.checked .ld-dd-check{background:var(--skyblue-500);border-color:var(--skyblue-500);}
+  .ld-dd-check::after{
+    content:'';width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;
+    transform:rotate(45deg) translate(-1px,-1px);display:none;
+  }
+  .ld-dd-item.checked .ld-dd-check::after{display:block;}
+
   .ld-add-condition{
     display:flex;align-items:center;justify-content:center;gap:10px;height:68px;cursor:pointer;
   }
@@ -866,18 +898,21 @@
         <div class="ld-content">
           <div class="ld-field-row">
             <p>문항</p>
-            <div class="ld-select" onclick="toggleDropdown(event,'ddQuestion')">
-              <p>원데이 클래스 참여 경험이 어느 정도인가요?</p>
+            <div class="ld-select ld-question-field" onclick="openFieldDropdown(event,this,'question')">
+              <div class="ld-select-left">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b class="ld-question-badge">Q5</b></div>
+                <p class="ld-question-title">원데이 클래스 참여 경험이 어느 정도인가요?</p>
+              </div>
               <img src="assets/icon-dropdown-chevron.svg" alt="">
             </div>
           </div>
 
           <div class="ld-field-row">
             <p>답변</p>
-            <div class="ld-answer" onclick="toggleDropdown(event,'ddAnswer')">
+            <div class="ld-answer" onclick="openFieldDropdown(event,this,'answer')">
               <div class="ld-answer-chips">
-                <div class="ans-chip"><span>가끔참여해요</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation()"></div>
-                <div class="ans-chip"><span>자주 참여해요</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation()"></div>
+                <div class="ans-chip"><span>가끔 참여해요</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>
+                <div class="ans-chip"><span>자주 참여해요</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>
               </div>
               <img src="assets/icon-dropdown-chevron.svg" alt="">
             </div>
@@ -885,7 +920,7 @@
 
           <div class="ld-field-row">
             <p>조건</p>
-            <div class="ld-select" onclick="toggleDropdown(event,'ddCondition')">
+            <div class="ld-select" onclick="openFieldDropdown(event,this,'condition')">
               <p>~를 선택했을 때</p>
               <img src="assets/icon-dropdown-chevron.svg" alt="">
             </div>
@@ -902,7 +937,7 @@
             <img src="assets/icon-move-arrow.svg" alt="">
             <span>이동</span>
           </div>
-          <div class="ld-move-select" onclick="toggleDropdown(event,'ddMove')">
+          <div class="ld-move-select" onclick="openFieldDropdown(event,this,'move')">
             <div class="ld-move-select-left">
               <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
               <p>아래 분야의 선호도를 알려주세요.</p>
@@ -1023,10 +1058,162 @@
     });
     rpLogicList.classList.toggle('hidden', !anyVisible);
   }
-  function toggleDropdown(evt, id){
-    evt.stopPropagation();
-    // Placeholder: visual affordance only in this static build.
+  // 문항별 답변 옵션(중앙 편집 패널의 qep-option 텍스트와 동일하게 유지) + 조건 옵션 목록.
+  var QUESTION_OPTIONS = {
+    Q5: ['처음이에요', '가끔 참여해요', '자주 참여해요'],
+    Q6: ['온라인 베이킹', '드로잉', '가죽공예', '향수·캔들'],
+    Q7: ['1', '2', '3', '4', '5'],
+    Q8: ['SNS', '지인추천', '포털검색', '플랫폼 앱']
+  };
+  var CONDITION_OPTIONS = ['~를 선택했을 때', '~를 선택하지 않았을 때'];
+
+  // ---------------- 우측 패널 문항/답변/조건/이동 필드 드롭다운 ----------------
+  // 메뉴는 document.body에 직접 붙이고 position:fixed로 필드 아래에 배치한다.
+  // (logic-detail, right-panel 모두 overflow:hidden/auto라서 그 내부에 넣으면 잘린다.)
+  function closeFieldDropdown(){
+    var existing = document.querySelector('.ld-dd-menu');
+    if (existing) existing.remove();
+    document.querySelectorAll('.dd-open').forEach(function(el){ el.classList.remove('dd-open'); });
+    window.removeEventListener('scroll', closeFieldDropdown, true);
   }
+
+  function positionDropdownMenu(menu, fieldEl){
+    var r = fieldEl.getBoundingClientRect();
+    menu.style.width = r.width + 'px';
+    menu.style.left = r.left + 'px';
+    var menuHeight = menu.offsetHeight;
+    var top = r.bottom + 4;
+    if (top + menuHeight > window.innerHeight) top = Math.max(4, r.top - menuHeight - 4);
+    menu.style.top = top + 'px';
+  }
+
+  function buildDropdownItem(text, checked, onSelect){
+    var item = document.createElement('div');
+    item.className = 'ld-dd-item' + (checked ? ' checked' : '');
+    item.innerHTML = '<span class="ld-dd-check"></span><span></span>';
+    item.querySelector('span:last-child').textContent = text;
+    item.addEventListener('click', function(e){
+      e.stopPropagation();
+      onSelect(item);
+    });
+    return item;
+  }
+
+  function getAnswerChipsWrap(block){
+    return block.querySelector('.ld-answer-chips');
+  }
+  function getSelectedAnswerTexts(block){
+    var wrap = getAnswerChipsWrap(block);
+    if (!wrap) return [];
+    return Array.from(wrap.querySelectorAll('.ans-chip span')).map(function(s){ return s.textContent; });
+  }
+  function renderAnswerChips(block, selected){
+    var wrap = getAnswerChipsWrap(block);
+    if (!wrap) return;
+    if (!selected.length){
+      wrap.innerHTML = '<p class="ld-placeholder">답변을 선택해주세요</p>';
+      return;
+    }
+    wrap.innerHTML = selected.map(function(opt){
+      return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+    }).join('');
+  }
+  function toggleAnswerOption(block, optionText){
+    var selected = getSelectedAnswerTexts(block);
+    var i = selected.indexOf(optionText);
+    if (i === -1) selected.push(optionText); else selected.splice(i, 1);
+    renderAnswerChips(block, selected);
+  }
+  function removeAnswerChip(imgEl){
+    var block = imgEl.closest('.logic-detail');
+    var selected = getSelectedAnswerTexts(block).filter(function(t){
+      return t !== imgEl.previousElementSibling.textContent;
+    });
+    renderAnswerChips(block, selected);
+  }
+
+  function setBlockQuestion(block, qid){
+    block.setAttribute('data-question', qid);
+    var badge = block.querySelector('.ld-question-badge');
+    var title = block.querySelector('.ld-question-title');
+    if (badge) badge.textContent = qid;
+    if (title) title.textContent = QUESTION_TITLES[qid] || qid;
+    var headBadge = block.querySelector('.ld-head-chips .q-label b');
+    if (headBadge) headBadge.textContent = qid;
+    renderAnswerChips(block, []); // 문항이 바뀌면 이전 문항의 답변 선택은 더 이상 유효하지 않다.
+    refreshRpLogicListForQuestion(currentQuestionId);
+  }
+
+  function setBlockMoveTarget(block, qid){
+    var badge = block.querySelector('.ld-move-select-left .q-label b');
+    var title = block.querySelector('.ld-move-select-left p');
+    if (badge) badge.textContent = qid;
+    if (title) title.textContent = QUESTION_TITLES[qid] || qid;
+    var headBadges = block.querySelectorAll('.ld-head-chips .q-label b');
+    if (headBadges.length > 1) headBadges[1].textContent = qid;
+  }
+
+  function openFieldDropdown(evt, fieldEl, type){
+    evt.stopPropagation();
+    var wasOpen = fieldEl.classList.contains('dd-open');
+    closeFieldDropdown();
+    if (wasOpen) return; // 같은 필드를 다시 클릭하면 토글로 닫기만 한다.
+
+    var block = fieldEl.closest('.logic-detail');
+    var menu = document.createElement('div');
+    menu.className = 'ld-dd-menu';
+
+    if (type === 'question'){
+      QUESTION_ORDER.forEach(function(qid){
+        var item = buildDropdownItem(qid + '. ' + (QUESTION_TITLES[qid] || ''), block.getAttribute('data-question') === qid, function(){
+          setBlockQuestion(block, qid);
+          closeFieldDropdown();
+        });
+        menu.appendChild(item);
+      });
+    } else if (type === 'condition'){
+      var currentText = fieldEl.querySelector('p') ? fieldEl.querySelector('p').textContent : '';
+      CONDITION_OPTIONS.forEach(function(cond){
+        var item = buildDropdownItem(cond, cond === currentText, function(){
+          fieldEl.querySelector('p').textContent = cond;
+          closeFieldDropdown();
+        });
+        menu.appendChild(item);
+      });
+    } else if (type === 'move'){
+      var ownQid = block.getAttribute('data-question');
+      QUESTION_ORDER.filter(function(q){ return q !== ownQid; }).forEach(function(qid){
+        var item = buildDropdownItem(qid + '. ' + (QUESTION_TITLES[qid] || ''), false, function(){
+          setBlockMoveTarget(block, qid);
+          closeFieldDropdown();
+        });
+        menu.appendChild(item);
+      });
+    } else if (type === 'answer'){
+      var qid2 = block.getAttribute('data-question') || currentQuestionId;
+      var opts = QUESTION_OPTIONS[qid2] || [];
+      var selected = getSelectedAnswerTexts(block);
+      opts.forEach(function(opt, i){
+        var item = buildDropdownItem((i + 1) + '. ' + opt, selected.indexOf(opt) !== -1, function(itemEl){
+          toggleAnswerOption(block, opt);
+          itemEl.classList.toggle('checked');
+        });
+        menu.appendChild(item);
+      });
+      // 답변은 다중 선택이라, 항목을 골라도 메뉴를 닫지 않고 바깥을 클릭할 때만 닫는다.
+    }
+
+    if (!menu.children.length) return;
+    fieldEl.classList.add('dd-open');
+    document.body.appendChild(menu);
+    positionDropdownMenu(menu, fieldEl);
+    window.addEventListener('scroll', closeFieldDropdown, true);
+  }
+
+  document.addEventListener('click', function(evt){
+    if (evt.target.closest('.ld-dd-menu')) return;
+    closeFieldDropdown();
+  });
 
   function nextQuestionAfter(qid){
     var idx = QUESTION_ORDER.indexOf(qid);
@@ -1064,21 +1251,24 @@
       '<div class="ld-content">' +
         '<div class="ld-field-row">' +
           '<p>문항</p>' +
-          '<div class="ld-select" onclick="toggleDropdown(event,\'ddQuestion\')">' +
-            '<p>' + qTitle + '</p>' +
+          '<div class="ld-select ld-question-field" onclick="openFieldDropdown(event,this,\'question\')">' +
+            '<div class="ld-select-left">' +
+              '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b class="ld-question-badge">' + qid + '</b></div>' +
+              '<p class="ld-question-title">' + qTitle + '</p>' +
+            '</div>' +
             '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
           '</div>' +
         '</div>' +
         '<div class="ld-field-row">' +
           '<p>답변</p>' +
-          '<div class="ld-select" onclick="toggleDropdown(event,\'ddAnswer\')">' +
-            '<p class="ld-placeholder">답변을 선택해주세요</p>' +
+          '<div class="ld-answer" onclick="openFieldDropdown(event,this,\'answer\')">' +
+            '<div class="ld-answer-chips"><p class="ld-placeholder">답변을 선택해주세요</p></div>' +
             '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
           '</div>' +
         '</div>' +
         '<div class="ld-field-row">' +
           '<p>조건</p>' +
-          '<div class="ld-select" onclick="toggleDropdown(event,\'ddCondition\')">' +
+          '<div class="ld-select" onclick="openFieldDropdown(event,this,\'condition\')">' +
             '<p>~를 선택했을 때</p>' +
             '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
           '</div>' +
@@ -1093,7 +1283,7 @@
           '<img src="assets/icon-move-arrow.svg" alt="">' +
           '<span>이동</span>' +
         '</div>' +
-        '<div class="ld-move-select" onclick="toggleDropdown(event,\'ddMove\')">' +
+        '<div class="ld-move-select" onclick="openFieldDropdown(event,this,\'move\')">' +
           '<div class="ld-move-select-left">' +
             '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + moveTarget + '</b></div>' +
             '<p>' + moveTitle + '</p>' +
