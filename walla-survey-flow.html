@@ -335,16 +335,18 @@
   .ld-select img{width:16px;height:16px;flex-shrink:0;}
 
   .ld-answer{
-    flex:1;min-width:0;height:38px;border:1px solid var(--neutral-200);border-radius:10px;
-    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
+    flex:1;min-width:0;min-height:38px;border:1px solid var(--neutral-200);border-radius:10px;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;cursor:pointer;
   }
-  .ld-answer-chips{display:flex;align-items:center;gap:4px;}
+  /* 답변을 여러 개 고르면 칩이 박스 밖으로 넘치는 대신 줄바꿈되며 필드 높이가 늘어난다. */
+  .ld-answer-chips{display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:1;min-width:0;}
   .ans-chip{
     background:var(--neutral-100);border:1px solid var(--neutral-300);border-radius:6px;
-    height:24px;padding:0 8px;display:flex;align-items:center;gap:2px;width:96px;
+    height:24px;padding:0 8px;display:flex;align-items:center;gap:2px;width:96px;flex-shrink:0;
   }
   .ans-chip span{font-size:14px;color:var(--neutral-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
   .ans-chip img{width:16px;height:16px;flex-shrink:0;cursor:pointer;}
+  .ld-answer > img{width:16px;height:16px;flex-shrink:0;align-self:flex-start;margin-top:3px;}
 
   .ld-select-left{display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
   .ld-select-left p{font-size:14px;color:var(--neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -1132,16 +1134,24 @@
     renderAnswerChips(block, selected);
   }
 
+  // 로직 블록이 우측 패널의 어느 문항 목록에 속하는지는 data-question(블록 소유 문항)이
+  // 결정하고, 이 함수는 건드리지 않는다. "문항" 필드는 그 로직의 조건이 참조하는
+  // 문항(예: "Q5의 답변이 ~일 때")을 바꾸는 것일 뿐, 블록 자체를 다른 문항 목록으로
+  // 옮기는 게 아니다 -- 예전엔 data-question까지 같이 바꿔서, 유일한 로직 블록의 문항을
+  // 바꾸면 현재 보고 있는 문항 목록이 통째로 비어 보이는 버그가 있었다.
   function setBlockQuestion(block, qid){
-    block.setAttribute('data-question', qid);
     var badge = block.querySelector('.ld-question-badge');
     var title = block.querySelector('.ld-question-title');
     if (badge) badge.textContent = qid;
     if (title) title.textContent = QUESTION_TITLES[qid] || qid;
     var headBadge = block.querySelector('.ld-head-chips .q-label b');
     if (headBadge) headBadge.textContent = qid;
-    renderAnswerChips(block, []); // 문항이 바뀌면 이전 문항의 답변 선택은 더 이상 유효하지 않다.
-    refreshRpLogicListForQuestion(currentQuestionId);
+    renderAnswerChips(block, []); // 참조 문항이 바뀌면 이전 문항의 답변 선택은 더 이상 유효하지 않다.
+  }
+
+  function getBlockQuestionRefId(block){
+    var badge = block.querySelector('.ld-question-badge');
+    return (badge && badge.textContent) || block.getAttribute('data-question') || currentQuestionId;
   }
 
   function setBlockMoveTarget(block, qid){
@@ -1164,8 +1174,9 @@
     menu.className = 'ld-dd-menu';
 
     if (type === 'question'){
+      var refQid = getBlockQuestionRefId(block);
       QUESTION_ORDER.forEach(function(qid){
-        var item = buildDropdownItem(qid + '. ' + (QUESTION_TITLES[qid] || ''), block.getAttribute('data-question') === qid, function(){
+        var item = buildDropdownItem(qid + '. ' + (QUESTION_TITLES[qid] || ''), refQid === qid, function(){
           setBlockQuestion(block, qid);
           closeFieldDropdown();
         });
@@ -1190,7 +1201,7 @@
         menu.appendChild(item);
       });
     } else if (type === 'answer'){
-      var qid2 = block.getAttribute('data-question') || currentQuestionId;
+      var qid2 = getBlockQuestionRefId(block);
       var opts = QUESTION_OPTIONS[qid2] || [];
       var selected = getSelectedAnswerTexts(block);
       opts.forEach(function(opt, i){
