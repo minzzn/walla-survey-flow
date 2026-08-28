@@ -1119,6 +1119,21 @@
       }).join('');
     }
     syncOptionLogicPills();
+    syncOpenAnswerDropdown(block);
+  }
+  // 답변 드롭다운이 열려 있는 채로 칩이 추가/삭제되면(드롭다운 항목 클릭이든, 필드에 남아있는
+  // 칩의 X 버튼 클릭이든) 드롭다운의 체크박스도 실제 선택 상태와 항상 일치시킨다.
+  function syncOpenAnswerDropdown(block){
+    var aField = block.querySelector('.ld-answer');
+    var menu = document.querySelector('.ld-dd-menu');
+    if (!aField || !menu || !aField.classList.contains('dd-open')) return;
+    var qid = getBlockQuestionRefId(block);
+    var opts = QUESTION_OPTIONS[qid] || [];
+    var selected = getSelectedAnswerTexts(block);
+    menu.querySelectorAll('.ld-dd-item').forEach(function(item, i){
+      if (opts[i] === undefined) return;
+      item.classList.toggle('checked', selected.indexOf(opts[i]) !== -1);
+    });
   }
   function toggleAnswerOption(block, optionText){
     var selected = getSelectedAnswerTexts(block);
@@ -1249,9 +1264,8 @@
       var opts = QUESTION_OPTIONS[qid2] || [];
       var selected = getSelectedAnswerTexts(block);
       opts.forEach(function(opt, i){
-        var item = buildDropdownItem((i + 1) + '. ' + opt, selected.indexOf(opt) !== -1, function(itemEl){
-          toggleAnswerOption(block, opt);
-          itemEl.classList.toggle('checked');
+        var item = buildDropdownItem((i + 1) + '. ' + opt, selected.indexOf(opt) !== -1, function(){
+          toggleAnswerOption(block, opt); // renderAnswerChips가 이 항목을 포함한 전체 체크박스 상태를 다시 맞춰준다.
         });
         menu.appendChild(item);
       });
