@@ -18,26 +18,29 @@ https://walla-survey-flow.netlify.app
 
 ## 업데이트 내역
 
-> git 커밋 시각은 커밋 히스토리를 뒤늦게 재정리하면서 한 번에 찍힌 값이라 실제
-> 작업 시각과 다릅니다. 아래는 실제로 작업한 날짜 기준, 진행된 순서대로 정리한
-> 표입니다.
+> 시각은 각 커밋의 git 커밋 타임스탬프 기준입니다. 커밋 1~13은 작업 내용을
+> 기능 단위로 재정리하면서 한 번에 다시 커밋한 것이라 타임스탬프가 몇 초 이내로
+> 몰려 있습니다 — 실제로 화면에서 개발하고 확인한 시각은 아닙니다.
 
-| # | 날짜 | 구분 | 내용 |
-|---|------|------|------|
-| 1 | 2026-08-28 | `feat` | 피그마 임시 CDN URL을 `assets/` 로컬 파일로 교체 (7일 만료 문제 해결) |
-| 2 | 2026-08-28 | `feat` | 중앙 캔버스 드래그 + 휠 스크롤 패닝 추가 |
-| 3 | 2026-08-28 | `feat` | 모바일 한 손가락 터치 패닝 지원 |
-| 4 | 2026-08-28 | `feat` | 줌 인/아웃 · 화면맞춤 · 잠금 컨트롤 버튼 연결 (줌아웃 아이콘 찌그러짐 버그도 수정) |
-| — | 2026-08-28 | `chore` | Netlify 배포 설정 + 로컬 자동배포 워처(`watch-deploy.sh`) 구축 |
-| 5 | 2026-08-29 | `feat` | 문항 편집 패널(Q5~Q8 옵션/척도 UI) + 편집·로직 모드 전환 추가 |
-| 6 | 2026-08-29 | `refactor` | 캔버스 탭 / 우측 패널 탭 상태를 `setEditMode()`로 통합 |
-| 7 | 2026-08-29 | `feat` | "로직 미리보기" 팝오버를 정보 아이콘 호버·탭 시에만 노출 |
-| 8 | 2026-08-29 | `feat` | 문항 선택 시 테두리 강조 + 스크롤, 우측 패널 연동(로직 없는 문항은 빈 상태) |
-| 9 | 2026-08-29 | `feat` | 문항 옵션의 이동/삭제 버튼을 호버 시에만 노출 |
-| 10 | 2026-08-29 | `feat` | 중앙 패널에서 문항 블록을 직접 클릭해도 선택되도록 확장 |
-| 11 | 2026-08-29 | `fix` | 문항 패널 자동 스크롤이 전체 페이지가 아닌 패널 내부로만 동작하도록 수정 |
-| 12 | 2026-08-29 | `feat` | 첫 진입 시 문항 편집 화면을 기본값으로, 로직 전용 컨트롤 범위 지정 |
-| 13 | 2026-08-29 | `chore` | 커밋 히스토리를 기능 단위 13개로 재정리, GitHub PR 오픈 |
+| # | 커밋 시각 (KST) | 커밋 | 구분 | 내용 |
+|---|------|------|------|------|
+| 1 | 2026-08-29 02:32:23 | [`aac6527`](https://github.com/minzzn/walla-survey-flow/commit/aac6527) | `feat` | 피그마 임시 CDN URL을 `assets/` 로컬 파일로 교체 (7일 만료 문제 해결) |
+| 2 | 2026-08-29 02:32:23 | [`7042295`](https://github.com/minzzn/walla-survey-flow/commit/7042295) | `feat` | 중앙 캔버스 드래그 + 휠 스크롤 패닝 추가 |
+| 3 | 2026-08-29 02:32:23 | [`eb5ec8d`](https://github.com/minzzn/walla-survey-flow/commit/eb5ec8d) | `feat` | 모바일 한 손가락 터치 패닝 지원 |
+| 4 | 2026-08-29 02:32:23 | [`374cd33`](https://github.com/minzzn/walla-survey-flow/commit/374cd33) | `feat` | 줌 인/아웃 · 화면맞춤 · 잠금 컨트롤 버튼 연결 (줌아웃 아이콘 찌그러짐 버그도 수정) |
+| 5 | 2026-08-29 02:32:23 | [`c675855`](https://github.com/minzzn/walla-survey-flow/commit/c675855) | `feat` | 문항 편집 패널(Q5~Q8 옵션/척도 UI) + 편집·로직 모드 전환 추가 |
+| 6 | 2026-08-29 02:32:23 | [`217942f`](https://github.com/minzzn/walla-survey-flow/commit/217942f) | `refactor` | 캔버스 탭 / 우측 패널 탭 상태를 `setEditMode()`로 통합 |
+| 7 | 2026-08-29 02:32:23 | [`731e8d7`](https://github.com/minzzn/walla-survey-flow/commit/731e8d7) | `feat` | "로직 미리보기" 팝오버를 정보 아이콘 호버·탭 시에만 노출 |
+| 8 | 2026-08-29 02:32:23 | [`b6ee47e`](https://github.com/minzzn/walla-survey-flow/commit/b6ee47e) | `feat` | 문항 선택 시 테두리 강조 + 스크롤, 우측 패널 연동(로직 없는 문항은 빈 상태) |
+| 9 | 2026-08-29 02:32:23 | [`a1b3848`](https://github.com/minzzn/walla-survey-flow/commit/a1b3848) | `feat` | 문항 옵션의 이동/삭제 버튼을 호버 시에만 노출 |
+| 10 | 2026-08-29 02:32:24 | [`7f94ec0`](https://github.com/minzzn/walla-survey-flow/commit/7f94ec0) | `feat` | 중앙 패널에서 문항 블록을 직접 클릭해도 선택되도록 확장 |
+| 11 | 2026-08-29 02:32:24 | [`ada4cf8`](https://github.com/minzzn/walla-survey-flow/commit/ada4cf8) | `fix` | 문항 패널 자동 스크롤이 전체 페이지가 아닌 패널 내부로만 동작하도록 수정 |
+| 12 | 2026-08-29 02:32:24 | [`84ecfd8`](https://github.com/minzzn/walla-survey-flow/commit/84ecfd8) | `feat` | 첫 진입 시 문항 편집 화면을 기본값으로, 로직 전용 컨트롤 범위 지정 |
+| 13 | 2026-08-29 02:32:24 | [`8ee1d2e`](https://github.com/minzzn/walla-survey-flow/commit/8ee1d2e) | `chore` | Netlify 자동배포 워처(`watch-deploy.sh`) 추가 |
+| 14 | 2026-08-29 02:38:23 | [`51d6849`](https://github.com/minzzn/walla-survey-flow/commit/51d6849) | `docs` | README에 업데이트 내역 표 추가 |
+
+실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
+2026-08-29 새벽(5~13번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
