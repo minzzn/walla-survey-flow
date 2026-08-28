@@ -280,6 +280,9 @@
     padding:10px 0 16px;display:flex;flex-direction:column;align-items:center;gap:16px;
     flex:1;min-height:0;overflow-y:auto;scroll-behavior:smooth;
   }
+  /* overflow:auto로 스크롤시키려는 의도인데 flex-shrink 기본값(1) 때문에
+     내용이 넘칠 때 자식들(제목행/로직목록/CTA버튼 등)이 찌그러지던 버그 수정 */
+  .rp-body > *{flex-shrink:0;}
   .rp-title-row{display:flex;align-items:center;justify-content:space-between;padding-top:18px;width:333px;}
   .rp-title-left{display:flex;align-items:center;gap:10px;}
   .rp-title-left > span{font-size:16px;font-weight:700;color:var(--neutral-600);}
