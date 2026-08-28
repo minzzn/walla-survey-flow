@@ -281,6 +281,8 @@
   .guide-btn span{font-size:14px;color:var(--neutral-500);}
   .guide-btn img{width:14px;height:14px;}
 
+  .rp-logic-list{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;}
+
   .rp-summary{
     width:333px;height:48px;border:1px solid var(--neutral-200);border-radius:10px;
     display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
@@ -373,7 +375,12 @@
     display:flex;flex-direction:column;align-items:center;gap:100px;
     padding:48px 62px;
   }
-  .qep-block{width:100%;max-width:599px;display:flex;flex-direction:column;gap:22px;}
+  .qep-block{
+    width:100%;max-width:599px;display:flex;flex-direction:column;gap:22px;
+    padding:12px;border:1px solid transparent;border-radius:8px;
+    transition:border-color .15s ease;
+  }
+  .qep-block.selected{border-color:var(--skyblue-500);}
   .qep-title{font-weight:700;font-size:18px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .qep-title-row{display:flex;align-items:center;gap:22px;width:100%;}
   .qep-title-row .qep-title{flex:1;min-width:0;}
@@ -583,7 +590,7 @@
         <div class="qep-inner">
 
           <!-- Q5 -->
-          <div class="qep-block">
+          <div class="qep-block" data-question="Q5">
             <p class="qep-title">Q5. 지금까지 참여한 클래스 전반에 얼마나 만족하시나요</p>
             <div class="qep-options">
               <div class="qep-option">
@@ -622,7 +629,7 @@
           </div>
 
           <!-- Q6 -->
-          <div class="qep-block">
+          <div class="qep-block" data-question="Q6">
             <p class="qep-title">Q6.아래 분야의 선호도를 알려주세요</p>
             <div class="qep-options">
               <div class="qep-option">
@@ -648,7 +655,7 @@
           </div>
 
           <!-- Q7 -->
-          <div class="qep-block">
+          <div class="qep-block" data-question="Q7">
             <p class="qep-title">Q7.지금까지 참여한 클래스는 전반에 얼마나 만족하시나요</p>
             <div class="qep-rating">
               <div class="qep-rating-range">
@@ -677,7 +684,7 @@
           </div>
 
           <!-- Q8 -->
-          <div class="qep-block">
+          <div class="qep-block" data-question="Q8">
             <div class="qep-title-row">
               <p class="qep-title">Q8.보통 어떤 경로로 클래스를 찾나요?</p>
               <span class="qep-badge">다중 선택형</span>
@@ -719,19 +726,19 @@
             <div class="fp-list">
               <div class="page-divider"><div class="line"></div><span>페이지 구분</span><div class="line"></div></div>
 
-              <div class="fp-row selected">
+              <div class="fp-row selected" onclick="selectQuestion('Q5', this)">
                 <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
                 <p>원데이 클래스 참여 경험이 어느 정도 인가요?</p>
               </div>
-              <div class="fp-row">
+              <div class="fp-row" onclick="selectQuestion('Q6', this)">
                 <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
                 <p>아래 분야의 선호도를 알려주세요.</p>
               </div>
-              <div class="fp-row">
+              <div class="fp-row" onclick="selectQuestion('Q7', this)">
                 <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q7</b></div>
                 <p>지금까지 참여한 클래스 전</p>
               </div>
-              <div class="fp-row">
+              <div class="fp-row" onclick="selectQuestion('Q8', this)">
                 <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
                 <p>보통 어떤 경로로 클래스를...</p>
               </div>
@@ -765,11 +772,12 @@
       <div class="rp-title-row">
         <div class="rp-title-left">
           <span>로직</span>
-          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b id="rpQuestionLabel">Q5</b></div>
         </div>
         <div class="guide-btn"><span>가이드</span><img src="assets/icon-help.svg" alt=""></div>
       </div>
 
+      <div class="rp-logic-list" id="rpLogicList">
       <div class="rp-summary" id="rpSummary">
         <div class="rp-summary-left">
           <div class="rp-summary-num"><div class="rp-summary-num-inner"><span>로직1</span></div></div>
@@ -845,6 +853,8 @@
           </div>
         </div>
       </div>
+      </div>
+      <!-- /rp-logic-list -->
 
       <div class="rp-cta">
         <img src="assets/icon-plus.svg" alt="">
@@ -888,6 +898,34 @@
     setEditMode(isLogic);
   }
 
+  // 로직이 하나라도 설정된 문항 목록. 여기 없는 문항을 선택하면
+  // 우측 로직 패널은 빈 상태("새 로직 추가" 버튼만)로 보여준다.
+  var QUESTIONS_WITH_LOGIC = ['Q5'];
+
+  // 왼쪽 필드 목록에서 문항을 선택하면 문항 설정(편집) 화면으로 전환하고,
+  // 중앙 편집 패널에서 해당 문항으로 스크롤 + 테두리 하이라이트,
+  // 우측 로직 패널도 선택된 문항 기준으로 갱신한다.
+  function selectQuestion(qid, rowEl){
+    document.querySelectorAll('.fp-row').forEach(function(r){ r.classList.remove('selected'); });
+    rowEl.classList.add('selected');
+
+    setEditMode(false);
+
+    document.querySelectorAll('.qep-block').forEach(function(b){ b.classList.remove('selected'); });
+    var target = document.querySelector('.qep-block[data-question="' + qid + '"]');
+    if (target){
+      target.classList.add('selected');
+      target.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+
+    var rpLabel = document.getElementById('rpQuestionLabel');
+    if (rpLabel) rpLabel.textContent = qid;
+
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (rpLogicList){
+      rpLogicList.classList.toggle('hidden', QUESTIONS_WITH_LOGIC.indexOf(qid) === -1);
+    }
+  }
   function toggleDropdown(evt, id){
     evt.stopPropagation();
     // Placeholder: visual affordance only in this static build.
