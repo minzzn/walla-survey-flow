@@ -324,6 +324,7 @@
     display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
   }
   .ld-select p{font-size:14px;color:var(--neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  .ld-select p.ld-placeholder{color:var(--neutral-400);}
   .ld-select img{width:16px;height:16px;flex-shrink:0;}
 
   .ld-answer{
@@ -826,7 +827,7 @@
       </div>
 
       <div class="rp-logic-list" id="rpLogicList">
-      <div class="rp-summary" id="rpSummary">
+      <div class="rp-summary" id="rpSummary" data-question="Q5">
         <div class="rp-summary-left">
           <div class="rp-summary-num"><div class="rp-summary-num-inner"><span>로직1</span></div></div>
           <div class="rp-summary-chips">
@@ -838,7 +839,7 @@
         <img src="assets/icon-chevron-down.svg" alt="">
       </div>
 
-      <div class="logic-detail" id="logicDetail">
+      <div class="logic-detail" id="logicDetail" data-question="Q5">
         <div class="ld-head">
           <div class="ld-head-left">
             <div class="ld-arrow-icon"><img src="assets/icon-arrow-header.svg" alt=""></div>
@@ -904,7 +905,7 @@
       </div>
       <!-- /rp-logic-list -->
 
-      <div class="rp-cta">
+      <div class="rp-cta" onclick="addNewLogic()">
         <img src="assets/icon-plus.svg" alt="">
         <span>새 로직 추가</span>
       </div>
@@ -949,9 +950,14 @@
     setEditMode(isLogic);
   }
 
-  // 로직이 하나라도 설정된 문항 목록. 여기 없는 문항을 선택하면
-  // 우측 로직 패널은 빈 상태("새 로직 추가" 버튼만)로 보여준다.
-  var QUESTIONS_WITH_LOGIC = ['Q5'];
+  var QUESTION_TITLES = {
+    Q5: '원데이 클래스 참여 경험이 어느 정도인가요?',
+    Q6: '아래 분야의 선호도를 알려주세요.',
+    Q7: '지금까지 참여한 클래스는 전반에 얼마나 만족하시나요',
+    Q8: '보통 어떤 경로로 클래스를 찾나요?'
+  };
+  var QUESTION_ORDER = ['Q5', 'Q6', 'Q7', 'Q8'];
+  var currentQuestionId = 'Q5';
 
   // target을 questionEditPanel 안에서만 세로 중앙으로 스크롤한다.
   // scrollIntoView는 상위 스크롤 조상(문서 전체)까지 같이 움직일 수 있어서
@@ -975,6 +981,7 @@
   // 중앙 편집 패널에서 해당 문항으로 스크롤 + 테두리 하이라이트,
   // 우측 로직 패널도 선택된 문항 기준으로 갱신한다.
   function selectQuestion(qid){
+    currentQuestionId = qid;
     document.querySelectorAll('.fp-row').forEach(function(r){ r.classList.remove('selected'); });
     var rowEl = document.querySelector('.fp-row[data-question="' + qid + '"]');
     if (rowEl) rowEl.classList.add('selected');
@@ -991,14 +998,121 @@
     var rpLabel = document.getElementById('rpQuestionLabel');
     if (rpLabel) rpLabel.textContent = qid;
 
+    refreshRpLogicListForQuestion(qid);
+  }
+
+  // #rpLogicList는 모든 문항의 로직 블록을 같이 담고 있는 하나의 컨테이너라서,
+  // 문항을 바꿀 때마다 그 문항 소유의 블록만 보이게 하고 나머지는 숨긴다.
+  function refreshRpLogicListForQuestion(qid){
     var rpLogicList = document.getElementById('rpLogicList');
-    if (rpLogicList){
-      rpLogicList.classList.toggle('hidden', QUESTIONS_WITH_LOGIC.indexOf(qid) === -1);
-    }
+    if (!rpLogicList) return;
+    var anyVisible = false;
+    rpLogicList.querySelectorAll('[data-question]').forEach(function(el){
+      var match = el.getAttribute('data-question') === qid;
+      el.classList.toggle('hidden', !match);
+      if (match) anyVisible = true;
+    });
+    rpLogicList.classList.toggle('hidden', !anyVisible);
   }
   function toggleDropdown(evt, id){
     evt.stopPropagation();
     // Placeholder: visual affordance only in this static build.
+  }
+
+  function nextQuestionAfter(qid){
+    var idx = QUESTION_ORDER.indexOf(qid);
+    if (idx === -1) return QUESTION_ORDER[0];
+    return QUESTION_ORDER[(idx + 1) % QUESTION_ORDER.length];
+  }
+
+  // "새 로직 추가" 클릭 시, 현재 선택된 문항 기준으로 빈 로직 편집 블록을
+  // 우측 패널에 새로 만들어 붙인다 (피그마 node 538:12572 디자인 반영).
+  function addNewLogic(){
+    var qid = currentQuestionId;
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!rpLogicList) return;
+
+    var logicNum = rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]').length + 1;
+    var moveTarget = nextQuestionAfter(qid);
+    var qTitle = QUESTION_TITLES[qid] || qid;
+    var moveTitle = QUESTION_TITLES[moveTarget] || moveTarget;
+
+    var block = document.createElement('div');
+    block.className = 'logic-detail';
+    block.setAttribute('data-question', qid);
+    block.innerHTML =
+      '<div class="ld-head">' +
+        '<div class="ld-head-left">' +
+          '<div class="ld-arrow-icon"><img src="assets/icon-arrow-header.svg" alt=""></div>' +
+          '<div class="ld-head-num-inner"><span>로직' + logicNum + '</span></div>' +
+          '<div class="ld-head-chips">' +
+            '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + qid + '</b></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ld-trash" onclick="event.stopPropagation(); removeLogicBlock(this)"><img src="assets/icon-trash.svg" alt=""></div>' +
+      '</div>' +
+      '<div style="height:12px;"></div>' +
+      '<div class="ld-content">' +
+        '<div class="ld-field-row">' +
+          '<p>문항</p>' +
+          '<div class="ld-select" onclick="toggleDropdown(event,\'ddQuestion\')">' +
+            '<p>' + qTitle + '</p>' +
+            '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
+          '</div>' +
+        '</div>' +
+        '<div class="ld-field-row">' +
+          '<p>답변</p>' +
+          '<div class="ld-select" onclick="toggleDropdown(event,\'ddAnswer\')">' +
+            '<p class="ld-placeholder">답변을 선택해주세요</p>' +
+            '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
+          '</div>' +
+        '</div>' +
+        '<div class="ld-field-row">' +
+          '<p>조건</p>' +
+          '<div class="ld-select" onclick="toggleDropdown(event,\'ddCondition\')">' +
+            '<p>~를 선택했을 때</p>' +
+            '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ld-add-condition">' +
+        '<img src="assets/icon-add-condition.svg" alt="">' +
+        '<span>조건 추가</span>' +
+      '</div>' +
+      '<div class="ld-move">' +
+        '<div class="ld-move-label">' +
+          '<img src="assets/icon-move-arrow.svg" alt="">' +
+          '<span>이동</span>' +
+        '</div>' +
+        '<div class="ld-move-select" onclick="toggleDropdown(event,\'ddMove\')">' +
+          '<div class="ld-move-select-left">' +
+            '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + moveTarget + '</b></div>' +
+            '<p>' + moveTitle + '</p>' +
+          '</div>' +
+          '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
+        '</div>' +
+      '</div>';
+
+    rpLogicList.appendChild(block);
+    refreshRpLogicListForQuestion(qid);
+  }
+
+  // 새로 추가된(또는 기존) 로직 블록 삭제. 해당 문항의 블록이 하나도 안 남으면
+  // 우측 패널을 다시 빈 상태로 되돌린다.
+  function removeLogicBlock(trashEl){
+    var block = trashEl.closest('.logic-detail');
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!block || !rpLogicList) return;
+    var qid = block.getAttribute('data-question') || currentQuestionId;
+    block.remove();
+
+    var remaining = rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]');
+    remaining.forEach(function(b, i){
+      var label = b.querySelector('.ld-head-num-inner span');
+      if (label) label.textContent = '로직' + (i + 1);
+    });
+
+    refreshRpLogicListForQuestion(currentQuestionId);
   }
 
   // ---------------- 로직 미리보기 popover: hover (desktop) + tap (mobile) ----------------
