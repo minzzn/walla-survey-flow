@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Walla · 설문 로직 빌더</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --skyblue-100:#e5f2ff;
+    --skyblue-200:#c2e0ff;
+    --skyblue-500:#007eff;
+    --skyblue-700:#0058b3;
+    --grey-96:#eaf2ff;
+    --neutral-100:#f3f4f6;
+    --neutral-200:#e5e7eb;
+    --neutral-300:#d1d5dc;
+    --neutral-400:#99a1af;
+    --neutral-500:#6a7282;
+    --neutral-600:#4a5565;
+    --neutral-700:#364153;
+    --neutral-800:#1e2939;
+    --azure-48:#6a758a;
+    --azure-61:#4285f4;
+    --grey-13:#212121;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Noto Sans KR',sans-serif;
+    background:#e9eaec;
+    color:var(--grey-13);
+    -webkit-font-smoothing:antialiased;
+  }
+  .icon-chip{
+    background:var(--grey-96);
+    width:22px;height:22px;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .icon-chip img{width:14px;height:14px;}
+  .q-label{display:flex;align-items:center;gap:2px;flex-shrink:0;}
+  .q-label b{font-weight:700;font-size:14px;color:var(--skyblue-700);white-space:nowrap;}
+  .q-label.grey b{color:var(--neutral-500);}
+
+  /* ---------------- Stage ---------------- */
+  .stage{
+    width:1440px;margin:24px auto;position:relative;
+    background:var(--white);
+    box-shadow:0 12px 40px rgba(20,20,30,.18);
+    border-radius:4px; overflow:hidden;
+  }
+
+  /* ---------------- Top bar ---------------- */
+  .topbar{
+    height:48px;border-bottom:1px solid var(--neutral-300);
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;
+    background:var(--white); position:relative; z-index:20;
+  }
+  .tb-left{display:flex;align-items:center;gap:17px;}
+  .tb-logo{width:30px;height:30px;}
+  .tb-crumb{display:flex;align-items:center;gap:12px;height:100%;}
+  .tb-crumb span{font-size:14px;color:var(--azure-48);white-space:nowrap;}
+  .tb-crumb img{width:11.8px;height:11.8px;}
+
+  .tb-tabs{
+    background:#fafafa;border-radius:11px;display:flex;align-items:center;
+    justify-content:center;padding:2.5px;height:34px;
+  }
+  .tb-tabs .tab{
+    padding:2px 8px;border-radius:9px;font-size:14px;font-weight:500;
+    color:var(--grey-13);text-align:center;white-space:nowrap;height:28px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.5;
+  }
+  .tb-tabs .tab.active{background:var(--white);opacity:1;box-shadow:0 1px 1px rgba(0,0,0,.05);}
+
+  .tb-right{display:flex;align-items:center;gap:13px;}
+  .tb-icon-group{display:flex;align-items:center;gap:7px;}
+  .tb-icon-btn{
+    background:var(--neutral-100);border-radius:9px;width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .tb-icon-btn img{width:15px;height:15px;}
+  .tb-publish{
+    background:var(--skyblue-500);border-radius:9px;height:30px;padding:0 7px;
+    min-width:63px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .tb-publish span{color:#fff;font-size:14px;font-weight:500;}
+  .tb-avatar{width:27px;height:27px;border-radius:50%;overflow:hidden;flex-shrink:0;}
+  .tb-avatar img{width:100%;height:100%;object-fit:cover;}
+
+  /* ---------------- Workspace / canvas ---------------- */
+  .workspace{position:relative;width:1440px;height:977px;}
+  .center-canvas{
+    position:absolute;inset:0;overflow:hidden;
+    background-image:url('assets/canvas-bg.png');
+    background-repeat:repeat;background-size:551px 478px;background-position:top left;
+  }
+
+  /* toolbar (동시 편집 + 편집/로직 tabs) */
+  .canvas-toolbar{position:absolute;right:396px;top:10px;display:flex;align-items:center;gap:8px;z-index:10;}
+  .badge{
+    background:var(--neutral-100);border-radius:7.4px;display:flex;align-items:center;gap:2px;
+    padding:3.4px 6.7px;
+  }
+  .badge .dot{width:6.7px;height:6.7px;border-radius:50%;background:#7bf1a8;}
+  .badge span{font-size:14px;color:var(--azure-48);}
+  .canvas-tabs{
+    background:var(--neutral-100);border-radius:11px;display:flex;align-items:center;
+    justify-content:center;padding:2px;height:40px;width:145px;
+  }
+  .canvas-tabs .ctab{
+    flex:1;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    gap:4px;cursor:pointer;font-size:14px;color:var(--grey-13);
+  }
+  .canvas-tabs .ctab.active{background:var(--white);box-shadow:0 1px 1px rgba(0,0,0,.05);font-weight:500;}
+  .canvas-tabs .ctab img{width:14px;height:14px;}
+
+  /* flow legend popover */
+  .flow-legend{
+    position:absolute;right:396px;top:50px;background:var(--white);
+    border:1px solid var(--neutral-200);border-radius:12px;
+    box-shadow:0 4px 6px rgba(0,0,0,.03);
+    padding:16px;display:flex;flex-direction:column;gap:10px;z-index:9;
+  }
+  .flow-legend > p{font-size:14px;color:var(--neutral-800);}
+  .legend-item{display:flex;align-items:center;gap:8px;}
+  .legend-item span{font-size:14px;color:var(--azure-48);white-space:nowrap;}
+  .legend-item img{width:24px;height:2px;}
+
+  /* terminal nodes (시작 / 제출하기) */
+  .terminal-node{
+    position:absolute;width:184px;background:var(--white);
+    border:1px solid var(--neutral-300);border-radius:8px;
+    padding:12px 64px;display:flex;align-items:center;justify-content:center;
+  }
+  .terminal-node span{font-size:14px;font-weight:500;color:var(--neutral-500);white-space:nowrap;}
+
+  /* flow pill nodes (Q6 / Q7 / Q8) */
+  .flow-pill{
+    position:absolute;width:380px;height:40px;background:var(--white);
+    border:1px solid var(--neutral-300);border-radius:12px;
+    display:flex;align-items:center;gap:2px;padding:9px 12px;overflow:hidden;
+  }
+  .flow-pill .q-text{
+    flex:1;font-size:16px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .flow-pill .q-tag{font-size:14px;color:var(--neutral-400);white-space:nowrap;}
+
+  /* branch label pill */
+  .branch-pill{
+    position:absolute;background:var(--white);border:2px solid var(--skyblue-500);
+    border-radius:14px;padding:5px 18px;display:flex;align-items:center;justify-content:center;
+  }
+  .branch-pill span{font-size:14px;font-weight:700;color:var(--skyblue-500);white-space:nowrap;}
+
+  /* connectors */
+  svg.connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+
+  /* collaborator caret */
+  .collab-caret{position:absolute;left:350px;top:30px;width:6px;height:9px;pointer-events:none;}
+
+  /* ---------------- Q5 card ---------------- */
+  .q5-card{
+    position:absolute;left:470px;top:133px;width:480px;
+    background:var(--white);border:1px solid var(--skyblue-500);border-radius:20px;
+    box-shadow:0 0 10px rgba(0,126,255,.2);overflow:hidden;z-index:8;
+  }
+  .q5-head{
+    height:50px;border-bottom:1px solid var(--neutral-200);
+    display:flex;align-items:flex-end;justify-content:space-between;padding:8px 16px;
+  }
+  .q5-head-left{display:flex;align-items:center;gap:8px;}
+  .q5-head-left p{font-size:16px;color:var(--neutral-800);white-space:nowrap;}
+  .q5-edit-link{font-size:14px;color:var(--azure-61);white-space:nowrap;cursor:pointer;}
+  .q5-body{padding:20px 16px;display:flex;flex-direction:column;gap:8px;}
+  .q5-body > p{font-size:16px;color:var(--neutral-400);}
+
+  .logic-row{
+    height:50px;border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;
+  }
+  .logic-row.grey{background:var(--neutral-100);}
+  .logic-row.blue{background:var(--skyblue-100);}
+  .logic-row-left{display:flex;align-items:center;gap:18px;flex:1;min-width:0;}
+  .logic-row-num{display:flex;align-items:center;gap:18px;width:53px;flex-shrink:0;}
+  .logic-row-num span{font-size:14px;font-weight:700;white-space:nowrap;}
+  .logic-row.grey .logic-row-num span{color:var(--neutral-600);}
+  .logic-row.blue .logic-row-num span{color:var(--skyblue-500);}
+  .logic-row-num .divider{width:1px;height:16px;background:var(--neutral-300);}
+  .logic-chips{display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
+  .logic-chip-box{
+    background:var(--white);border:1px solid var(--neutral-300);border-radius:6px;
+    height:26px;padding:0 8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .logic-row.blue .logic-chip-box{border-color:var(--skyblue-200);}
+  .logic-chip-box span{font-size:14px;color:var(--neutral-800);white-space:nowrap;}
+  .logic-or{font-size:14px;color:var(--neutral-600);flex-shrink:0;}
+  .dest-pill{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .dest-pill img{width:16px;height:16px;}
+
+  /* ---------------- Left panel ---------------- */
+  .left-panel-wrap{
+    position:absolute;left:16px;top:16px;display:flex;align-items:flex-end;gap:12px;
+    filter:drop-shadow(-1px 0 4px rgba(54,65,83,.12));z-index:10;
+  }
+  .field-panel{
+    width:280px;height:752px;background:var(--white);border:1px solid var(--neutral-100);
+    border-radius:16px;display:flex;flex-direction:column;overflow:hidden;
+  }
+  .field-panel-top{height:525px;position:relative;}
+  .fp-header{
+    height:45px;display:flex;align-items:center;justify-content:space-between;padding:10px;
+  }
+  .fp-header span{font-size:14px;font-weight:700;color:var(--neutral-500);}
+  .fp-add-btn{
+    width:32px;height:32px;border-radius:11px;background:#f6f6f6;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .fp-add-btn img{width:16px;height:16px;}
+  .fp-list{display:flex;flex-direction:column;gap:8px;padding:0 12px;}
+
+  .page-divider{display:flex;align-items:center;justify-content:center;gap:4px;padding:4px 8px 0;}
+  .page-divider .line{width:88px;height:2px;border-top:2px dashed rgba(107,119,140,.5);}
+  .page-divider span{font-size:14px;font-weight:500;color:rgba(107,119,140,.5);white-space:nowrap;}
+
+  .fp-row{
+    display:flex;align-items:center;gap:3px;border-radius:11px;padding:9px 12px;overflow:hidden;
+  }
+  .fp-row.selected{background:var(--grey-96);}
+  .fp-row p{
+    flex:1;font-size:14px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+  }
+
+  .field-panel-bottom{height:209px;}
+  .fp-header2{height:45px;display:flex;align-items:center;justify-content:space-between;padding:10px;}
+  .fp-header2 span{font-size:14px;font-weight:700;color:var(--neutral-500);}
+
+  .control-panel{
+    background:var(--white);box-shadow:0 0 1px rgba(0,0,0,.08);display:flex;flex-direction:column;
+  }
+  .ctrl-btn{
+    width:33px;height:37px;display:flex;align-items:center;justify-content:center;
+    border-bottom:1px solid var(--neutral-100);cursor:pointer;
+  }
+  .ctrl-btn:last-child{border-bottom:none;}
+  .ctrl-btn img{width:10px;height:10px;}
+
+  /* ---------------- Right panel ---------------- */
+  .right-panel{
+    position:absolute;left:1055px;top:16px;width:369px;
+    border:1px solid var(--neutral-100);border-top:none;border-radius:16px;
+    box-shadow:1px 0 8px rgba(54,65,83,.12);background:var(--white);overflow:hidden;z-index:10;
+  }
+  .rp-tabs{display:flex;}
+  .rp-tabs .rtab{
+    flex:1;height:44px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;
+    cursor:pointer;
+  }
+  .rp-tabs .rtab.inactive{background:var(--neutral-100);border-top-left-radius:16px;}
+  .rp-tabs .rtab.active{background:var(--white);border-top-right-radius:16px;}
+  .rp-tabs .rtab span{font-size:16px;font-weight:700;}
+  .rp-tabs .rtab.inactive span{color:var(--neutral-400);}
+  .rp-tabs .rtab.active span{color:var(--skyblue-500);}
+
+  .rp-body{padding:10px 0 16px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .rp-title-row{display:flex;align-items:center;justify-content:space-between;padding-top:18px;width:333px;}
+  .rp-title-left{display:flex;align-items:center;gap:10px;}
+  .rp-title-left > span{font-size:16px;font-weight:700;color:var(--neutral-600);}
+  .guide-btn{display:flex;align-items:center;gap:3px;cursor:pointer;}
+  .guide-btn span{font-size:14px;color:var(--neutral-500);}
+  .guide-btn img{width:14px;height:14px;}
+
+  .rp-summary{
+    width:333px;height:48px;border:1px solid var(--neutral-200);border-radius:10px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
+  }
+  .rp-summary-left{display:flex;align-items:center;gap:6px;}
+  .rp-summary-num{display:flex;align-items:center;gap:0;}
+  .rp-summary-num-inner{display:flex;align-items:center;padding:2px 8px;}
+  .rp-summary-num span{font-size:14px;font-weight:700;color:var(--neutral-500);}
+  .rp-summary-chips{display:flex;align-items:center;gap:4px;}
+  .rp-summary-chips img{width:16px;height:16px;}
+  .rp-summary > img{width:16px;height:16px;}
+
+  .logic-detail{
+    width:333px;background:var(--white);border:1px solid var(--skyblue-500);border-radius:10px;overflow:hidden;
+  }
+  .ld-head{
+    height:59px;background:var(--white);border-bottom:1px solid var(--neutral-100);
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;
+  }
+  .ld-head-left{display:flex;align-items:center;gap:6px;}
+  .ld-head-num{display:flex;align-items:center;}
+  .ld-arrow-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;}
+  .ld-arrow-icon img{width:20px;height:20px;transform:rotate(-90deg) scaleY(-1);}
+  .ld-head-num-inner{padding:2px 8px;}
+  .ld-head-num-inner span{font-size:14px;font-weight:700;color:var(--skyblue-500);}
+  .ld-head-chips{display:flex;align-items:center;gap:4px;}
+  .ld-head-chips img{width:20px;height:20px;}
+  .ld-trash{width:16px;height:16px;cursor:pointer;}
+  .ld-trash img{width:16px;height:16px;}
+
+  .ld-content{padding:0 18px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .ld-field-row{display:flex;align-items:center;gap:12px;width:100%;}
+  .ld-field-row > p{font-size:14px;color:var(--azure-48);white-space:nowrap;flex-shrink:0;}
+
+  .ld-select{
+    flex:1;min-width:0;height:38px;border:1px solid var(--neutral-200);border-radius:10px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
+  }
+  .ld-select p{font-size:14px;color:var(--neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  .ld-select img{width:16px;height:16px;flex-shrink:0;}
+
+  .ld-answer{
+    flex:1;min-width:0;height:38px;border:1px solid var(--neutral-200);border-radius:10px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
+  }
+  .ld-answer-chips{display:flex;align-items:center;gap:4px;}
+  .ans-chip{
+    background:var(--neutral-100);border:1px solid var(--neutral-300);border-radius:6px;
+    height:24px;padding:0 8px;display:flex;align-items:center;gap:2px;width:96px;
+  }
+  .ans-chip span{font-size:14px;color:var(--neutral-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  .ans-chip img{width:16px;height:16px;flex-shrink:0;cursor:pointer;}
+
+  .ld-add-condition{
+    display:flex;align-items:center;justify-content:center;gap:10px;height:68px;cursor:pointer;
+  }
+  .ld-add-condition img{width:20px;height:20px;}
+  .ld-add-condition span{font-size:14px;font-weight:700;color:#429fff;}
+
+  .ld-move{
+    width:100%;background:var(--skyblue-100);height:68px;display:flex;align-items:center;gap:8px;padding:12px 10px;
+  }
+  .ld-move-label{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .ld-move-label img{width:20px;height:20px;transform:rotate(180deg) scaleY(-1);}
+  .ld-move-label span{font-size:14px;font-weight:700;color:var(--skyblue-500);}
+  .ld-move-select{
+    flex:1;min-width:0;height:38px;background:var(--white);border:1px solid var(--neutral-200);border-radius:10px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
+  }
+  .ld-move-select-left{display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
+  .ld-move-select-left p{font-size:14px;color:var(--neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ld-move-select img{width:16px;height:16px;flex-shrink:0;}
+
+  .rp-cta{
+    width:333px;height:40px;background:var(--skyblue-500);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+  }
+  .rp-cta img{width:14px;height:14px;}
+  .rp-cta span{font-size:14px;font-weight:500;color:#fff;}
+
+  .hidden{display:none !important;}
+
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="tb-left">
+      <img class="tb-logo" src="assets/logo.svg" alt="walla logo">
+      <div class="tb-crumb">
+        <span>New Workspace</span>
+        <img src="assets/chevron-breadcrumb.svg" alt="">
+        <span>새 프로젝트</span>
+      </div>
+    </div>
+    <div class="tb-tabs">
+      <div class="tab active">만들기</div>
+      <div class="tab">연동하기</div>
+      <div class="tab">공유하기</div>
+      <div class="tab">결과보기</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-icon-group">
+        <div class="tb-icon-btn"><img src="assets/icon-survey-settings.svg" alt=""></div>
+        <div class="tb-icon-btn"><img src="assets/icon-topbar-2.svg" alt=""></div>
+        <div class="tb-icon-btn"><img src="assets/icon-topbar-3.svg" alt=""></div>
+        <div class="tb-publish"><span>게시하기</span></div>
+      </div>
+      <div class="tb-avatar"><img src="assets/avatar.png" alt="우승연"></div>
+    </div>
+  </div>
+
+  <!-- Workspace -->
+  <div class="workspace">
+    <div class="center-canvas">
+
+      <!-- toolbar -->
+      <div class="canvas-toolbar">
+        <div class="badge"><span class="dot"></span><span>동시 편집</span></div>
+        <div class="canvas-tabs">
+          <div class="ctab" onclick="switchCanvasTab(this,false)">
+            <img src="assets/icon-edit-tab.svg" alt="">
+            편집
+          </div>
+          <div class="ctab active" onclick="switchCanvasTab(this,true)">
+            <img src="assets/icon-logic-tab.svg" alt="" style="transform:rotate(90deg)">
+            로직
+            <img src="assets/icon-chevron-small.svg" alt="">
+          </div>
+        </div>
+      </div>
+
+      <!-- flow legend popover -->
+      <div class="flow-legend" id="flowLegend">
+        <p>로직 미리보기</p>
+        <div class="legend-item">
+          <img src="assets/icon-legend-line-solid.svg" alt="">
+          <span>선택한 응답에 따른 이동</span>
+        </div>
+        <div class="legend-item">
+          <img src="assets/icon-legend-line-dashed.svg" alt="">
+          <span>기본 흐름 / 그 외 응답</span>
+        </div>
+      </div>
+
+      <!-- 시작 / 제출하기 -->
+      <div class="terminal-node" style="left:618px;top:54px;"><span>시작</span></div>
+      <div class="terminal-node" style="left:618px;top:865px;"><span>제출하기</span></div>
+
+      <!-- connectors -->
+      <svg class="connectors">
+        <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path d="M 710 363 C 710 420, 487 420, 487 484" stroke="#007eff" stroke-width="1.5" fill="none"/>
+        <path d="M 710 363 V 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path d="M 487 524 V 581" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path d="M 487 621 C 487 690, 600 690, 600 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path d="M 710 811 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+      </svg>
+
+      <!-- branch label -->
+      <div class="branch-pill" style="left:557px;top:408px;"><span>2 또는 3</span></div>
+
+      <!-- collaborator caret -->
+      <div class="collab-caret">
+        <img src="assets/icon-caret-1.svg" alt="" style="position:absolute;left:3px;top:5px;width:1px;height:8px;">
+        <img src="assets/icon-caret-2.svg" alt="" style="position:absolute;left:0;top:0;width:6px;height:1px;">
+      </div>
+
+      <!-- Q6 / Q7 / Q8 flow pills -->
+      <div class="flow-pill" style="left:297px;top:484px;">
+        <div class="q-label"><b>Q6</b></div>
+        <span class="q-text">아래 분야의 선호도를 알려주세요.</span>
+        <span class="q-tag">→ 다음 질문</span>
+      </div>
+      <div class="flow-pill" style="left:297px;top:581px;">
+        <div class="q-label"><b>Q7</b></div>
+        <span class="q-text">지금까지 참여한 클래스 전</span>
+        <span class="q-tag">→ 다음 질문</span>
+      </div>
+      <div class="flow-pill" style="left:520px;top:771px;">
+        <div class="q-label"><b>Q8</b></div>
+        <span class="q-text">보통 어떤 경로로 클래스를 찾나요</span>
+        <span class="q-tag">→ 다음 질문</span>
+      </div>
+
+      <!-- Q5 card -->
+      <div class="q5-card">
+        <div class="q5-head">
+          <div class="q5-head-left">
+            <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+            <p>원데이 클래스 참여 경험이 어느 정도 인가요?</p>
+          </div>
+          <div class="q5-edit-link">문항 편집</div>
+        </div>
+        <div class="q5-body">
+          <p>응답에 따른 이동</p>
+
+          <div class="logic-row grey">
+            <div class="logic-row-left">
+              <div class="logic-row-num"><span>로직1</span></div>
+              <div class="logic-chips">
+                <div class="logic-chip-box"><span>1. 처음이에요</span></div>
+              </div>
+            </div>
+            <div class="dest-pill">
+              <img src="assets/icon-dest-arrow-grey.svg" alt="">
+              <div class="q-label grey"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q1</b></div>
+            </div>
+          </div>
+
+          <div class="logic-row blue">
+            <div class="logic-row-left">
+              <div class="logic-row-num"><span>로직2</span></div>
+              <div class="logic-chips">
+                <div class="logic-chip-box"><span>2. 가끔 참여해요</span></div>
+                <span class="logic-or">또는</span>
+                <div class="logic-chip-box"><span>3.자주 참여해요</span></div>
+              </div>
+            </div>
+            <div class="dest-pill">
+              <img src="assets/icon-dest-arrow-blue.svg" alt="">
+              <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q1</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Left panel -->
+      <div class="left-panel-wrap">
+        <div class="field-panel">
+          <div class="field-panel-top">
+            <div class="fp-header">
+              <span>설문 필드</span>
+              <div class="fp-add-btn"><img src="assets/icon-add-field.svg" alt=""></div>
+            </div>
+            <div class="fp-list">
+              <div class="page-divider"><div class="line"></div><span>페이지 구분</span><div class="line"></div></div>
+
+              <div class="fp-row selected">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+                <p>원데이 클래스 참여 경험이 어느 정도 인가요?</p>
+              </div>
+              <div class="fp-row">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
+                <p>아래 분야의 선호도를 알려주세요.</p>
+              </div>
+              <div class="fp-row">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q7</b></div>
+                <p>지금까지 참여한 클래스 전</p>
+              </div>
+              <div class="fp-row">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
+                <p>보통 어떤 경로로 클래스를...</p>
+              </div>
+            </div>
+          </div>
+          <div class="field-panel-bottom">
+            <div class="fp-header2">
+              <span>엔딩 필드</span>
+              <div class="fp-add-btn"><img src="assets/icon-add-field.svg" alt=""></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-panel" id="controlPanel">
+          <div class="ctrl-btn"><img src="assets/icon-zoom-in.svg" alt=""></div>
+          <div class="ctrl-btn"><img src="assets/icon-zoom-out.svg" alt=""></div>
+          <div class="ctrl-btn"><img src="assets/icon-fit-view.svg" alt=""></div>
+          <div class="ctrl-btn"><img src="assets/icon-lock.svg" alt=""></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right panel -->
+    <div class="right-panel">
+      <div class="rp-tabs">
+        <div class="rtab inactive" onclick="switchRpTab(this,false)"><span>문항 설정</span></div>
+        <div class="rtab active" onclick="switchRpTab(this,true)"><span>로직</span></div>
+      </div>
+      <div class="rp-body">
+      <div class="rp-title-row">
+        <div class="rp-title-left">
+          <span>로직</span>
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+        </div>
+        <div class="guide-btn"><span>가이드</span><img src="assets/icon-help.svg" alt=""></div>
+      </div>
+
+      <div class="rp-summary" id="rpSummary">
+        <div class="rp-summary-left">
+          <div class="rp-summary-num"><div class="rp-summary-num-inner"><span>로직1</span></div></div>
+          <div class="rp-summary-chips">
+            <div class="q-label grey"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+            <img src="assets/icon-arrow-flow.svg" alt="">
+            <div class="q-label grey"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
+          </div>
+        </div>
+        <img src="assets/icon-chevron-down.svg" alt="">
+      </div>
+
+      <div class="logic-detail" id="logicDetail">
+        <div class="ld-head">
+          <div class="ld-head-left">
+            <div class="ld-arrow-icon"><img src="assets/icon-arrow-header.svg" alt=""></div>
+            <div class="ld-head-num-inner"><span>로직1</span></div>
+            <div class="ld-head-chips">
+              <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+              <img src="assets/icon-arrow-flow-2.svg" alt="">
+              <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
+            </div>
+          </div>
+          <div class="ld-trash" onclick="event.stopPropagation()"><img src="assets/icon-trash.svg" alt=""></div>
+        </div>
+
+        <div style="height:12px;"></div>
+        <div class="ld-content">
+          <div class="ld-field-row">
+            <p>문항</p>
+            <div class="ld-select" onclick="toggleDropdown(event,'ddQuestion')">
+              <p>원데이 클래스 참여 경험이 어느 정도인가요?</p>
+              <img src="assets/icon-dropdown-chevron.svg" alt="">
+            </div>
+          </div>
+
+          <div class="ld-field-row">
+            <p>답변</p>
+            <div class="ld-answer" onclick="toggleDropdown(event,'ddAnswer')">
+              <div class="ld-answer-chips">
+                <div class="ans-chip"><span>가끔참여해요</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation()"></div>
+                <div class="ans-chip"><span>자주 참여해요</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation()"></div>
+              </div>
+              <img src="assets/icon-dropdown-chevron.svg" alt="">
+            </div>
+          </div>
+
+          <div class="ld-field-row">
+            <p>조건</p>
+            <div class="ld-select" onclick="toggleDropdown(event,'ddCondition')">
+              <p>~를 선택했을 때</p>
+              <img src="assets/icon-dropdown-chevron.svg" alt="">
+            </div>
+          </div>
+        </div>
+
+        <div class="ld-add-condition">
+          <img src="assets/icon-add-condition.svg" alt="">
+          <span>조건 추가</span>
+        </div>
+
+        <div class="ld-move">
+          <div class="ld-move-label">
+            <img src="assets/icon-move-arrow.svg" alt="">
+            <span>이동</span>
+          </div>
+          <div class="ld-move-select" onclick="toggleDropdown(event,'ddMove')">
+            <div class="ld-move-select-left">
+              <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
+              <p>아래 분야의 선호도를 알려주세요.</p>
+            </div>
+            <img src="assets/icon-dropdown-chevron.svg" alt="">
+          </div>
+        </div>
+      </div>
+
+      <div class="rp-cta">
+        <img src="assets/icon-plus.svg" alt="">
+        <span>새 로직 추가</span>
+      </div>
+    </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function switchCanvasTab(el, showLegend){
+    el.parentElement.querySelectorAll('.ctab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('flowLegend').style.display = showLegend ? '' : 'none';
+  }
+  function switchRpTab(el, isLogic){
+    el.parentElement.querySelectorAll('.rtab').forEach(t=>{t.classList.remove('active');t.classList.add('inactive');});
+    el.classList.remove('inactive');
+    el.classList.add('active');
+  }
+
+  function toggleDropdown(evt, id){
+    evt.stopPropagation();
+    // Placeholder: visual affordance only in this static build.
+  }
+</script>
+
+</body>
+</html>
+
