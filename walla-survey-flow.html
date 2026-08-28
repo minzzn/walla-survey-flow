@@ -368,17 +368,20 @@
   /* ---------------- Question edit-list panel (문항 설정) ---------------- */
   .question-edit-panel{
     position:absolute;left:341px;right:385px;top:16px;bottom:16px;
-    background:var(--white);border-radius:16px;overflow-y:auto;
+    background:var(--white);border-radius:16px;overflow-y:auto;scroll-behavior:smooth;
     box-shadow:0 4px 6px rgba(0,0,0,.03);z-index:8;
   }
   .qep-inner{
     display:flex;flex-direction:column;align-items:center;gap:100px;
     padding:48px 62px;
+    /* 마지막 문항들도 패널 상단 위치까지 스크롤될 수 있도록 넉넉한 여유 공간을
+       처음부터 고정으로 확보해둔다 (동적 JS 계산은 타이밍에 따라 불안정했음). */
+    padding-bottom:900px;
   }
   .qep-block{
     width:100%;max-width:599px;display:flex;flex-direction:column;gap:22px;
     padding:12px;border:1px solid transparent;border-radius:8px;cursor:pointer;
-    transition:border-color .15s ease;
+    transition:border-color .15s ease;scroll-margin:24px;
   }
   .qep-block.selected{border-color:var(--skyblue-500);}
   .qep-title{font-weight:700;font-size:18px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -945,6 +948,24 @@
   // 우측 로직 패널은 빈 상태("새 로직 추가" 버튼만)로 보여준다.
   var QUESTIONS_WITH_LOGIC = ['Q5'];
 
+  // target을 questionEditPanel 안에서만 세로 중앙으로 스크롤한다.
+  // scrollIntoView는 상위 스크롤 조상(문서 전체)까지 같이 움직일 수 있어서
+  // 대신 패널의 scrollTop을 직접 계산해 이 패널만 스크롤되게 한다.
+  // 마지막 문항들(Q7, Q8 등)은 아래에 더 스크롤할 콘텐츠가 없어서
+  // 상단 위치까지 끌어올릴 여유 공간이 부족할 수 있다. 패널 높이만큼
+  // 하단 여백을 미리 확보해서 어떤 문항이든 상단 위치까지 스크롤되게 한다.
+  function scrollWithinQuestionPanel(target){
+    var panel = document.getElementById('questionEditPanel');
+    if (!panel || !target) return;
+    var TOP_OFFSET = 32; // 중앙 정렬 대신 패널 상단에서 이만큼 여백을 두고 위치시킨다.
+    var panelRect = panel.getBoundingClientRect();
+    var targetRect = target.getBoundingClientRect();
+    var targetTopWithinPanel = (targetRect.top - panelRect.top) + panel.scrollTop;
+    var desired = targetTopWithinPanel - TOP_OFFSET;
+    desired = Math.max(0, Math.min(desired, panel.scrollHeight - panel.clientHeight));
+    panel.scrollTop = desired; // CSS scroll-behavior:smooth animates this
+  }
+
   // 왼쪽 필드 목록에서 문항을 선택하면 문항 설정(편집) 화면으로 전환하고,
   // 중앙 편집 패널에서 해당 문항으로 스크롤 + 테두리 하이라이트,
   // 우측 로직 패널도 선택된 문항 기준으로 갱신한다.
@@ -959,7 +980,7 @@
     var target = document.querySelector('.qep-block[data-question="' + qid + '"]');
     if (target){
       target.classList.add('selected');
-      target.scrollIntoView({ behavior:'smooth', block:'center' });
+      scrollWithinQuestionPanel(target);
     }
 
     var rpLabel = document.getElementById('rpQuestionLabel');
