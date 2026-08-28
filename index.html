@@ -132,6 +132,8 @@
   }
   .flow-legend.show{display:flex;}
   .logic-info-icon{cursor:pointer;}
+  /* 로직 탭이 활성화되어 있을 때만 정보 아이콘이 호버/탭에 반응 */
+  .canvas-tabs .ctab:not(.active) .logic-info-icon{pointer-events:none;opacity:.5;}
   .flow-legend > p{font-size:14px;color:var(--neutral-800);}
   .legend-item{display:flex;align-items:center;gap:8px;}
   .legend-item span{font-size:14px;color:var(--azure-48);white-space:nowrap;}
@@ -478,11 +480,11 @@
       <div class="canvas-toolbar">
         <div class="badge"><span class="dot"></span><span>동시 편집</span></div>
         <div class="canvas-tabs">
-          <div class="ctab" onclick="switchCanvasTab(this,false)">
+          <div class="ctab active" onclick="switchCanvasTab(this,false)">
             <img src="assets/icon-edit-tab.svg" alt="">
             편집
           </div>
-          <div class="ctab active" onclick="switchCanvasTab(this,true)">
+          <div class="ctab" onclick="switchCanvasTab(this,true)">
             <img src="assets/icon-logic-tab.svg" alt="" style="transform:rotate(90deg)">
             로직
             <img src="assets/icon-chevron-small.svg" alt="로직 정보" class="logic-info-icon" id="logicInfoIcon">
@@ -504,7 +506,7 @@
       </div>
 
       <!-- pannable canvas content -->
-      <div class="canvas-content" id="canvasContent">
+      <div class="canvas-content hidden" id="canvasContent">
 
       <!-- 시작 / 제출하기 -->
       <div class="terminal-node" style="left:618px;top:54px;"><span>시작</span></div>
@@ -592,11 +594,11 @@
       <!-- /pannable canvas content -->
 
       <!-- 문항 설정 : question edit-list panel -->
-      <div class="question-edit-panel hidden" id="questionEditPanel">
+      <div class="question-edit-panel" id="questionEditPanel">
         <div class="qep-inner">
 
           <!-- Q5 -->
-          <div class="qep-block" data-question="Q5" onclick="selectQuestion('Q5')">
+          <div class="qep-block selected" data-question="Q5" onclick="selectQuestion('Q5')">
             <p class="qep-title">Q5. 지금까지 참여한 클래스 전반에 얼마나 만족하시나요</p>
             <div class="qep-options">
               <div class="qep-option">
@@ -798,7 +800,7 @@
           </div>
         </div>
 
-        <div class="control-panel" id="controlPanel">
+        <div class="control-panel hidden" id="controlPanel">
           <div class="ctrl-btn" id="btnZoomIn" title="확대"><img src="assets/icon-zoom-in.svg" alt=""></div>
           <div class="ctrl-btn" id="btnZoomOut" title="축소"><img class="icon-zoom-out-img" src="assets/icon-zoom-out.svg" alt=""></div>
           <div class="ctrl-btn" id="btnFitView" title="화면에 맞추기"><img src="assets/icon-fit-view.svg" alt=""></div>
@@ -811,8 +813,8 @@
     <!-- Right panel -->
     <div class="right-panel">
       <div class="rp-tabs">
-        <div class="rtab inactive" onclick="switchRpTab(this,false)"><span>문항 설정</span></div>
-        <div class="rtab active" onclick="switchRpTab(this,true)"><span>로직</span></div>
+        <div class="rtab active" onclick="switchRpTab(this,false)"><span>문항 설정</span></div>
+        <div class="rtab inactive" onclick="switchRpTab(this,true)"><span>로직</span></div>
       </div>
       <div class="rp-body">
       <div class="rp-title-row">
@@ -929,12 +931,15 @@
 
     var canvasContent = document.getElementById('canvasContent');
     var questionEditPanel = document.getElementById('questionEditPanel');
+    var controlPanel = document.getElementById('controlPanel');
     if (isLogic){
       questionEditPanel.classList.add('hidden');
       canvasContent.classList.remove('hidden');
+      if (controlPanel) controlPanel.classList.remove('hidden');
     } else {
       canvasContent.classList.add('hidden');
       questionEditPanel.classList.remove('hidden');
+      if (controlPanel) controlPanel.classList.add('hidden');
     }
   }
   function switchCanvasTab(el, isLogic){
@@ -1002,7 +1007,15 @@
     var legend = document.getElementById('flowLegend');
     if (!infoIcon || !legend) return;
 
-    function show(){ legend.classList.add('show'); }
+    // 로직 탭(canvas-tabs)이 활성화되어 있을 때만 정보 아이콘이 반응한다.
+    // CSS pointer-events:none이 실제 마우스/터치 입력은 막아주지만,
+    // 여기서도 한 번 더 확인해서 이 조건을 명확한 단일 기준으로 유지한다.
+    function isLogicTabActive(){
+      var ctabs = document.querySelectorAll('.canvas-tabs .ctab');
+      return ctabs[1] && ctabs[1].classList.contains('active');
+    }
+
+    function show(){ if (isLogicTabActive()) legend.classList.add('show'); }
     function hide(){ legend.classList.remove('show'); }
 
     // Desktop: real mouse hover
@@ -1013,6 +1026,7 @@
     // stopPropagation so the tap doesn't also trigger the parent 편집/로직 tab click.
     infoIcon.addEventListener('click', function(evt){
       evt.stopPropagation();
+      if (!isLogicTabActive()) return;
       legend.classList.toggle('show');
     });
 
