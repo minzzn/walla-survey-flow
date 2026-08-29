@@ -1253,6 +1253,16 @@
     var ctrlY = bottomY + 57; // 원래 곡선(363 -> 420)과 동일한 상대 오프셋을 유지한다.
     p1.setAttribute('d', 'M 710 ' + bottomY + ' C 710 ' + ctrlY + ', 487 ' + ctrlY + ', 487 484');
     p2.setAttribute('d', 'M 710 ' + bottomY + ' V 771');
+
+    // "2 또는 3" 라벨을 곡선(q5BranchPath) 길이의 정중앙 위에 계속 맞춘다.
+    // 곡선 모양이 카드 높이에 따라 계속 바뀌므로, 베지어 t=0.5 지점이 아니라
+    // getPointAtLength로 실제 호의 중간 지점을 구해야 어느 모양에서도 선 위에 온다.
+    var pill = document.getElementById('q5BranchPill');
+    if (pill && p1.getTotalLength){
+      var mid = p1.getPointAtLength(p1.getTotalLength() / 2);
+      pill.style.left = (mid.x - pill.offsetWidth / 2) + 'px';
+      pill.style.top = (mid.y - pill.offsetHeight / 2) + 'px';
+    }
   }
 
   // ---------------- 로직 블록 아코디언: 선택한 블록만 파란 테두리로 펼쳐지고
