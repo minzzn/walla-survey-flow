@@ -54,9 +54,10 @@ https://walla-survey-flow.netlify.app
 | 28 | 2026-08-29 12:11:50 | [`1d79b1d`](https://github.com/minzzn/walla-survey-flow/commit/1d79b1d) | `feat` | Q5에 "처음이에요 → Q8" 로직2를 기본으로 미리 추가 |
 | 29 | 2026-08-29 12:20:51 | [`365235d`](https://github.com/minzzn/walla-survey-flow/commit/365235d) | `feat` | 로직 캔버스에서 문항 카드/핀을 클릭하면 캔버스 모드는 유지한 채 우측 패널을 그 문항의 로직 탭으로 전환 |
 | 30 | 2026-08-29 12:33:52 | [`c8e60cc`](https://github.com/minzzn/walla-survey-flow/commit/c8e60cc) | `feat` | Q5 로직 카드를 기본 접힘 상태로 바꾸고 활성화됐을 때만 펼치기, 분기선도 활성화 시에만 파란색으로 표시 |
+| 31 | 2026-08-29 12:37:08 | [`4385b29`](https://github.com/minzzn/walla-survey-flow/commit/4385b29) | `fix` | Q5 카드에서 Q8로 곧게 내려가는 두 번째 연결선도 카드 활성화에 같이 반응하도록 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~30번)입니다.
+2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~31번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
