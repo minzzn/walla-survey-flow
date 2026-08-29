@@ -935,6 +935,72 @@
           </div>
         </div>
       </div>
+
+      <div class="logic-detail collapsed" id="logicDetail2" data-question="Q5">
+        <div class="ld-head" onclick="toggleLogicBlock(this)">
+          <div class="ld-head-left">
+            <div class="ld-arrow-icon"><img src="assets/icon-arrow-header.svg" alt=""></div>
+            <div class="ld-head-num-inner"><span>로직2</span></div>
+            <div class="ld-head-chips">
+              <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+              <img src="assets/icon-arrow-flow-2.svg" alt="">
+              <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
+            </div>
+          </div>
+          <div class="ld-trash" onclick="event.stopPropagation(); removeLogicBlock(this)"><img src="assets/icon-trash.svg" alt=""></div>
+        </div>
+
+        <div class="ld-spacer" style="height:12px;"></div>
+        <div class="ld-content">
+          <div class="ld-field-row">
+            <p>문항</p>
+            <div class="ld-select ld-question-field" onclick="openFieldDropdown(event,this,'question')">
+              <div class="ld-select-left">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b class="ld-question-badge">Q5</b></div>
+                <p class="ld-question-title">원데이 클래스 참여 경험이 어느 정도인가요?</p>
+              </div>
+              <img src="assets/icon-dropdown-chevron.svg" alt="">
+            </div>
+          </div>
+
+          <div class="ld-field-row">
+            <p>답변</p>
+            <div class="ld-answer" onclick="openFieldDropdown(event,this,'answer')">
+              <div class="ld-answer-chips">
+                <div class="ans-chip"><span>처음이에요</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>
+              </div>
+              <img src="assets/icon-dropdown-chevron.svg" alt="">
+            </div>
+          </div>
+
+          <div class="ld-field-row">
+            <p>조건</p>
+            <div class="ld-select" onclick="openFieldDropdown(event,this,'condition')">
+              <p>~를 선택했을 때</p>
+              <img src="assets/icon-dropdown-chevron.svg" alt="">
+            </div>
+          </div>
+        </div>
+
+        <div class="ld-add-condition">
+          <img src="assets/icon-add-condition.svg" alt="">
+          <span>조건 추가</span>
+        </div>
+
+        <div class="ld-move">
+          <div class="ld-move-label">
+            <img src="assets/icon-move-arrow.svg" alt="">
+            <span>이동</span>
+          </div>
+          <div class="ld-move-select" onclick="openFieldDropdown(event,this,'move')">
+            <div class="ld-move-select-left">
+              <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
+              <p>보통 어떤 경로로 클래스를 찾나요?</p>
+            </div>
+            <img src="assets/icon-dropdown-chevron.svg" alt="">
+          </div>
+        </div>
+      </div>
       </div>
       <!-- /rp-logic-list -->
 
