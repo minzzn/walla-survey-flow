@@ -57,9 +57,10 @@ https://walla-survey-flow.netlify.app
 | 31 | 2026-08-29 12:37:08 | [`4385b29`](https://github.com/minzzn/walla-survey-flow/commit/4385b29) | `fix` | Q5 카드에서 Q8로 곧게 내려가는 두 번째 연결선도 카드 활성화에 같이 반응하도록 수정 |
 | 32 | 2026-08-29 12:40:36 | [`f415ac2`](https://github.com/minzzn/walla-survey-flow/commit/f415ac2) | `feat` | 연결선 활성화 표시를 Q6/Q7/Q8에도 확장 (문항 클릭 시 그 문항의 다음 연결선만 파란색) |
 | 33 | 2026-08-29 12:47:39 | [`1df5c15`](https://github.com/minzzn/walla-survey-flow/commit/1df5c15) | `fix` | Q5 카드가 접힌 상태일 때 연결선이 카드 아래 빈 공간에서 끊겨 보이던 버그 수정 |
+| 34 | 2026-08-29 12:52:00 | [`81ff12f`](https://github.com/minzzn/walla-survey-flow/commit/81ff12f) | `fix` | "2 또는 3" 분기 라벨이 카드 접힘/펼침 상태와 무관하게 항상 분기선 중앙에 오도록 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~33번)입니다.
+2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
