@@ -159,12 +159,14 @@
   }
   .flow-pill .q-tag{font-size:14px;color:var(--neutral-400);white-space:nowrap;}
 
-  /* branch label pill */
+  /* branch label pill: 기본은 회색, 관련 문항(Q5)이 활성화됐을 때만 파란색으로 켜진다. */
   .branch-pill{
-    position:absolute;background:var(--white);border:2px solid var(--skyblue-500);
+    position:absolute;background:var(--white);border:2px solid var(--neutral-300);
     border-radius:14px;padding:5px 18px;display:flex;align-items:center;justify-content:center;
   }
-  .branch-pill span{font-size:14px;font-weight:700;color:var(--skyblue-500);white-space:nowrap;}
+  .branch-pill span{font-size:14px;font-weight:700;color:var(--neutral-400);white-space:nowrap;}
+  .branch-pill.active{border-color:var(--skyblue-500);}
+  .branch-pill.active span{color:var(--skyblue-500);}
 
   /* connectors */
   svg.connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
@@ -172,21 +174,26 @@
   /* collaborator caret */
   .collab-caret{position:absolute;left:350px;top:30px;width:6px;height:9px;pointer-events:none;}
 
-  /* ---------------- Q5 card ---------------- */
+  /* ---------------- Q5 card ----------------
+     기본(선택 안 됨)은 다른 문항 핀과 같은 접힌 한 줄 상태이고, 이 문항이
+     활성화됐을 때만 "응답에 따른 이동" 로직 목록이 있는 카드로 펼쳐진다. */
   .q5-card{
     position:absolute;left:470px;top:133px;width:480px;cursor:pointer;
-    background:var(--white);border:1px solid var(--neutral-300);border-radius:20px;
+    background:var(--white);border:1px solid var(--neutral-300);border-radius:12px;
     overflow:hidden;z-index:8;
   }
-  .q5-card.selected{border-color:var(--skyblue-500);box-shadow:0 0 10px rgba(0,126,255,.2);}
+  .q5-card.selected{border-radius:20px;border-color:var(--skyblue-500);box-shadow:0 0 10px rgba(0,126,255,.2);}
   .q5-head{
-    height:50px;border-bottom:1px solid var(--neutral-200);
-    display:flex;align-items:flex-end;justify-content:space-between;padding:8px 16px;
+    height:40px;border-bottom:none;
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;
   }
+  .q5-card.selected .q5-head{height:50px;border-bottom:1px solid var(--neutral-200);padding:8px 16px;align-items:flex-end;}
   .q5-head-left{display:flex;align-items:center;gap:8px;}
-  .q5-head-left p{font-size:16px;color:var(--neutral-800);white-space:nowrap;}
-  .q5-edit-link{font-size:14px;color:var(--azure-61);white-space:nowrap;cursor:pointer;}
-  .q5-body{padding:20px 16px;display:flex;flex-direction:column;gap:8px;}
+  .q5-head-left p{font-size:16px;color:var(--neutral-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .q5-edit-link{font-size:14px;color:var(--azure-61);white-space:nowrap;cursor:pointer;display:none;}
+  .q5-card.selected .q5-edit-link{display:block;}
+  .q5-body{padding:20px 16px;display:none;flex-direction:column;gap:8px;}
+  .q5-card.selected .q5-body{display:flex;}
   .q5-body > p{font-size:16px;color:var(--neutral-400);}
 
   .logic-row{
@@ -560,7 +567,7 @@
       <!-- connectors -->
       <svg class="connectors">
         <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path d="M 710 363 C 710 420, 487 420, 487 484" stroke="#007eff" stroke-width="1.5" fill="none"/>
+        <path id="q5BranchPath" d="M 710 363 C 710 420, 487 420, 487 484" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path d="M 710 363 V 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path d="M 487 524 V 581" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path d="M 487 621 C 487 690, 600 690, 600 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
@@ -568,7 +575,7 @@
       </svg>
 
       <!-- branch label -->
-      <div class="branch-pill" style="left:557px;top:408px;"><span>2 또는 3</span></div>
+      <div class="branch-pill" id="q5BranchPill" style="left:557px;top:408px;"><span>2 또는 3</span></div>
 
       <!-- collaborator caret -->
       <div class="collab-caret">
@@ -594,7 +601,7 @@
       </div>
 
       <!-- Q5 card -->
-      <div class="q5-card selected" data-question="Q5" onclick="activateLogicForQuestion('Q5')">
+      <div class="q5-card" data-question="Q5" onclick="activateLogicForQuestion('Q5')">
         <div class="q5-head">
           <div class="q5-head-left">
             <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
@@ -1208,6 +1215,13 @@
     if (rpLabel) rpLabel.textContent = qid;
     refreshRpLogicListForQuestion(qid);
     setRpMode(true);
+
+    // Q5의 분기(로직) 표시선 -- 문항 핀/카드와 마찬가지로 Q5가 활성화됐을 때만 파란색으로 켜진다.
+    var isQ5Active = qid === 'Q5';
+    var branchPill = document.getElementById('q5BranchPill');
+    if (branchPill) branchPill.classList.toggle('active', isQ5Active);
+    var branchPath = document.getElementById('q5BranchPath');
+    if (branchPath) branchPath.setAttribute('stroke', isQ5Active ? '#007eff' : '#d1d5dc');
   }
 
   // ---------------- 로직 블록 아코디언: 선택한 블록만 파란 테두리로 펼쳐지고
