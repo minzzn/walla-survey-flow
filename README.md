@@ -52,9 +52,10 @@ https://walla-survey-flow.netlify.app
 | 26 | 2026-08-29 04:44:02 | [`fb34d10`](https://github.com/minzzn/walla-survey-flow/commit/fb34d10) | `feat` | 문항 제목·옵션 텍스트를 번호 제외하고 직접 수정 가능하게 하고, 수정 시 우측 패널까지 자동 반영 |
 | 27 | 2026-08-29 04:49:43 | [`81f6e7c`](https://github.com/minzzn/walla-survey-flow/commit/81f6e7c) | `fix` | "새 로직 추가"로 만든 블록도 이동 대상을 고르면 헤더에 화살표+대상 문항 배지가 나타나도록 수정 |
 | 28 | 2026-08-29 12:11:50 | [`1d79b1d`](https://github.com/minzzn/walla-survey-flow/commit/1d79b1d) | `feat` | Q5에 "처음이에요 → Q8" 로직2를 기본으로 미리 추가 |
+| 29 | 2026-08-29 12:20:51 | [`365235d`](https://github.com/minzzn/walla-survey-flow/commit/365235d) | `feat` | 로직 캔버스에서 문항 카드/핀을 클릭하면 캔버스 모드는 유지한 채 우측 패널을 그 문항의 로직 탭으로 전환 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~27번) → 2026-08-29 낮(28번)입니다.
+2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~29번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
