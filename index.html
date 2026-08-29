@@ -569,9 +569,9 @@
         <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q5BranchPath" d="M 710 363 C 710 420, 487 420, 487 484" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q5BranchPath2" d="M 710 363 V 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path d="M 487 524 V 581" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path d="M 487 621 C 487 690, 600 690, 600 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path d="M 710 811 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q6LinePath" d="M 487 524 V 581" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q7LinePath" d="M 487 621 C 487 690, 600 690, 600 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q8LinePath" d="M 710 811 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
       </svg>
 
       <!-- branch label -->
@@ -1072,6 +1072,14 @@
     Q8: '보통 어떤 경로로 클래스를 찾나요?'
   };
   var QUESTION_ORDER = ['Q5', 'Q6', 'Q7', 'Q8'];
+  // 각 문항 카드/핀 바로 아래에서 다음 문항으로 뻗어나가는 연결선의 id 목록.
+  // Q5는 분기가 2개라 선도 2개다.
+  var QUESTION_OUTGOING_PATHS = {
+    Q5: ['q5BranchPath', 'q5BranchPath2'],
+    Q6: ['q6LinePath'],
+    Q7: ['q7LinePath'],
+    Q8: ['q8LinePath']
+  };
   var currentQuestionId = 'Q5';
 
   function getQuestionTitle(qid){
@@ -1216,13 +1224,16 @@
     refreshRpLogicListForQuestion(qid);
     setRpMode(true);
 
-    // Q5의 분기(로직) 표시선 -- 문항 핀/카드와 마찬가지로 Q5가 활성화됐을 때만 파란색으로 켜진다.
-    var isQ5Active = qid === 'Q5';
+    // 문항에서 다음 문항으로 나가는 연결선 -- 문항 핀/카드와 마찬가지로 그 문항이
+    // 활성화됐을 때만 파란색으로 켜지고, 나머지는 전부 회색으로 되돌아간다.
     var branchPill = document.getElementById('q5BranchPill');
-    if (branchPill) branchPill.classList.toggle('active', isQ5Active);
-    ['q5BranchPath', 'q5BranchPath2'].forEach(function(id){
-      var path = document.getElementById(id);
-      if (path) path.setAttribute('stroke', isQ5Active ? '#007eff' : '#d1d5dc');
+    if (branchPill) branchPill.classList.toggle('active', qid === 'Q5');
+    Object.keys(QUESTION_OUTGOING_PATHS).forEach(function(q){
+      var active = q === qid;
+      QUESTION_OUTGOING_PATHS[q].forEach(function(id){
+        var path = document.getElementById(id);
+        if (path) path.setAttribute('stroke', active ? '#007eff' : '#d1d5dc');
+      });
     });
   }
 
