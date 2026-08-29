@@ -568,7 +568,7 @@
       <svg class="connectors">
         <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q5BranchPath" d="M 710 363 C 710 420, 487 420, 487 484" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path d="M 710 363 V 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q5BranchPath2" d="M 710 363 V 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path d="M 487 524 V 581" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path d="M 487 621 C 487 690, 600 690, 600 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path d="M 710 811 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
@@ -1220,8 +1220,10 @@
     var isQ5Active = qid === 'Q5';
     var branchPill = document.getElementById('q5BranchPill');
     if (branchPill) branchPill.classList.toggle('active', isQ5Active);
-    var branchPath = document.getElementById('q5BranchPath');
-    if (branchPath) branchPath.setAttribute('stroke', isQ5Active ? '#007eff' : '#d1d5dc');
+    ['q5BranchPath', 'q5BranchPath2'].forEach(function(id){
+      var path = document.getElementById(id);
+      if (path) path.setAttribute('stroke', isQ5Active ? '#007eff' : '#d1d5dc');
+    });
   }
 
   // ---------------- 로직 블록 아코디언: 선택한 블록만 파란 테두리로 펼쳐지고
