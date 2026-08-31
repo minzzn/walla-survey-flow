@@ -200,7 +200,7 @@
     position:absolute;padding:4px 16px;border-radius:20px;background:var(--white);
     border:2px solid var(--neutral-500);color:var(--neutral-500);font-size:14px;font-weight:700;
     white-space:nowrap;display:flex;align-items:center;justify-content:center;
-    transform:translate(-50%,-50%);z-index:2;
+    transform:translate(-50%,-50%);z-index:9; /* .flow-pill은 z-index:8이라 그 위에 있어야 배지가 카드에 가려지지 않는다 */
   }
   .branch-num-badge.active{border-color:var(--skyblue-500);color:var(--skyblue-500);}
 
@@ -1273,6 +1273,14 @@
     var ctrlY = y1 + (y2 - y1) / 2;
     return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ctrlY + ', ' + x2 + ' ' + ctrlY + ', ' + x2 + ' ' + y2;
   }
+  // connectorPath와 달리 시작점 바로 근처(57px 아래)에서 빠르게 꺾인다. 같은
+  // 지점(문항 바로 아래)에서 시작하는 두 선("그 외" 선과 직행선)이 한참 겹쳐
+  // 보이지 않고 눈에 띄게 갈라지도록, 분기 선에는 이 모양을 쓴다.
+  function earlyBendPath(x1, y1, x2, y2){
+    if (x1 === x2) return 'M ' + x1 + ' ' + y1 + ' V ' + y2;
+    var ctrlY = y1 + 57;
+    return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ctrlY + ', ' + x2 + ' ' + ctrlY + ', ' + x2 + ' ' + y2;
+  }
   function svgX(cssLeftPx){ return cssLeftPx + 190; }
 
   // 카드 사이의 기본 간격 -- 접힌 카드 높이(42px)를 포함해 인접한 두 카드의
@@ -1363,7 +1371,11 @@
 
     if (extraPathEl){
       extraPathEl.style.display = '';
-      extraPathEl.setAttribute('d', connectorPath(sourceX, sourceBottom, targetX, targetTop));
+      // 일반 connectorPath(중간 지점에서 완만하게 꺾임)를 쓰면, qid 자신이 이미
+      // 옆 컬럼에 있을 때(예: 5->8과 6->8이 겹칠 때) 이 직행선이 qid의 "그 외"
+      // 선과 시작점 근처에서 한참 겹쳐 보인다. earlyBendPath로 시작점 바로
+      // 근처에서 빠르게 꺾이게 해서 두 선을 눈에 띄게 갈라놓는다.
+      extraPathEl.setAttribute('d', earlyBendPath(sourceX, sourceBottom, targetX, targetTop));
     }
     if (extraBadgeEl){
       extraBadgeEl.style.display = 'flex';
@@ -1405,9 +1417,8 @@
       return;
     }
     linePathEl.style.display = '';
-    var ctrlY = sourceBottom + 57;
     var nextX2 = svgX(parseInt(immediateNextEl.style.left, 10));
-    linePathEl.setAttribute('d', 'M ' + sourceX + ' ' + sourceBottom + ' C ' + sourceX + ' ' + ctrlY + ', ' + nextX2 + ' ' + ctrlY + ', ' + nextX2 + ' ' + immediateNextEl.offsetTop);
+    linePathEl.setAttribute('d', earlyBendPath(sourceX, sourceBottom, nextX2, immediateNextEl.offsetTop));
     if (elseBadgeEl){
       elseBadgeEl.style.display = 'flex';
       // 곡선의 중점은 베지어 t=0.5로 손수 계산하는 것보다 실제 경로 길이의
