@@ -194,11 +194,15 @@
   .dest-pill img{width:16px;height:16px;}
 
   /* 여러 갈래로 나가는 연결선 중 특정 로직 번호를 표시하는 동그란 배지 */
+  /* 분기 선 위의 "몇 번 응답" 알약 배지. 기본은 회색(비활성), 그 선의 로직이
+     지금 펼쳐져 있을 때만 파란색(활성)이 된다 (피그마 node 615:11522). */
   .branch-num-badge{
-    position:absolute;width:24px;height:24px;border-radius:50%;background:var(--white);
-    border:1.5px solid var(--skyblue-500);color:var(--skyblue-500);font-size:12px;font-weight:700;
-    display:flex;align-items:center;justify-content:center;z-index:2;
+    position:absolute;padding:4px 16px;border-radius:20px;background:var(--white);
+    border:2px solid var(--neutral-500);color:var(--neutral-500);font-size:14px;font-weight:700;
+    white-space:nowrap;display:flex;align-items:center;justify-content:center;
+    transform:translate(-50%,-50%);z-index:2;
   }
+  .branch-num-badge.active{border-color:var(--skyblue-500);color:var(--skyblue-500);}
 
   /* connectors */
   svg.connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
@@ -616,6 +620,7 @@
         <path id="q8LinePath" d="M 710 722 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
       </svg>
       <div class="branch-num-badge" id="q5ExtraBadge" style="display:none;">1</div>
+      <div class="branch-num-badge" id="q5ElseBadge" style="display:none;"></div>
 
       <!-- collaborator caret -->
       <div class="collab-caret">
@@ -1252,6 +1257,7 @@
     var q8 = document.querySelector('.flow-pill[data-question="Q8"]');
     var extraPath = document.getElementById('q5ExtraPath');
     var extraBadge = document.getElementById('q5ExtraBadge');
+    var elseBadge = document.getElementById('q5ElseBadge');
     if (!q5 || !q6 || !q7 || !q8) return;
 
     var q5Branching = q5.classList.contains('expanded') && getConfiguredLogicBlocks('Q5').length > 0;
@@ -1261,6 +1267,7 @@
       q8.style.left = '520px'; q8.style.top = '682px';
       if (extraPath) extraPath.style.display = 'none';
       if (extraBadge) extraBadge.style.display = 'none';
+      if (elseBadge) elseBadge.style.display = 'none';
       // 분기 카드가 접히면 Q5->Q6 선도 곡선(그 외 응답)이 아니라 원래의 직선으로
       // 되돌려야 한다. 안 그러면 로직 삭제 후에도 예전 곡선 좌표가 그대로 남는다.
       var q5LinePath = document.getElementById('q5LinePath');
@@ -1282,6 +1289,14 @@
       if (q6Path){
         var ctrlY = q5Bottom + 57;
         q6Path.setAttribute('d', 'M 710 ' + q5Bottom + ' C 710 ' + ctrlY + ', 487 ' + ctrlY + ', 487 ' + q6Top);
+        if (elseBadge){
+          elseBadge.style.display = 'flex';
+          // 곡선의 중점은 베지어 t=0.5로 손수 계산하는 것보다 실제 경로 길이의
+          // 절반 지점(getPointAtLength)을 쓰는 게 곡선이 재배치돼도 항상 정확하다.
+          var midPoint = q6Path.getPointAtLength(q6Path.getTotalLength() / 2);
+          elseBadge.style.left = midPoint.x + 'px';
+          elseBadge.style.top = midPoint.y + 'px';
+        }
       }
       // Q5 -> Q8 직행선(로직1) + 번호 배지
       if (extraPath){
@@ -1290,8 +1305,8 @@
       }
       if (extraBadge){
         extraBadge.style.display = 'flex';
-        extraBadge.style.left = (710 - 12) + 'px';
-        extraBadge.style.top = ((q5Bottom + q8Top) / 2 - 12) + 'px';
+        extraBadge.style.left = '710px';
+        extraBadge.style.top = ((q5Bottom + q8Top) / 2) + 'px';
       }
     }
 
@@ -1324,9 +1339,20 @@
   // 파란색으로 켜는 게 아니라 지금 펼쳐져(활성화되어) 있는 로직 블록 하나만 파란색이
   // 되어야 한다 (피그마 node 615:10470) -- 로직1이 펼쳐져 있으면 그 로직이 가리키는
   // 직행선만, "그 외 응답"(자동 블록)이 펼쳐져 있으면 그 곡선만 파란색이 된다.
+  // 답변 텍스트를 "몇 번" 옵션인지로 바꿔서 "2 OR 3"처럼 합친다 (피그마 node 615:11522의
+  // 선 위 배지 텍스트).
+  function getAnswerNumbersLabel(qid, block){
+    var opts = getQuestionOptionTexts(qid);
+    return getSelectedAnswerTexts(block)
+      .map(function(a){ return opts.indexOf(a) + 1; })
+      .filter(function(n){ return n > 0; })
+      .join(' OR ');
+  }
   function updateQ5LineColors(q5, q5Branching){
     var q5LinePath = document.getElementById('q5LinePath');
     var q5ExtraPath = document.getElementById('q5ExtraPath');
+    var extraBadge = document.getElementById('q5ExtraBadge');
+    var elseBadge = document.getElementById('q5ElseBadge');
     if (!q5LinePath || !q5ExtraPath) return;
     var isSelected = q5.classList.contains('selected');
 
@@ -1341,6 +1367,25 @@
     var autoActive = !!autoBlock && !autoBlock.classList.contains('collapsed');
     q5ExtraPath.setAttribute('stroke', explicitActive ? '#007eff' : '#d1d5dc');
     q5LinePath.setAttribute('stroke', autoActive ? '#007eff' : '#d1d5dc');
+
+    if (extraBadge){
+      if (explicitBlock){
+        extraBadge.style.display = 'flex';
+        extraBadge.textContent = getAnswerNumbersLabel('Q5', explicitBlock);
+        extraBadge.classList.toggle('active', explicitActive);
+      } else {
+        extraBadge.style.display = 'none';
+      }
+    }
+    if (elseBadge){
+      if (autoBlock){
+        elseBadge.style.display = 'flex';
+        elseBadge.textContent = getAnswerNumbersLabel('Q5', autoBlock);
+        elseBadge.classList.toggle('active', autoActive);
+      } else {
+        elseBadge.style.display = 'none';
+      }
+    }
   }
   function updateAllFlowNodes(){
     QUESTION_ORDER.forEach(function(qid){ updateFlowNodeContent(qid); });
