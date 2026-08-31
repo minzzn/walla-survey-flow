@@ -1251,9 +1251,19 @@
       '</div>';
     body.innerHTML = html;
   }
-  // Q5가 카드로 펼쳐지면 Q6/Q7 핀이 옆으로 비켜나서 Q5->Q8 직행선(로직1)과
-  // Q5->Q6 곡선("그 외 응답")이 겹치지 않게 자리를 만들어준다. 다른 문항이 펼쳐질
-  // 때는(아직 구체적으로 요구된 사례가 없어서) 기본 직선 배치를 그대로 둔다.
+  // 두 점을 잇는 연결선을 만든다. x좌표가 같으면 직선, 다르면(컬럼이 바뀌면)
+  // 부드러운 S자 곡선이 된다 -- Q6/Q7이 실제로 어느 컬럼에 있는지에 따라
+  // 연결선 모양이 자동으로 달라지게 하기 위한 공용 헬퍼.
+  function connectorPath(x1, y1, x2, y2){
+    if (x1 === x2) return 'M ' + x1 + ' ' + y1 + ' V ' + y2;
+    var ctrlY = y1 + (y2 - y1) / 2;
+    return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ctrlY + ', ' + x2 + ' ' + ctrlY + ', ' + x2 + ' ' + y2;
+  }
+  function svgX(cssLeftPx){ return cssLeftPx + 190; }
+
+  // Q5에 실제로 설정된 로직1의 이동 대상이 Q6/Q7/Q8 중 어디냐에 따라, 그 사이에
+  // 있는 문항들만 옆으로 비켜나고(건너뛰는 문항들) 목표 문항부터는 다시 메인
+  // 컬럼으로 돌아온다. 예를 들어 5->7이면 Q6만 비켜나고 Q7이 목표 지점이 된다.
   function updateFlowLayout(){
     var q5 = document.querySelector('.flow-pill[data-question="Q5"]');
     var q6 = document.querySelector('.flow-pill[data-question="Q6"]');
@@ -1264,10 +1274,16 @@
     var elseBadge = document.getElementById('q5ElseBadge');
     if (!q5 || !q6 || !q7 || !q8) return;
 
+    var pillEls = { Q6: q6, Q7: q7, Q8: q8 };
     // Q6/Q7 위치와 분기 선의 존재 여부는 Q5 카드가 지금 펼쳐져 보이는지(.expanded,
     // 선택 여부에 좌우됨)와 무관하게, 실제로 로직이 설정돼 있는지만으로 정해진다.
     // 그래야 다른 문항을 보고 있어도 Q5의 분기 레이아웃 자체는 그대로 유지된다.
-    var q5Branching = getConfiguredLogicBlocks('Q5').length > 0;
+    var explicitBlock = getConfiguredLogicBlocks('Q5')[0];
+    var explicitTarget = explicitBlock ? getBlockMoveTargetId(explicitBlock) : '';
+    var explicitIdx = QUESTION_ORDER.indexOf(explicitTarget); // Q5=0, Q6=1, Q7=2, Q8=3
+    var skipped = explicitIdx > 1 ? QUESTION_ORDER.slice(1, explicitIdx) : [];
+    var q5Branching = skipped.length > 0;
+
     if (!q5Branching){
       q6.style.left = '520px'; q6.style.top = '316px';
       q7.style.left = '520px'; q7.style.top = '499px';
@@ -1284,18 +1300,32 @@
       }
     } else {
       var q5Bottom = q5.offsetTop + q5.offsetHeight;
-      var q6Top = q5Bottom + 120;
-      q6.style.left = '297px'; q6.style.top = q6Top + 'px';
-      var q7Top = q6Top + q6.offsetHeight + 57;
-      q7.style.left = '297px'; q7.style.top = q7Top + 'px';
-      var q8Top = Math.max(q7Top + q7.offsetHeight + 90, q5Bottom + 190);
-      q8.style.left = '520px'; q8.style.top = q8Top + 'px';
+      var prevBottom = null;
+      skipped.forEach(function(qid, i){
+        var el = pillEls[qid];
+        el.style.left = '297px';
+        el.style.top = (i === 0 ? q5Bottom + 120 : prevBottom + 57) + 'px';
+        prevBottom = el.offsetTop + el.offsetHeight;
+      });
+      var targetTop = Math.max(prevBottom + 90, q5Bottom + 190);
+      var targetEl = pillEls[explicitTarget];
+      targetEl.style.left = '520px';
+      targetEl.style.top = targetTop + 'px';
 
-      // Q5 -> Q6 곡선("그 외 응답")
+      // 목표 문항 다음부터는 다시 평범한 메인 컬럼 간격(183px)으로 이어진다.
+      var nextTop = targetTop + 183;
+      QUESTION_ORDER.slice(explicitIdx + 1).forEach(function(qid){
+        var el = pillEls[qid];
+        el.style.left = '520px';
+        el.style.top = nextTop + 'px';
+        nextTop += 183;
+      });
+
+      // Q5 -> Q6 곡선("그 외 응답") -- Q6은 분기 상태에서 항상 옆 컬럼의 첫 번째다.
       var q6Path = document.getElementById('q5LinePath');
       if (q6Path){
         var ctrlY = q5Bottom + 57;
-        q6Path.setAttribute('d', 'M 710 ' + q5Bottom + ' C 710 ' + ctrlY + ', 487 ' + ctrlY + ', 487 ' + q6Top);
+        q6Path.setAttribute('d', 'M 710 ' + q5Bottom + ' C 710 ' + ctrlY + ', 487 ' + ctrlY + ', 487 ' + q6.offsetTop);
         if (elseBadge){
           elseBadge.style.display = 'flex';
           // 곡선의 중점은 베지어 t=0.5로 손수 계산하는 것보다 실제 경로 길이의
@@ -1305,36 +1335,35 @@
           elseBadge.style.top = midPoint.y + 'px';
         }
       }
-      // Q5 -> Q8 직행선(로직1) + 번호 배지
+      // Q5 -> 실제 목표 문항 직행선(로직1) + 번호 배지
       if (extraPath){
         extraPath.style.display = '';
-        extraPath.setAttribute('d', 'M 710 ' + q5Bottom + ' V ' + q8Top);
+        extraPath.setAttribute('d', 'M 710 ' + q5Bottom + ' V ' + targetTop);
       }
       if (extraBadge){
         extraBadge.style.display = 'flex';
         extraBadge.style.left = '710px';
-        extraBadge.style.top = ((q5Bottom + q8Top) / 2) + 'px';
+        extraBadge.style.top = ((q5Bottom + targetTop) / 2) + 'px';
       }
     }
 
-    // Q6->Q7, Q7->Q8 연결선은 두 상태 모두에서 실제 위치를 따라간다.
+    // Q6->Q7, Q7->Q8 연결선은 실제 좌표를 따라간다 -- 같은 컬럼에 있으면 직선,
+    // 컬럼이 바뀌는 지점(건너뛴 문항 -> 목표 문항)이면 자동으로 곡선이 된다.
     var q6Bottom = q6.offsetTop + q6.offsetHeight;
-    var q7Top2 = q7.offsetTop;
     var q6to7 = document.getElementById('q6LinePath');
     if (q6to7){
-      var midX = q5Branching ? 487 : 710;
-      q6to7.setAttribute('d', 'M ' + midX + ' ' + q6Bottom + ' V ' + q7Top2);
+      q6to7.setAttribute('d', connectorPath(
+        svgX(parseInt(q6.style.left, 10)), q6Bottom,
+        svgX(parseInt(q7.style.left, 10)), q7.offsetTop
+      ));
     }
     var q7Bottom = q7.offsetTop + q7.offsetHeight;
-    var q8Top2 = q8.offsetTop;
     var q7to8 = document.getElementById('q7LinePath');
     if (q7to8){
-      if (q5Branching){
-        var ctrlY2 = q7Bottom + (q8Top2 - q7Bottom) / 2;
-        q7to8.setAttribute('d', 'M 487 ' + q7Bottom + ' C 487 ' + ctrlY2 + ', 710 ' + ctrlY2 + ', 710 ' + q8Top2);
-      } else {
-        q7to8.setAttribute('d', 'M 710 ' + q7Bottom + ' V ' + q8Top2);
-      }
+      q7to8.setAttribute('d', connectorPath(
+        svgX(parseInt(q7.style.left, 10)), q7Bottom,
+        svgX(parseInt(q8.style.left, 10)), q8.offsetTop
+      ));
     }
     var q8Bottom = q8.offsetTop + q8.offsetHeight;
     var q8to9 = document.getElementById('q8LinePath');
