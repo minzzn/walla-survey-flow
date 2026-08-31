@@ -61,9 +61,10 @@ https://walla-survey-flow.netlify.app
 | 35 | 2026-08-31 09:16:21 | [`6e31410`](https://github.com/minzzn/walla-survey-flow/commit/6e31410) | `feat` | 첫 화면에서 모든 문항이 로직 없는 빈 상태로 시작하도록 변경 (Q5 예시 로직 2개 제거) |
 | 36 | 2026-08-31 09:21:07 | [`8f168e1`](https://github.com/minzzn/walla-survey-flow/commit/8f168e1) | `feat` | 로직 캔버스의 Q5 카드에 남아있던 하드코딩된 로직1/로직2 행도 제거 |
 | 37 | 2026-08-31 10:29:11 | [`d469a6c`](https://github.com/minzzn/walla-survey-flow/commit/d469a6c) | `feat` | 로직 미설정 상태의 플로우차트를 피그마 참고안대로 단일 세로 배치로 재설계, 우측 패널 "문항을 선택해 주세요" 기본 상태 추가 |
+| 38 | 2026-08-31 10:36:06 | [`98753c0`](https://github.com/minzzn/walla-survey-flow/commit/98753c0) | `feat` | 캔버스에서 문항을 클릭하면 로직이 없을 경우 자동으로 첫 로직 블록을 만들어 펼쳐서 보여줌 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~37번)입니다.
+2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~38번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
