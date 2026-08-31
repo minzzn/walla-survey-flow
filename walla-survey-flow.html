@@ -1230,8 +1230,13 @@
 
     var html = '<p>응답에 따른 이동</p>';
     var nextQ = nextQuestionAfter(qid);
-    function destPillInner(target){
-      return '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + target + '</b></div>';
+    // 이동 대상이 바로 다음 문항이면(=로직 없이도 원래 흘러가는 기본 경로),
+    // 아이콘+Qn 배지를 아예 보여주지 않는다 -- 실제로 흐름을 건너뛰는 경우만
+    // 눈에 띄게 표시한다.
+    function destPillHtml(target, arrowSrc){
+      if (!target || target === nextQ) return '';
+      return '<div class="dest-pill"><img src="' + arrowSrc + '" alt="">' +
+        '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + target + '</b></div></div>';
     }
     configured.forEach(function(block, i){
       var answers = getEffectiveAnswerTexts(qid, block);
@@ -1246,10 +1251,7 @@
             '<div class="logic-row-num"><span>로직' + (i + 1) + '</span></div>' +
             '<div class="logic-chips">' + chips + '</div>' +
           '</div>' +
-          '<div class="dest-pill">' +
-            '<img src="assets/icon-dest-arrow-blue.svg" alt="">' +
-            destPillInner(target) +
-          '</div>' +
+          destPillHtml(target, 'assets/icon-dest-arrow-blue.svg') +
         '</div>';
     });
     // "그 외 응답" 행은 실제로 자동 블록이 존재할 때만 보여준다 -- 답변을 전부
@@ -1262,10 +1264,7 @@
       html +=
         '<div class="logic-row grey">' +
           '<div class="logic-row-left"><span class="logic-else-label">그 외 응답</span></div>' +
-          '<div class="dest-pill">' +
-            '<img src="assets/icon-dest-arrow-grey.svg" alt="">' +
-            destPillInner(elseTarget) +
-          '</div>' +
+          destPillHtml(elseTarget, 'assets/icon-dest-arrow-grey.svg') +
         '</div>';
     }
     body.innerHTML = html;
@@ -1809,6 +1808,10 @@
       var qid = getBlockQuestionRefId(block);
       var moveTarget = getBlockMoveTargetId(block);
       if (!moveTarget) return;
+      // 이동 대상이 바로 다음 문항이면(=로직 없이도 원래 흘러가는 기본 경로)
+      // 아이콘+Qn 배지를 아예 붙이지 않는다 -- 실제로 흐름을 건너뛰는 옵션만
+      // 눈에 띄게 표시한다.
+      if (moveTarget === nextQuestionAfter(qid)) return;
       getEffectiveAnswerTexts(qid, block).forEach(function(answerText){
         var optionEl = findOptionEl(qid, answerText);
         if (!optionEl) return;
