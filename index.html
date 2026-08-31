@@ -477,6 +477,9 @@
   .qep-option-text{font-size:16px;color:var(--grey-13);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .qep-dest-pill{display:flex;align-items:center;gap:7px;height:32px;padding:0 8px;border-radius:15px;flex-shrink:0;}
   .qep-dest-pill img.route-icon{width:16px;height:16px;}
+  /* 다른 옵션에 로직이 하나라도 걸리면, 아직 지정 안 된 나머지 옵션엔 자동으로
+     "다음 문항으로"라는 안내만 붙는다 (실제 Qn 배지 대신 옅은 회색 텍스트). */
+  .qep-next-label{font-weight:700;font-size:14px;color:#9c9c9c;white-space:nowrap;}
   /* 이동/삭제 버튼은 옵션 행에 마우스를 올렸을 때만(또는 모바일에서 탭했을 때만) 보임 */
   .qep-option-actions{display:none;gap:4px;flex-shrink:0;}
   .qep-option:hover .qep-option-actions,
@@ -1188,8 +1191,10 @@
   // (피그마 node 615:10470). 답변을 하나도 안 고른 자동 생성 빈 블록은 "설정됨"으로
   // 치지 않는다 -- activateLogicForQuestion이 클릭할 때마다 빈 블록을 만들어주므로,
   // 그것만으로 카드가 펼쳐지면 아무 답변도 없는데 펼쳐진 것처럼 보인다.
+  // 자동 생성된 "다음 문항으로" 블록(data-auto)은 캔버스 카드가 이미 별도의 회색
+  // "그 외 응답" 행으로 같은 내용을 보여주고 있으므로, 여기서는 제외해 중복을 막는다.
   function getConfiguredLogicBlocks(qid){
-    return Array.from(document.querySelectorAll('#rpLogicList .logic-detail')).filter(function(b){
+    return Array.from(document.querySelectorAll('#rpLogicList .logic-detail:not([data-auto="true"])')).filter(function(b){
       return getBlockQuestionRefId(b) === qid && getSelectedAnswerTexts(b).length > 0;
     });
   }
@@ -1463,17 +1468,70 @@
     }
     pill.querySelector('b').textContent = moveTarget;
   }
+  // 사용자가 직접 지정한 게 아니라, 다른 옵션에 로직이 걸려서 자동으로 "다음 문항으로"
+  // 묶인 옵션에 붙는 표시. 실제 Qn 배지 대신 옅은 회색 텍스트만 보여준다.
+  function setOptionNextHint(optionEl){
+    if (optionEl.querySelector('.qep-dest-pill')) return;
+    var pill = document.createElement('div');
+    pill.className = 'qep-dest-pill';
+    pill.innerHTML =
+      '<img class="route-icon" src="assets/icon-route.svg" alt="">' +
+      '<p class="qep-next-label">다음 문항으로</p>';
+    optionEl.insertBefore(pill, optionEl.querySelector('.qep-option-actions'));
+  }
   function syncOptionLogicPills(){
+    syncAutoElseLogic(); // 옵션 중 하나라도 로직이 걸리면, 나머지 옵션은 자동으로 "다음 문항으로" 블록에 묶인다.
     document.querySelectorAll('.qep-option .qep-dest-pill').forEach(function(p){ p.remove(); });
     document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(block){
       var qid = getBlockQuestionRefId(block);
       var moveTarget = getBlockMoveTargetId(block);
       if (!moveTarget) return;
+      var isAuto = block.getAttribute('data-auto') === 'true';
       getSelectedAnswerTexts(block).forEach(function(answerText){
         var optionEl = findOptionEl(qid, answerText);
-        if (optionEl) setOptionPill(optionEl, moveTarget);
+        if (!optionEl) return;
+        if (isAuto) setOptionNextHint(optionEl); else setOptionPill(optionEl, moveTarget);
       });
     });
+  }
+
+  // ---------------- 옵션 하나에라도 로직이 걸리면, 나머지 옵션은 자동으로
+  // "다음 문항으로" 로직 블록에 묶인다 (피그마 node 615:19122). ----------------
+  function syncAutoElseLogic(){
+    QUESTION_ORDER.forEach(function(qid){ syncAutoElseLogicForQuestion(qid); });
+    // 방금 새로 만들었거나 순서를 옮긴 블록이, 지금 보고 있는 문항이 아니면 다시 숨긴다.
+    if (currentQuestionId) refreshRpLogicListForQuestion(currentQuestionId);
+  }
+  function syncAutoElseLogicForQuestion(qid){
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!rpLogicList) return;
+    var autoBlock = rpLogicList.querySelector('.logic-detail[data-auto="true"][data-question="' + qid + '"]');
+    var explicitConfigured = getConfiguredLogicBlocks(qid); // data-auto 블록은 이미 제외되어 있다.
+    var leftover = [];
+    if (explicitConfigured.length){
+      var covered = {};
+      explicitConfigured.forEach(function(b){
+        getSelectedAnswerTexts(b).forEach(function(a){ covered[a] = true; });
+      });
+      leftover = getQuestionOptionTexts(qid).filter(function(o){ return !covered[o]; });
+    }
+    if (!leftover.length){
+      if (autoBlock) autoBlock.remove();
+    } else {
+      if (!autoBlock){
+        autoBlock = buildLogicDetailElement(qid, 0, nextQuestionAfter(qid));
+        autoBlock.setAttribute('data-auto', 'true');
+        autoBlock.classList.add('collapsed');
+      }
+      rpLogicList.appendChild(autoBlock); // 항상 목록 맨 아래("그 외 나머지")에 오도록 매번 끝으로 옮긴다.
+      var wrap = getAnswerChipsWrap(autoBlock);
+      if (wrap){
+        wrap.innerHTML = leftover.map(function(opt){
+          return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+        }).join('');
+      }
+    }
+    renumberLogicBlocks(qid);
   }
 
   // 로직 블록이 우측 패널의 어느 문항 목록에 속하는지는 data-question(블록 소유 문항)이
@@ -1592,7 +1650,10 @@
   // ---------------- 중앙 편집 패널: 옵션 호버 시 나오는 "이동" 아이콘으로 그 옵션의
   // 이동 대상을 오른쪽 패널을 거치지 않고 바로 바꾼다 (피그마 node 600:7295). ----------------
   function findLogicBlockForOption(qid, answerText){
-    var blocks = document.querySelectorAll('#rpLogicList .logic-detail');
+    // data-auto 블록(자동 "다음 문항으로" 묶음)은 제외한다 -- 안 그러면 그 안에 같이
+    // 묶여있던 다른 옵션들까지 통째로 새 이동 대상으로 바뀌어 버린다. 이 옵션 하나만
+    // 명시적으로 지정하려면 항상 별도의 새 블록으로 분리돼야 한다.
+    var blocks = document.querySelectorAll('#rpLogicList .logic-detail:not([data-auto="true"])');
     for (var i = 0; i < blocks.length; i++){
       if (getBlockQuestionRefId(blocks[i]) !== qid) continue;
       if (getSelectedAnswerTexts(blocks[i]).indexOf(answerText) !== -1) return blocks[i];
@@ -1603,7 +1664,7 @@
   // 문항을 클릭하면 빈 로직1이 자동으로 만들어지는데, 이 블록을 재사용하지 않으면
   // 편집 뷰의 이동 아이콘을 쓸 때마다 빈 블록은 그대로 두고 새 블록만 계속 늘어난다.
   function findEmptyLogicBlock(qid){
-    var blocks = document.querySelectorAll('#rpLogicList .logic-detail');
+    var blocks = document.querySelectorAll('#rpLogicList .logic-detail:not([data-auto="true"])');
     for (var i = 0; i < blocks.length; i++){
       if (getBlockQuestionRefId(blocks[i]) !== qid) continue;
       if (getSelectedAnswerTexts(blocks[i]).length === 0) return blocks[i];
@@ -1635,8 +1696,10 @@
         currentQuestionId = qid;
         addNewLogic();
         currentQuestionId = prevCurrent;
-        var blocks = document.querySelectorAll('#rpLogicList .logic-detail[data-question="' + qid + '"]');
-        block = blocks[blocks.length - 1];
+        // addNewLogic이 끝나면서 syncOptionLogicPills -> syncAutoElseLogic이 돌기 때문에,
+        // "다음 문항으로" 자동 블록이 목록 맨 끝으로 다시 옮겨질 수 있다. 그래서 마지막
+        // 요소를 그냥 집는 대신, 방금 만든 빈 블록을 다시 조건으로 찾는다.
+        block = findEmptyLogicBlock(qid);
       }
       toggleAnswerOption(block, answerText);
     }
@@ -1689,15 +1752,9 @@
     return QUESTION_ORDER[(idx + 1) % QUESTION_ORDER.length];
   }
 
-  // "새 로직 추가" 클릭 시, 현재 선택된 문항 기준으로 빈 로직 편집 블록을
-  // 우측 패널에 새로 만들어 붙인다 (피그마 node 538:12572 디자인 반영).
-  function addNewLogic(){
-    var qid = currentQuestionId;
-    var rpLogicList = document.getElementById('rpLogicList');
-    if (!rpLogicList) return;
-
-    var logicNum = rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]').length + 1;
-    var moveTarget = nextQuestionAfter(qid);
+  // 로직 편집 블록 하나의 DOM을 만든다. addNewLogic(사용자가 직접 추가)과
+  // syncAutoElseLogicForQuestion(나머지 옵션을 자동으로 묶는 블록) 둘 다 이 템플릿을 쓴다.
+  function buildLogicDetailElement(qid, logicNum, moveTarget){
     var qTitle = getQuestionTitle(qid);
     var moveTitle = getQuestionTitle(moveTarget);
 
@@ -1759,6 +1816,19 @@
           '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
         '</div>' +
       '</div>';
+    return block;
+  }
+
+  // "새 로직 추가" 클릭 시, 현재 선택된 문항 기준으로 빈 로직 편집 블록을
+  // 우측 패널에 새로 만들어 붙인다 (피그마 node 538:12572 디자인 반영).
+  function addNewLogic(){
+    var qid = currentQuestionId;
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!rpLogicList) return;
+
+    var logicNum = rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]').length + 1;
+    var moveTarget = nextQuestionAfter(qid);
+    var block = buildLogicDetailElement(qid, logicNum, moveTarget);
 
     rpLogicList.appendChild(block);
     refreshRpLogicListForQuestion(qid);
@@ -1766,6 +1836,13 @@
     block.classList.remove('collapsed');
     syncOptionLogicPills();
     updateAllFlowNodes();
+  }
+
+  function renumberLogicBlocks(qid){
+    document.querySelectorAll('#rpLogicList .logic-detail[data-question="' + qid + '"]').forEach(function(b, i){
+      var label = b.querySelector('.ld-head-num-inner span');
+      if (label) label.textContent = '로직' + (i + 1);
+    });
   }
 
   // 새로 추가된(또는 기존) 로직 블록 삭제. 해당 문항의 블록이 하나도 안 남으면
@@ -1776,12 +1853,7 @@
     if (!block || !rpLogicList) return;
     var qid = block.getAttribute('data-question') || currentQuestionId;
     block.remove();
-
-    var remaining = rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]');
-    remaining.forEach(function(b, i){
-      var label = b.querySelector('.ld-head-num-inner span');
-      if (label) label.textContent = '로직' + (i + 1);
-    });
+    renumberLogicBlocks(qid);
 
     refreshRpLogicListForQuestion(currentQuestionId);
     syncOptionLogicPills();
