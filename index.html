@@ -1633,6 +1633,13 @@
     return Array.from(wrap.querySelectorAll('.ans-chip span')).map(function(s){ return s.textContent; });
   }
   function renderAnswerChips(block, selected){
+    // 사용자가 자동 "그 외" 블록의 답변을 직접 건드리면, 더 이상 leftover로
+    // 자동 재계산되는 블록이 아니라 사용자가 편집한 명시적 로직으로 승격시킨다.
+    // 안 그러면 이 함수가 끝나자마자 실행되는 syncAutoElseLogic이 leftover
+    // 기준으로 답변을 다시 계산해서 방금 한 수정을 곧바로 덮어써 버린다.
+    // 이렇게 승격된 뒤에도 여전히 남는 답변이 있으면, 그건 새 자동 블록으로
+    // 다시 자연스럽게 묶인다.
+    if (block.getAttribute('data-auto') === 'true') block.removeAttribute('data-auto');
     var wrap = getAnswerChipsWrap(block);
     if (!wrap) return;
     if (!selected.length){
