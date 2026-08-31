@@ -421,13 +421,21 @@
   .qep-option:hover .qep-option-actions,
   .qep-option.touch-active .qep-option-actions{display:flex;}
   .qep-action-btn{
-    width:32px;height:32px;border:1px solid var(--neutral-200);border-radius:7px;
+    position:relative;width:32px;height:32px;border:1px solid var(--neutral-200);border-radius:7px;
     background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
   }
   .qep-action-btn img{width:20px;height:20px;}
   .qep-action-btn.edit img{transform:rotate(90deg);}
-  .qep-action-btn.edit.dd-open{background:var(--skyblue-500);border-color:var(--skyblue-500);}
-  .qep-action-btn.edit.dd-open img{filter:brightness(0) invert(1);}
+  /* 드롭다운이 열려 있을 때: 배경은 흰색 그대로 두고 테두리와 아이콘만 파란색으로 켠다
+     (원본 아이콘은 회색 고정 SVG라 CSS mask로 정확한 skyblue-500 색을 입힌다). */
+  .qep-action-btn.edit.dd-open{border-color:var(--skyblue-500);}
+  .qep-action-btn.edit.dd-open img{opacity:0;}
+  .qep-action-btn.edit.dd-open::after{
+    content:'';position:absolute;width:20px;height:20px;background-color:var(--skyblue-500);
+    transform:rotate(90deg);
+    -webkit-mask:url('assets/icon-hover-edit.svg') center/contain no-repeat;
+    mask:url('assets/icon-hover-edit.svg') center/contain no-repeat;
+  }
 
   .qep-row-actions{display:flex;align-items:center;justify-content:space-between;width:100%;}
   .qep-add-group{display:flex;align-items:center;gap:6px;}
@@ -1362,6 +1370,12 @@
       toggleAnswerOption(block, answerText);
     }
     setBlockMoveTarget(block, targetQid);
+
+    // 우측 패널을 이 문항의 로직 탭으로 열고, 방금 고친 블록만 펼쳐서 바로 보여준다.
+    setRpMode(true);
+    revealLogicPanelForQuestion(qid);
+    collapseAllLogicBlocks();
+    block.classList.remove('collapsed');
   }
   function openOptionMoveDropdown(evt, iconEl){
     evt.stopPropagation();
