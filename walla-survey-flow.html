@@ -624,6 +624,7 @@
         <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q5LinePath" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q5ExtraPath" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
+        <path id="q5ExtraPath2" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
         <path id="q6LinePath" d="M 710 356 V 499" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q6ExtraPath" d="M 710 356 V 499" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
         <path id="q7LinePath" d="M 710 539 V 682" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
@@ -631,6 +632,7 @@
       </svg>
       <div class="branch-num-badge" id="q5ExtraBadge" style="display:none;">1</div>
       <div class="branch-num-badge" id="q5ElseBadge" style="display:none;"></div>
+      <div class="branch-num-badge" id="q5ExtraBadge2" style="display:none;"></div>
       <div class="branch-num-badge" id="q6ExtraBadge" style="display:none;"></div>
       <div class="branch-num-badge" id="q6ElseBadge" style="display:none;"></div>
 
@@ -1293,6 +1295,22 @@
     var ctrlY = y1 + 57;
     return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ctrlY + ', ' + x2 + ' ' + ctrlY + ', ' + x2 + ' ' + y2;
   }
+  // 분기 선 하나를 그린다. 시작점과 도착점의 x가 다르면(옆 컬럼으로 건너뛰는
+  // 경우) earlyBendPath로 충분히 갈라져 보인다. 그런데 답변이 세 곳 이상으로
+  // 나뉘어도 그중 여러 target이 전부 메인 컬럼(같은 x)에 남아있을 수 있다
+  // (예: 5->6, 5->7, 5->8이 동시에 걸리면 Q6/Q7/Q8 모두 건너뛰는 문항이 없어
+  // 셋 다 메인 컬럼에 그대로 남는다) -- 이때 x가 같다고 그냥 세로 직선을 그으면
+  // 여러 선이 완전히 겹쳐 몇 개가 있는지도 알 수 없다. laneOffset(0이면 직선,
+  // 그 외에는 laneOffset만큼 옆으로 부풀렸다 다시 제자리로 돌아오는 곡선)으로
+  // 같은 컬럼 안에서도 선끼리 눈에 띄게 갈라지게 한다.
+  function branchPath(x1, y1, x2, y2, laneOffset){
+    if (x1 !== x2) return earlyBendPath(x1, y1, x2, y2);
+    if (!laneOffset) return 'M ' + x1 + ' ' + y1 + ' V ' + y2;
+    var bendX = x1 - laneOffset;
+    var ctrlY1 = y1 + 57;
+    var ctrlY2 = y2 - 40;
+    return 'M ' + x1 + ' ' + y1 + ' C ' + bendX + ' ' + ctrlY1 + ', ' + bendX + ' ' + ctrlY2 + ', ' + x1 + ' ' + y2;
+  }
   function svgX(cssLeftPx){ return cssLeftPx + 190; }
 
   // 카드 사이의 기본 간격 -- 접힌 카드 높이(42px)를 포함해 인접한 두 카드의
@@ -1318,16 +1336,36 @@
   // 실제 직행선(extraPath)은 여기서 바로 그리지 않는다 -- Q6의 분기가 Q5의
   // 목표(Q8) 위치를 더 내릴 수도 있으므로, 모든 위치 계산이 끝난 뒤 별도로
   // drawExtraPath를 호출해서 최종 위치 기준으로 그린다.
+  // qid의 답변이 실제로 나뉘어 가는 곳(로직1, 로직2, ... + 그 외)을 전부 모은다.
+  // mergeLogicBlocksByTarget이 이동 대상이 같은 블록은 항상 하나로 합쳐주므로,
+  // 여기 담기는 블록들은 서로 target이 겹치지 않는 게 보장된다 -- 즉 이 배열의
+  // 길이가 곧 이 문항에서 실제로 그려야 할 분기 선의 개수다.
+  function getBranchesForQuestion(qid){
+    var explicit = getConfiguredLogicBlocks(qid).map(function(b){
+      return { block: b, target: getBlockMoveTargetId(b), isAuto: false };
+    });
+    var autoBlock = document.querySelector('#rpLogicList .logic-detail[data-auto="true"][data-question="' + qid + '"]');
+    if (autoBlock){
+      explicit.push({ block: autoBlock, target: getBlockMoveTargetId(autoBlock) || nextQuestionAfter(qid), isAuto: true });
+    }
+    return explicit.filter(function(b){ return !!b.target; });
+  }
+
+  // qid 이후 문항들의 위치를 정한다. qid의 답변이 여러 target으로 나뉠 수
+  // 있으므로(예: 5->6, 5->7, 5->8 동시), 각 target이 아닌(=아무도 가지 않는)
+  // 문항만 옆 컬럼(297px)으로 비켜나고, 실제 target인 문항은 전부 메인 컬럼에
+  // 남는다. 곁다리로 비켜난 구간(연속된 "아무도 안 가는" 문항들)이 하나 끝날
+  // 때마다 메인 컬럼으로 다시 합류하는 지점에서 더 큰 간격을 준다.
   function resolveBranchPositions(qid, allPills, forceLayout){
     var sourceEl = allPills[qid];
     var sourceIdx = QUESTION_ORDER.indexOf(qid);
     var downstream = QUESTION_ORDER.slice(sourceIdx + 1);
-    var explicitBlock = getConfiguredLogicBlocks(qid)[0];
-    var explicitTarget = explicitBlock ? getBlockMoveTargetId(explicitBlock) : '';
-    var targetIdx = QUESTION_ORDER.indexOf(explicitTarget);
-    var skipped = (targetIdx > sourceIdx + 1) ? QUESTION_ORDER.slice(sourceIdx + 1, targetIdx) : [];
-    var branching = skipped.length > 0;
     var sourceBottom = sourceEl.offsetTop + sourceEl.offsetHeight;
+    var branches = getBranchesForQuestion(qid);
+    // target이 딱 하나뿐이고 그게 바로 다음 문항이면, 사실상 로직이 없는 것과
+    // 똑같은 모양(분기선 없이 밋밋한 한 줄)이어야 한다.
+    var isTrivial = branches.length === 1 && branches[0].target === QUESTION_ORDER[sourceIdx + 1];
+    var branching = branches.length > 0 && !isTrivial;
 
     if (!branching){
       if (forceLayout){
@@ -1339,105 +1377,117 @@
           prevBottom = el.offsetTop + el.offsetHeight;
         });
       }
-      return { branching: false, explicitBlock: null, target: '' };
+      return { branching: false, branches: [] };
     }
 
-    var prevSideBottom = null;
-    skipped.forEach(function(dqid, i){
-      var el = allPills[dqid];
-      el.style.left = '297px';
-      el.style.top = (i === 0 ? sourceBottom + 120 : prevSideBottom + 57) + 'px';
-      prevSideBottom = el.offsetTop + el.offsetHeight;
+    var targetIdxSet = {};
+    var maxTargetIdx = sourceIdx;
+    branches.forEach(function(b){
+      var idx = QUESTION_ORDER.indexOf(b.target);
+      targetIdxSet[idx] = true;
+      if (idx > maxTargetIdx) maxTargetIdx = idx;
     });
-    var targetTop = Math.max(prevSideBottom + 90, sourceBottom + 190);
-    var targetEl = allPills[explicitTarget];
-    targetEl.style.left = '520px';
-    targetEl.style.top = targetTop + 'px';
 
-    var afterPrevBottom = targetEl.offsetTop + targetEl.offsetHeight;
-    QUESTION_ORDER.slice(targetIdx + 1).forEach(function(dqid){
+    var prevBottom = sourceBottom;      // 방금 배치한 요소(메인이든 사이드든)의 아랫변
+    var runAnchorBottom = sourceBottom; // 지금 진행 중인(또는 다음에 시작할) 사이드 구간의 시작 기준점
+    var inSideRun = false;
+    for (var i = sourceIdx + 1; i <= maxTargetIdx; i++){
+      var dqid = QUESTION_ORDER[i];
+      var el = allPills[dqid];
+      if (targetIdxSet[i]){
+        var top = inSideRun ? Math.max(prevBottom + 90, runAnchorBottom + 190) : (prevBottom + CARD_GAP);
+        el.style.left = '520px';
+        el.style.top = top + 'px';
+        prevBottom = el.offsetTop + el.offsetHeight;
+        runAnchorBottom = prevBottom;
+        inSideRun = false;
+      } else {
+        var sideTop = inSideRun ? (prevBottom + 57) : (runAnchorBottom + 120);
+        el.style.left = '297px';
+        el.style.top = sideTop + 'px';
+        prevBottom = el.offsetTop + el.offsetHeight;
+        inSideRun = true;
+      }
+    }
+    // 가장 먼 target 이후로는 더 이상 아무도 갈라지지 않으므로 그냥 평범하게 이어 붙인다.
+    QUESTION_ORDER.slice(maxTargetIdx + 1).forEach(function(dqid){
       var el = allPills[dqid];
       el.style.left = '520px';
-      el.style.top = (afterPrevBottom + CARD_GAP) + 'px';
-      afterPrevBottom = el.offsetTop + el.offsetHeight;
+      el.style.top = (prevBottom + CARD_GAP) + 'px';
+      prevBottom = el.offsetTop + el.offsetHeight;
     });
 
-    return { branching: true, explicitBlock: explicitBlock, target: explicitTarget };
+    // 선 그리기(lane 배정)는 가까운 target부터 순서대로 하는 게 자연스러우므로 정렬해둔다.
+    branches = branches.slice().sort(function(a, b){
+      return QUESTION_ORDER.indexOf(a.target) - QUESTION_ORDER.indexOf(b.target);
+    });
+    return { branching: true, branches: branches };
   }
 
-  // resolveBranchPositions로 모든 위치가 확정된 뒤, qid의 직행선(로직1 ->
-  // 실제 목표 문항)을 최종 위치 기준으로 그린다. qid 자신이 옆 컬럼에 있을
-  // 수도 있으므로(다른 문항의 분기 때문에), 시작 x좌표도 실제 위치에서 읽는다.
-  function drawExtraPath(qid, allPills, extraPathEl, extraBadgeEl, result){
+  // resolveBranchPositions로 모든 위치가 확정된 뒤, qid에서 갈라지는 선들을
+  // 최종 위치 기준으로 그린다. slots는 [{path, badge}, ...] 형태의 DOM id
+  // 목록으로, qid에서 나올 수 있는 최대 분기 개수만큼 미리 마련해둔 자리다.
+  // qid 자신이 옆 컬럼에 있을 수도 있으므로(다른 문항의 분기 때문에), 시작
+  // x좌표도 실제 위치에서 읽는다.
+  function drawBranchLines(qid, allPills, slots, result){
+    var sourceEl = allPills[qid];
+    var sourceBottom = sourceEl.offsetTop + sourceEl.offsetHeight;
+    var sourceX = svgX(parseInt(sourceEl.style.left, 10));
+
     if (!result.branching){
-      if (extraPathEl) extraPathEl.style.display = 'none';
-      if (extraBadgeEl) extraBadgeEl.style.display = 'none';
+      var sourceIdx = QUESTION_ORDER.indexOf(qid);
+      var nextQid = QUESTION_ORDER[sourceIdx + 1];
+      var nextEl = nextQid ? allPills[nextQid] : null;
+      slots.forEach(function(slot, i){
+        var pathEl = document.getElementById(slot.path);
+        var badgeEl = document.getElementById(slot.badge);
+        if (i === 0 && pathEl && nextEl){
+          pathEl.style.display = '';
+          var nextX = svgX(parseInt(nextEl.style.left, 10));
+          pathEl.setAttribute('d', connectorPath(sourceX, sourceBottom, nextX, nextEl.offsetTop));
+        } else if (pathEl){
+          pathEl.style.display = 'none';
+        }
+        if (badgeEl) badgeEl.style.display = 'none';
+      });
       return;
     }
-    var sourceEl = allPills[qid];
-    var sourceBottom = sourceEl.offsetTop + sourceEl.offsetHeight;
-    var sourceX = svgX(parseInt(sourceEl.style.left, 10));
-    var targetEl = allPills[result.target];
-    var targetX = svgX(parseInt(targetEl.style.left, 10));
-    var targetTop = targetEl.offsetTop; // 다른 문항의 분기가 이 위치를 더 내렸을 수 있어 지금 다시 읽는다.
 
-    if (extraPathEl){
-      extraPathEl.style.display = '';
-      // 일반 connectorPath(중간 지점에서 완만하게 꺾임)를 쓰면, qid 자신이 이미
-      // 옆 컬럼에 있을 때(예: 5->8과 6->8이 겹칠 때) 이 직행선이 qid의 "그 외"
-      // 선과 시작점 근처에서 한참 겹쳐 보인다. earlyBendPath로 시작점 바로
-      // 근처에서 빠르게 꺾이게 해서 두 선을 눈에 띄게 갈라놓는다.
-      extraPathEl.setAttribute('d', earlyBendPath(sourceX, sourceBottom, targetX, targetTop));
-    }
-    if (extraBadgeEl){
-      extraBadgeEl.style.display = 'flex';
-      var midPoint = extraPathEl.getPointAtLength(extraPathEl.getTotalLength() / 2);
-      extraBadgeEl.style.left = midPoint.x + 'px';
-      extraBadgeEl.style.top = midPoint.y + 'px';
-    }
-  }
-
-  // qid의 "그 외 응답" 곡선(바로 다음 문항으로 가는 기본 선)을 그린다. 분기
-  // 중이 아니면 그냥 직선, 분기 중이면 옆으로 비켜난 첫 번째 문항까지 곡선으로
-  // 휘어진다. 실제 자동("그 외") 블록이 없으면(사용자가 지웠으면) 선 자체를
-  // 숨긴다.
-  function layoutElseLine(qid, allPills, linePathEl, elseBadgeEl, branchResult){
-    if (!linePathEl) return;
-    var sourceEl = allPills[qid];
-    var sourceIdx = QUESTION_ORDER.indexOf(qid);
-    var sourceBottom = sourceEl.offsetTop + sourceEl.offsetHeight;
-    // qid 자신이 다른 문항(예: Q5)의 분기 때문에 옆 컬럼(297px)으로 비켜나 있을
-    // 수도 있으므로, x좌표를 710으로 고정하지 않고 실제 위치에서 읽는다. 안
-    // 그러면 이 선이 실제 핀 위치와 동떨어진 곳에 떠 있는 것처럼 보인다.
-    var sourceX = svgX(parseInt(sourceEl.style.left, 10));
-    var immediateNextQid = QUESTION_ORDER[sourceIdx + 1];
-    var immediateNextEl = immediateNextQid ? allPills[immediateNextQid] : null;
-
-    if (!branchResult.branching){
-      linePathEl.style.display = '';
-      if (immediateNextEl){
-        var nextX = svgX(parseInt(immediateNextEl.style.left, 10));
-        linePathEl.setAttribute('d', connectorPath(sourceX, sourceBottom, nextX, immediateNextEl.offsetTop));
+    result.branches.forEach(function(branch, i){
+      var slot = slots[i];
+      if (!slot) return; // qid가 가질 수 있는 최대 분기 수를 넘는 경우는 없어야 하지만, 방어적으로 무시한다.
+      var pathEl = document.getElementById(slot.path);
+      var badgeEl = document.getElementById(slot.badge);
+      var targetEl = allPills[branch.target];
+      var targetX = svgX(parseInt(targetEl.style.left, 10));
+      var targetTop = targetEl.offsetTop; // 다른 문항의 분기가 이 위치를 더 내렸을 수 있어 지금 다시 읽는다.
+      if (pathEl){
+        pathEl.style.display = '';
+        // 같은 메인 컬럼 안에서 여러 target으로 갈리는 경우(x가 전부 같음) 선끼리
+        // 겹치지 않도록 lane마다 다른 폭으로 부풀린다. gap이 있는(x가 다른)
+        // 경우는 branchPath가 알아서 earlyBendPath로 처리한다.
+        pathEl.setAttribute('d', branchPath(sourceX, sourceBottom, targetX, targetTop, i * 55));
       }
-      if (elseBadgeEl) elseBadgeEl.style.display = 'none';
-      return;
-    }
-    var autoBlock = document.querySelector('#rpLogicList .logic-detail[data-auto="true"][data-question="' + qid + '"]');
-    if (!autoBlock){
-      linePathEl.style.display = 'none';
-      if (elseBadgeEl) elseBadgeEl.style.display = 'none';
-      return;
-    }
-    linePathEl.style.display = '';
-    var nextX2 = svgX(parseInt(immediateNextEl.style.left, 10));
-    linePathEl.setAttribute('d', earlyBendPath(sourceX, sourceBottom, nextX2, immediateNextEl.offsetTop));
-    if (elseBadgeEl){
-      elseBadgeEl.style.display = 'flex';
-      // 곡선의 중점은 베지어 t=0.5로 손수 계산하는 것보다 실제 경로 길이의
-      // 절반 지점(getPointAtLength)을 쓰는 게 곡선이 재배치돼도 항상 정확하다.
-      var midPoint = linePathEl.getPointAtLength(linePathEl.getTotalLength() / 2);
-      elseBadgeEl.style.left = midPoint.x + 'px';
-      elseBadgeEl.style.top = midPoint.y + 'px';
+      if (badgeEl && pathEl){
+        badgeEl.style.display = 'flex';
+        // 실제 길이의 절반 지점에 찍으면, target이 멀어서 선이 길어질수록
+        // 그 중간 지점이 아래쪽의 다른 문항 카드 줄과 겹쳐버린다(예: Q7로
+        // 가는 선의 중점이 그 사이에 있는 Q6 카드 위에 찍히는 문제). 분기가
+        // 갈라지는 지점(문항 바로 아래) 근처에 찍으면 몇 번을 건너뛰든 배지가
+        // 항상 첫 카드가 시작되기 전 여백에 놓인다. 다만 전부 같은 길이에서
+        // 찍으면 여러 선이 갈라지는 초입에는 아직 서로 가까워서 배지끼리
+        // 겹친다 -- lane마다 조금씩 더 먼 지점에서 찍어 세로로도 살짝 벌려둔다.
+        var badgeLen = Math.min(60 + i * 32, pathEl.getTotalLength() / 2);
+        var midPoint = pathEl.getPointAtLength(badgeLen);
+        badgeEl.style.left = midPoint.x + 'px';
+        badgeEl.style.top = midPoint.y + 'px';
+      }
+    });
+    for (var j = result.branches.length; j < slots.length; j++){
+      var unusedPath = document.getElementById(slots[j].path);
+      var unusedBadge = document.getElementById(slots[j].badge);
+      if (unusedPath) unusedPath.style.display = 'none';
+      if (unusedBadge) unusedBadge.style.display = 'none';
     }
   }
 
@@ -1448,6 +1498,15 @@
     var q8 = document.querySelector('.flow-pill[data-question="Q8"]');
     if (!q5 || !q6 || !q7 || !q8) return;
     var allPills = { Q5: q5, Q6: q6, Q7: q7, Q8: q8 };
+    var Q5_SLOTS = [
+      { path: 'q5LinePath', badge: 'q5ElseBadge' },
+      { path: 'q5ExtraPath', badge: 'q5ExtraBadge' },
+      { path: 'q5ExtraPath2', badge: 'q5ExtraBadge2' }
+    ];
+    var Q6_SLOTS = [
+      { path: 'q6LinePath', badge: 'q6ElseBadge' },
+      { path: 'q6ExtraPath', badge: 'q6ExtraBadge' }
+    ];
 
     // 1단계: 위치만 확정한다. Q5가 먼저 Q6/Q7/Q8의 기본 위치를 정하고, Q6
     // 자신도 로직이 있으면(예: 6->8) 그 위에서 다시 필요한 만큼 조정한다 --
@@ -1458,14 +1517,11 @@
     var q5Result = resolveBranchPositions('Q5', allPills, true);
     var q6Result = resolveBranchPositions('Q6', allPills, !q5Result.branching);
 
-    // 2단계: 위치가 모두 확정된 뒤에야 직행선을 그린다 -- Q6의 분기가 Q5의
-    // 목표(Q8) 위치를 더 내렸을 수도 있어서, 미리 계산해둔 좌표로 그리면
-    // 서로 어긋난 채 허공에 뜬 선이 생긴다.
-    drawExtraPath('Q5', allPills, document.getElementById('q5ExtraPath'), document.getElementById('q5ExtraBadge'), q5Result);
-    drawExtraPath('Q6', allPills, document.getElementById('q6ExtraPath'), document.getElementById('q6ExtraBadge'), q6Result);
-
-    layoutElseLine('Q5', allPills, document.getElementById('q5LinePath'), document.getElementById('q5ElseBadge'), q5Result);
-    layoutElseLine('Q6', allPills, document.getElementById('q6LinePath'), document.getElementById('q6ElseBadge'), q6Result);
+    // 2단계: 위치가 모두 확정된 뒤에야 선을 그린다 -- Q6의 분기가 Q5의
+    // 목표 위치를 더 내렸을 수도 있어서, 미리 계산해둔 좌표로 그리면 서로
+    // 어긋난 채 허공에 뜬 선이 생긴다.
+    drawBranchLines('Q5', allPills, Q5_SLOTS, q5Result);
+    drawBranchLines('Q6', allPills, Q6_SLOTS, q6Result);
 
     // Q7->Q8 연결선은 실제 좌표를 따라간다 -- 같은 컬럼에 있으면 직선, 컬럼이
     // 바뀌는 지점(건너뛴 문항 -> 목표 문항)이면 자동으로 곡선이 된다.
@@ -1486,8 +1542,8 @@
     var q8to9 = document.getElementById('q8LinePath');
     if (q8to9) q8to9.setAttribute('d', 'M 710 ' + q8Bottom + ' V ' + submitTop);
 
-    updateBranchLineColors('Q5', q5, q5Result.branching, 'q5LinePath', 'q5ExtraPath', 'q5ExtraBadge', 'q5ElseBadge');
-    updateBranchLineColors('Q6', q6, q6Result.branching, 'q6LinePath', 'q6ExtraPath', 'q6ExtraBadge', 'q6ElseBadge');
+    updateBranchLineColors('Q5', q5, q5Result, Q5_SLOTS);
+    updateBranchLineColors('Q6', q6, q6Result, Q6_SLOTS);
   }
   // Q5의 선이 두 개로 갈라지는 분기 상태에서는, 문항이 선택됐다고 무작정 둘 다
   // 파란색으로 켜는 게 아니라 지금 펼쳐져(활성화되어) 있는 로직 블록 하나만 파란색이
@@ -1506,56 +1562,39 @@
   // 하나의 선만 파란색이 되도록 한다 (피그마 node 615:10470, 615:11522) --
   // 로직1이 펼쳐져 있으면 그 직행선만, "그 외 응답" 블록이 펼쳐져 있으면 그
   // 곡선만 파란색이 된다. qid가 지금 선택돼 있지 않으면 둘 다 회색이다.
-  function updateBranchLineColors(qid, node, branching, linePathId, extraPathId, extraBadgeId, elseBadgeId){
-    var linePath = document.getElementById(linePathId);
-    var extraPath = document.getElementById(extraPathId);
-    var extraBadge = document.getElementById(extraBadgeId);
-    var elseBadge = document.getElementById(elseBadgeId);
-    if (!linePath || !extraPath) return;
+  // qid에서 갈라지는 선(slots)들의 색/배지를 정한다. 로직이 하나도 없으면
+  // (branching=false) 문항 선택 여부로만 유일한 선을 켠다. 분기 중이면, 지금
+  // 실제로 펼쳐져 있는 로직 블록에 대응하는 선 하나만 파란색이 되고 나머지는
+  // 회색이다 -- 어느 블록도 펼쳐져 있지 않으면(전부 접혀 있으면) 셋 이상으로
+  // 나뉜 경우 "그중 하나를 대신 켠다"는 자연스러운 대응이 없으므로 전부
+  // 회색으로 둔다.
+  function updateBranchLineColors(qid, node, result, slots){
     var isSelected = node.classList.contains('selected');
 
-    if (!branching){
-      // 로직이 아예 없어서 선이 하나뿐인 상태에서는 문항 선택 여부로만 이 선을 켠다.
-      linePath.setAttribute('stroke', isSelected ? '#007eff' : '#d1d5dc');
-      extraPath.setAttribute('stroke', '#d1d5dc');
-      if (extraBadge) extraBadge.style.display = 'none';
-      if (elseBadge) elseBadge.style.display = 'none';
+    if (!result.branching){
+      slots.forEach(function(slot, i){
+        var pathEl = document.getElementById(slot.path);
+        var badgeEl = document.getElementById(slot.badge);
+        if (pathEl) pathEl.setAttribute('stroke', (i === 0 && isSelected) ? '#007eff' : '#d1d5dc');
+        if (badgeEl) badgeEl.style.display = 'none';
+      });
       return;
     }
-    var explicitBlock = getConfiguredLogicBlocks(qid)[0];
-    var autoBlock = document.querySelector('#rpLogicList .logic-detail[data-auto="true"][data-question="' + qid + '"]');
-    // 로직이 설정돼 있으면(분기 상태면) 이 문항이 지금 선택 안 돼 있어도 분기
-    // 레이아웃과 배지는 그대로 유지된다 -- "어떤 로직 선이 파란색으로 강조되는지"만
-    // 지금 이 문항이 선택돼 있을 때로 제한한다.
-    //
-    // 두 선의 활성 여부는 로직1이 펼쳐져 있는지 하나만으로 정해지는 서로 반대
-    // 상태다 -- 로직1이 선택(펼쳐짐) 안 됐으면 항상 그 외가 선택된 것과 똑같이
-    // 보여준다(그 반대도 마찬가지). 로직1도 그 외도 둘 다 접혀 있어서 어느 쪽도
-    // 활성화되지 않는 애매한 상태는 만들지 않는다.
-    var explicitExpanded = !!explicitBlock && !explicitBlock.classList.contains('collapsed');
-    var explicitActive = isSelected && explicitExpanded;
-    var autoActive = isSelected && !!autoBlock && !explicitExpanded;
-    extraPath.setAttribute('stroke', explicitActive ? '#007eff' : '#d1d5dc');
-    linePath.setAttribute('stroke', autoActive ? '#007eff' : '#d1d5dc');
 
-    if (extraBadge){
-      if (explicitBlock){
-        extraBadge.style.display = 'flex';
-        extraBadge.textContent = getAnswerNumbersLabel(qid, explicitBlock);
-        extraBadge.classList.toggle('active', explicitActive);
-      } else {
-        extraBadge.style.display = 'none';
+    result.branches.forEach(function(branch, i){
+      var slot = slots[i];
+      if (!slot) return;
+      var pathEl = document.getElementById(slot.path);
+      var badgeEl = document.getElementById(slot.badge);
+      var expanded = !branch.block.classList.contains('collapsed');
+      var active = isSelected && expanded;
+      if (pathEl) pathEl.setAttribute('stroke', active ? '#007eff' : '#d1d5dc');
+      if (badgeEl){
+        badgeEl.style.display = 'flex';
+        badgeEl.textContent = getAnswerNumbersLabel(qid, branch.block);
+        badgeEl.classList.toggle('active', active);
       }
-    }
-    if (elseBadge){
-      if (autoBlock){
-        elseBadge.style.display = 'flex';
-        elseBadge.textContent = getAnswerNumbersLabel(qid, autoBlock);
-        elseBadge.classList.toggle('active', autoActive);
-      } else {
-        elseBadge.style.display = 'none';
-      }
-    }
+    });
   }
   function updateAllFlowNodes(){
     QUESTION_ORDER.forEach(function(qid){ updateFlowNodeContent(qid); });
