@@ -2140,7 +2140,11 @@
     head.innerHTML = '<span>어디로 이동 할까요</span><img src="assets/icon-dropdown-chevron.svg" alt="">';
     menu.appendChild(head);
 
-    QUESTION_ORDER.filter(function(q){ return q !== qid; }).forEach(function(targetQid){
+    // 바로 다음 문항은 목록에서 뺀다 -- 이동 로직을 따로 걸지 않아도 이미
+    // 그 문항으로 넘어가므로, 굳이 "이동"으로 골라야 하는 실제 스킵 대상만
+    // 보여준다.
+    var skipNextQid = nextQuestionAfter(qid);
+    QUESTION_ORDER.filter(function(q){ return q !== qid && q !== skipNextQid; }).forEach(function(targetQid){
       var item = buildMoveDropdownItem(targetQid, targetQid === currentTarget, function(){
         setOptionMoveTarget(qid, answerText, targetQid);
         closeFieldDropdown();
