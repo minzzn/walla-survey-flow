@@ -1285,9 +1285,16 @@
     var q5Branching = skipped.length > 0;
 
     if (!q5Branching){
-      q6.style.left = '520px'; q6.style.top = '316px';
-      q7.style.left = '520px'; q7.style.top = '499px';
-      q8.style.left = '520px'; q8.style.top = '682px';
+      // Q6/Q7/Q8 위치를 316/499/682로 고정해두면, Q5 카드가 선택돼 "응답에 따른
+      // 이동" 내용(예: 선택지가 모두 같은 문항으로 몰려 로직1 한 줄 + 그 외 응답
+      // 한 줄)으로 펼쳐져 실제 높이가 커졌을 때 Q6 박스와 겹쳐버린다. Q5의 실제
+      // 높이를 기준으로 다음 문항 위치를 다시 계산한다 (접혀 있을 때는 기존과
+      // 똑같이 316px가 나온다).
+      var q5BottomLinear = q5.offsetTop + q5.offsetHeight;
+      var q6TopLinear = q5BottomLinear + 141;
+      q6.style.left = '520px'; q6.style.top = q6TopLinear + 'px';
+      q7.style.left = '520px'; q7.style.top = (q6TopLinear + 183) + 'px';
+      q8.style.left = '520px'; q8.style.top = (q6TopLinear + 366) + 'px';
       if (extraPath) extraPath.style.display = 'none';
       if (extraBadge) extraBadge.style.display = 'none';
       if (elseBadge) elseBadge.style.display = 'none';
@@ -1295,8 +1302,7 @@
       // 되돌려야 한다. 안 그러면 로직 삭제 후에도 예전 곡선 좌표가 그대로 남는다.
       var q5LinePath = document.getElementById('q5LinePath');
       if (q5LinePath){
-        var q5BottomLinear = q5.offsetTop + q5.offsetHeight;
-        q5LinePath.setAttribute('d', 'M 710 ' + q5BottomLinear + ' V 316');
+        q5LinePath.setAttribute('d', 'M 710 ' + q5BottomLinear + ' V ' + q6TopLinear);
       }
     } else {
       var q5Bottom = q5.offsetTop + q5.offsetHeight;
