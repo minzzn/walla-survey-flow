@@ -68,9 +68,10 @@ https://walla-survey-flow.netlify.app
 | 42 | 2026-08-31 11:18:20 | [`11f4ae3`](https://github.com/minzzn/walla-survey-flow/commit/11f4ae3) | `fix` | 이동 아이콘 활성 색상을 파란 배경+흰 아이콘으로 재수정 (고해상도 참고안 기준) |
 | 43 | 2026-08-31 11:23:59 | [`0e18084`](https://github.com/minzzn/walla-survey-flow/commit/0e18084) | `fix` | 이동 아이콘 활성 색상을 하늘색 배경(#e5f2ff)+파란 아이콘으로 최종 수정 (피그마 실제 에셋 사용) |
 | 44 | 2026-08-31 11:34:43 | [`c55f487`](https://github.com/minzzn/walla-survey-flow/commit/c55f487) | `fix` | 편집 뷰와 로직 뷰에서 각각 설정한 로직 데이터가 어긋나던 버그 수정 (빈 로직 블록을 새로 만들지 않고 재사용) |
+| 45 | 2026-08-31 11:38:26 | [`40f020b`](https://github.com/minzzn/walla-survey-flow/commit/40f020b) | `feat` | 첫 진입 시 우측 패널이 문항 설정 대신 로직 탭으로 시작하도록 변경 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~44번)입니다.
+2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~45번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
