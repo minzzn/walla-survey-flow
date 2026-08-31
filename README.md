@@ -93,6 +93,7 @@ https://walla-survey-flow.netlify.app
 | 67 | 2026-08-31 16:03:08 | [`a82f36a`](https://github.com/minzzn/walla-survey-flow/commit/a82f36a) | `fix` | (잘못 짚은 수정 - 68번에서 되돌림) 중앙 패널 옵션 로직 아이콘의 기본 흰색 배경 제거 |
 | 68 | 2026-08-31 16:08:14 | [`ec4067e`](https://github.com/minzzn/walla-survey-flow/commit/ec4067e) | `fix` | 67번 되돌리고, 실제로는 편집/로직 탭의 "로직" 아이콘 SVG에 박혀있던 흰 배경 사각형을 제거 |
 | 69 | 2026-08-31 16:22:42 | [`0bc51d6`](https://github.com/minzzn/walla-survey-flow/commit/0bc51d6) | `feat` | 로직 캔버스 카드도 이동 대상이 다음 문항이면 배지 대신 "다음 문항으로" 텍스트로 표시 |
+| 70 | 2026-08-31 16:28:54 | [`64bc8a5`](https://github.com/minzzn/walla-survey-flow/commit/64bc8a5) | `feat` | 이동 목적지가 같아진 로직 블록들을 자동으로 하나로 합치도록 구현 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
