@@ -192,6 +192,9 @@
   .logic-or{font-size:14px;color:var(--neutral-600);flex-shrink:0;}
   .dest-pill{display:flex;align-items:center;gap:6px;flex-shrink:0;}
   .dest-pill img{width:16px;height:16px;}
+  /* 이동 대상이 바로 다음 문항이면 Qn 배지 대신 이 옅은 텍스트만 보여준다
+     (편집 뷰의 qep-next-label과 같은 규칙, 캔버스 로직 카드용). */
+  .dest-next-label{font-weight:700;font-size:14px;color:#9c9c9c;white-space:nowrap;}
 
   /* 여러 갈래로 나가는 연결선 중 특정 로직 번호를 표시하는 동그란 배지 */
   /* 분기 선 위의 "몇 번 응답" 알약 배지. 기본은 회색(비활성), 그 선의 로직이
@@ -1230,6 +1233,13 @@
     if (!shouldExpand){ body.innerHTML = ''; return; }
 
     var html = '<p>응답에 따른 이동</p>';
+    // 이동 대상이 원래 순서상 바로 다음 문항과 같으면 Qn 배지 대신 옅은
+    // "다음 문항으로" 텍스트만 보여준다 (편집 뷰의 옵션 이동 표시와 같은 규칙).
+    var nextQ = nextQuestionAfter(qid);
+    function destPillInner(target){
+      if (target === nextQ) return '<p class="dest-next-label">다음 문항으로</p>';
+      return '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + target + '</b></div>';
+    }
     configured.forEach(function(block, i){
       var answers = getSelectedAnswerTexts(block);
       var target = getBlockMoveTargetId(block) || '';
@@ -1245,7 +1255,7 @@
           '</div>' +
           '<div class="dest-pill">' +
             '<img src="assets/icon-dest-arrow-blue.svg" alt="">' +
-            '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + target + '</b></div>' +
+            destPillInner(target) +
           '</div>' +
         '</div>';
     });
@@ -1253,13 +1263,15 @@
     // 명시적으로 배정했거나, 사용자가 자동 블록을 직접 지웠으면 이 행도 같이 없어진다.
     var autoBlock = document.querySelector('#rpLogicList .logic-detail[data-auto="true"][data-question="' + qid + '"]');
     if (autoBlock){
-      var elseTarget = nextQuestionAfter(qid);
+      // 자동 블록의 실제 이동 대상을 읽는다 -- 기본값은 다음 문항이지만
+      // 사용자가 직접 다른 문항으로 바꿨을 수도 있다.
+      var elseTarget = getBlockMoveTargetId(autoBlock) || nextQ;
       html +=
         '<div class="logic-row grey">' +
           '<div class="logic-row-left"><span class="logic-else-label">그 외 응답</span></div>' +
           '<div class="dest-pill">' +
             '<img src="assets/icon-dest-arrow-grey.svg" alt="">' +
-            '<div class="q-label grey"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + elseTarget + '</b></div>' +
+            destPillInner(elseTarget) +
           '</div>' +
         '</div>';
     }
