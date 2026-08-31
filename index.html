@@ -147,17 +147,58 @@
   }
   .terminal-node span{font-size:14px;font-weight:500;color:var(--neutral-500);white-space:nowrap;}
 
-  /* flow pill nodes (Q6 / Q7 / Q8) */
+  /* flow pill nodes: 기본은 한 줄 핀이고, 실제 로직이 설정된 채로 선택되면
+     .expanded가 붙어 "응답에 따른 이동" 카드로 펼쳐진다. */
   .flow-pill{
-    position:absolute;width:380px;height:40px;background:var(--white);
-    border:1px solid var(--neutral-300);border-radius:12px;cursor:pointer;
-    display:flex;align-items:center;gap:2px;padding:9px 12px;overflow:hidden;
+    position:absolute;width:380px;background:var(--white);z-index:8;
+    border:1px solid var(--neutral-300);border-radius:12px;cursor:pointer;overflow:hidden;
   }
   .flow-pill.selected{border-color:var(--skyblue-500);}
+  .flow-pill.expanded{border-radius:20px;box-shadow:0 0 10px rgba(0,126,255,.15);}
+
+  .flow-pill-head{height:40px;padding:9px 12px;display:flex;align-items:center;gap:2px;}
+  .flow-pill.expanded .flow-pill-head{
+    height:50px;padding:8px 16px;align-items:flex-end;border-bottom:1px solid var(--neutral-200);
+  }
   .flow-pill .q-text{
     flex:1;font-size:16px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .flow-pill .q-tag{font-size:14px;color:var(--neutral-400);white-space:nowrap;}
+  .flow-pill.expanded .q-tag{display:none;}
+  .flow-pill-edit-link{font-size:14px;color:var(--azure-61);white-space:nowrap;cursor:pointer;display:none;}
+  .flow-pill.expanded .flow-pill-edit-link{display:block;}
+
+  .flow-pill-body{display:none;}
+  .flow-pill.expanded .flow-pill-body{
+    display:flex;flex-direction:column;gap:10px;padding:20px 16px;
+  }
+  .flow-pill-body > p{font-size:16px;color:var(--neutral-400);margin:0;}
+
+  .logic-row{
+    height:50px;border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;
+  }
+  .logic-row.grey{background:var(--neutral-100);}
+  .logic-row.blue{background:var(--skyblue-100);}
+  .logic-row-left{display:flex;align-items:center;gap:18px;flex:1;min-width:0;}
+  .logic-row-num{display:flex;align-items:center;gap:18px;width:53px;flex-shrink:0;}
+  .logic-row-num span{font-size:14px;font-weight:700;white-space:nowrap;color:var(--skyblue-500);}
+  .logic-else-label{font-size:14px;font-weight:700;color:var(--neutral-500);white-space:nowrap;}
+  .logic-chips{display:flex;align-items:center;gap:2px;flex:1;min-width:0;flex-wrap:wrap;}
+  .logic-chip-box{
+    background:var(--white);border:1px solid var(--neutral-300);border-radius:6px;
+    height:26px;padding:0 8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .logic-chip-box span{font-size:14px;color:var(--neutral-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;}
+  .logic-or{font-size:14px;color:var(--neutral-600);flex-shrink:0;}
+  .dest-pill{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .dest-pill img{width:16px;height:16px;}
+
+  /* 여러 갈래로 나가는 연결선 중 특정 로직 번호를 표시하는 동그란 배지 */
+  .branch-num-badge{
+    position:absolute;width:24px;height:24px;border-radius:50%;background:var(--white);
+    border:1.5px solid var(--skyblue-500);color:var(--skyblue-500);font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;z-index:2;
+  }
 
   /* connectors */
   svg.connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
@@ -560,14 +601,18 @@
       <div class="terminal-node" style="left:618px;top:54px;"><span>시작</span></div>
       <div class="terminal-node" style="left:618px;top:865px;"><span>제출하기</span></div>
 
-      <!-- connectors: 로직이 하나도 없으면 문항들이 분기 없이 한 줄로 곧게 이어진다. -->
+      <!-- connectors: 로직이 하나도 없으면 문항들이 분기 없이 한 줄로 곧게 이어지고,
+           Q5에 로직이 설정되면(updateFlowLayout) Q6/Q7이 옆으로 비켜나고 Q5->Q8
+           직행선(q5ExtraPath)이 추가로 나타난다. -->
       <svg class="connectors">
         <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q5LinePath" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q5ExtraPath" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
         <path id="q6LinePath" d="M 710 356 V 499" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q7LinePath" d="M 710 539 V 682" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q8LinePath" d="M 710 722 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
       </svg>
+      <div class="branch-num-badge" id="q5ExtraBadge" style="display:none;">1</div>
 
       <!-- collaborator caret -->
       <div class="collab-caret">
@@ -575,26 +620,43 @@
         <img src="assets/icon-caret-2.svg" alt="" style="position:absolute;left:0;top:0;width:6px;height:1px;">
       </div>
 
-      <!-- Q5~Q8: 로직 미설정 상태에서는 전부 같은 모양의 핀으로 세로 한 줄에 배치된다. -->
+      <!-- Q5~Q8: 로직 미설정 상태에서는 전부 같은 모양의 핀으로 세로 한 줄에 배치되고,
+           선택한 문항에 실제 로직이 있으면 카드로 펼쳐지며 응답별 이동 행이 나타난다. -->
       <div class="flow-pill" data-question="Q5" onclick="activateLogicForQuestion('Q5')" style="left:520px;top:133px;">
-        <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
-        <span class="q-text">원데이 클래스 참여 경험이 어느 정도인가요?</span>
-        <span class="q-tag">→ 다음 질문</span>
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+          <span class="q-text">원데이 클래스 참여 경험이 어느 정도인가요?</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
       </div>
       <div class="flow-pill" data-question="Q6" onclick="activateLogicForQuestion('Q6')" style="left:520px;top:316px;">
-        <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
-        <span class="q-text">아래 분야의 선호도를 알려주세요.</span>
-        <span class="q-tag">→ 다음 질문</span>
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
+          <span class="q-text">아래 분야의 선호도를 알려주세요.</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
       </div>
       <div class="flow-pill" data-question="Q7" onclick="activateLogicForQuestion('Q7')" style="left:520px;top:499px;">
-        <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q7</b></div>
-        <span class="q-text">지금까지 참여한 클래스 전</span>
-        <span class="q-tag">→ 다음 질문</span>
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q7</b></div>
+          <span class="q-text">지금까지 참여한 클래스 전</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
       </div>
       <div class="flow-pill" data-question="Q8" onclick="activateLogicForQuestion('Q8')" style="left:520px;top:682px;">
-        <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
-        <span class="q-text">보통 어떤 경로로 클래스를 찾나요</span>
-        <span class="q-tag">→ 다음 질문</span>
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
+          <span class="q-text">보통 어떤 경로로 클래스를 찾나요</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
       </div>
 
       </div>
@@ -881,6 +943,9 @@
       questionEditPanel.classList.add('hidden');
       canvasContent.classList.remove('hidden');
       if (controlPanel) controlPanel.classList.remove('hidden');
+      // 캔버스가 display:none인 동안은 카드 높이를 잴 수 없어 레이아웃 계산이 다
+      // 0으로 나오므로, 실제로 보이게 된 지금 다시 계산한다.
+      updateAllFlowNodes();
     } else {
       canvasContent.classList.add('hidden');
       questionEditPanel.classList.remove('hidden');
@@ -1087,6 +1152,7 @@
     if (rpCta) rpCta.classList.add('hidden');
     var hint = document.getElementById('rpEmptyHint');
     if (hint) hint.classList.remove('hidden');
+    updateAllFlowNodes();
   }
 
   function activateLogicForQuestion(qid){
@@ -1114,6 +1180,133 @@
         if (path) path.setAttribute('stroke', active ? '#007eff' : '#d1d5dc');
       });
     });
+
+    updateAllFlowNodes();
+  }
+
+  // ---------------- 로직이 실제로 설정된 문항은 캔버스에서 카드로 펼쳐진다 ----------------
+  // (피그마 node 615:10470). 답변을 하나도 안 고른 자동 생성 빈 블록은 "설정됨"으로
+  // 치지 않는다 -- activateLogicForQuestion이 클릭할 때마다 빈 블록을 만들어주므로,
+  // 그것만으로 카드가 펼쳐지면 아무 답변도 없는데 펼쳐진 것처럼 보인다.
+  function getConfiguredLogicBlocks(qid){
+    return Array.from(document.querySelectorAll('#rpLogicList .logic-detail')).filter(function(b){
+      return getBlockQuestionRefId(b) === qid && getSelectedAnswerTexts(b).length > 0;
+    });
+  }
+  function updateFlowNodeContent(qid){
+    var node = document.querySelector('#canvasContent .flow-pill[data-question="' + qid + '"]');
+    if (!node) return;
+    var configured = getConfiguredLogicBlocks(qid);
+    var shouldExpand = node.classList.contains('selected') && configured.length > 0;
+    node.classList.toggle('expanded', shouldExpand);
+
+    var body = node.querySelector('.flow-pill-body');
+    if (!body) return;
+    if (!shouldExpand){ body.innerHTML = ''; return; }
+
+    var html = '<p>응답에 따른 이동</p>';
+    configured.forEach(function(block, i){
+      var answers = getSelectedAnswerTexts(block);
+      var target = getBlockMoveTargetId(block) || '';
+      var chips = answers.map(function(a, idx){
+        var sep = idx < answers.length - 1 ? '<span class="logic-or">또는</span>' : '';
+        return '<div class="logic-chip-box"><span>' + a + '</span></div>' + sep;
+      }).join('');
+      html +=
+        '<div class="logic-row blue">' +
+          '<div class="logic-row-left">' +
+            '<div class="logic-row-num"><span>로직' + (i + 1) + '</span></div>' +
+            '<div class="logic-chips">' + chips + '</div>' +
+          '</div>' +
+          '<div class="dest-pill">' +
+            '<img src="assets/icon-dest-arrow-blue.svg" alt="">' +
+            '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + target + '</b></div>' +
+          '</div>' +
+        '</div>';
+    });
+    var elseTarget = nextQuestionAfter(qid);
+    html +=
+      '<div class="logic-row grey">' +
+        '<div class="logic-row-left"><span class="logic-else-label">그 외 응답</span></div>' +
+        '<div class="dest-pill">' +
+          '<img src="assets/icon-dest-arrow-grey.svg" alt="">' +
+          '<div class="q-label grey"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + elseTarget + '</b></div>' +
+        '</div>' +
+      '</div>';
+    body.innerHTML = html;
+  }
+  // Q5가 카드로 펼쳐지면 Q6/Q7 핀이 옆으로 비켜나서 Q5->Q8 직행선(로직1)과
+  // Q5->Q6 곡선("그 외 응답")이 겹치지 않게 자리를 만들어준다. 다른 문항이 펼쳐질
+  // 때는(아직 구체적으로 요구된 사례가 없어서) 기본 직선 배치를 그대로 둔다.
+  function updateFlowLayout(){
+    var q5 = document.querySelector('.flow-pill[data-question="Q5"]');
+    var q6 = document.querySelector('.flow-pill[data-question="Q6"]');
+    var q7 = document.querySelector('.flow-pill[data-question="Q7"]');
+    var q8 = document.querySelector('.flow-pill[data-question="Q8"]');
+    var extraPath = document.getElementById('q5ExtraPath');
+    var extraBadge = document.getElementById('q5ExtraBadge');
+    if (!q5 || !q6 || !q7 || !q8) return;
+
+    var q5Branching = q5.classList.contains('expanded') && getConfiguredLogicBlocks('Q5').length > 0;
+    if (!q5Branching){
+      q6.style.left = '520px'; q6.style.top = '316px';
+      q7.style.left = '520px'; q7.style.top = '499px';
+      q8.style.left = '520px'; q8.style.top = '682px';
+      if (extraPath) extraPath.style.display = 'none';
+      if (extraBadge) extraBadge.style.display = 'none';
+    } else {
+      var q5Bottom = q5.offsetTop + q5.offsetHeight;
+      var q6Top = q5Bottom + 120;
+      q6.style.left = '297px'; q6.style.top = q6Top + 'px';
+      var q7Top = q6Top + q6.offsetHeight + 57;
+      q7.style.left = '297px'; q7.style.top = q7Top + 'px';
+      var q8Top = Math.max(q7Top + q7.offsetHeight + 90, q5Bottom + 190);
+      q8.style.left = '520px'; q8.style.top = q8Top + 'px';
+
+      // Q5 -> Q6 곡선("그 외 응답")
+      var q6Path = document.getElementById('q5LinePath');
+      if (q6Path){
+        var ctrlY = q5Bottom + 57;
+        q6Path.setAttribute('d', 'M 710 ' + q5Bottom + ' C 710 ' + ctrlY + ', 487 ' + ctrlY + ', 487 ' + q6Top);
+      }
+      // Q5 -> Q8 직행선(로직1) + 번호 배지
+      if (extraPath){
+        extraPath.style.display = '';
+        extraPath.setAttribute('d', 'M 710 ' + q5Bottom + ' V ' + q8Top);
+      }
+      if (extraBadge){
+        extraBadge.style.display = 'flex';
+        extraBadge.style.left = (710 - 12) + 'px';
+        extraBadge.style.top = ((q5Bottom + q8Top) / 2 - 12) + 'px';
+      }
+    }
+
+    // Q6->Q7, Q7->Q8 연결선은 두 상태 모두에서 실제 위치를 따라간다.
+    var q6Bottom = q6.offsetTop + q6.offsetHeight;
+    var q7Top2 = q7.offsetTop;
+    var q6to7 = document.getElementById('q6LinePath');
+    if (q6to7){
+      var midX = q5Branching ? 487 : 710;
+      q6to7.setAttribute('d', 'M ' + midX + ' ' + q6Bottom + ' V ' + q7Top2);
+    }
+    var q7Bottom = q7.offsetTop + q7.offsetHeight;
+    var q8Top2 = q8.offsetTop;
+    var q7to8 = document.getElementById('q7LinePath');
+    if (q7to8){
+      if (q5Branching){
+        var ctrlY2 = q7Bottom + (q8Top2 - q7Bottom) / 2;
+        q7to8.setAttribute('d', 'M 487 ' + q7Bottom + ' C 487 ' + ctrlY2 + ', 710 ' + ctrlY2 + ', 710 ' + q8Top2);
+      } else {
+        q7to8.setAttribute('d', 'M 710 ' + q7Bottom + ' V ' + q8Top2);
+      }
+    }
+    var q8Bottom = q8.offsetTop + q8.offsetHeight;
+    var q8to9 = document.getElementById('q8LinePath');
+    if (q8to9) q8to9.setAttribute('d', 'M 710 ' + q8Bottom + ' V 865');
+  }
+  function updateAllFlowNodes(){
+    QUESTION_ORDER.forEach(function(qid){ updateFlowNodeContent(qid); });
+    updateFlowLayout();
   }
 
   // ---------------- 로직 블록 아코디언: 선택한 블록만 파란 테두리로 펼쳐지고
@@ -1203,6 +1396,7 @@
     }
     syncOptionLogicPills();
     syncOpenAnswerDropdown(block);
+    updateAllFlowNodes();
   }
   // 답변 드롭다운이 열려 있는 채로 칩이 추가/삭제되면(드롭다운 항목 클릭이든, 필드에 남아있는
   // 칩의 X 버튼 클릭이든) 드롭다운의 체크박스도 실제 선택 상태와 항상 일치시킨다.
@@ -1322,6 +1516,7 @@
       }
     }
     syncOptionLogicPills();
+    updateAllFlowNodes();
   }
 
   function openFieldDropdown(evt, fieldEl, type){
@@ -1563,6 +1758,7 @@
     collapseAllLogicBlocks(); // 새로 만든 로직은 바로 편집할 수 있게 펼친 채로 두고 나머지만 접는다.
     block.classList.remove('collapsed');
     syncOptionLogicPills();
+    updateAllFlowNodes();
   }
 
   // 새로 추가된(또는 기존) 로직 블록 삭제. 해당 문항의 블록이 하나도 안 남으면
@@ -1582,6 +1778,7 @@
 
     refreshRpLogicListForQuestion(currentQuestionId);
     syncOptionLogicPills();
+    updateAllFlowNodes();
   }
 
   // ---------------- 로직 설정 가이드 팝업: "가이드" 버튼으로 토글 ----------------
