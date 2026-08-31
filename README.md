@@ -71,9 +71,10 @@ https://walla-survey-flow.netlify.app
 | 45 | 2026-08-31 11:38:26 | [`40f020b`](https://github.com/minzzn/walla-survey-flow/commit/40f020b) | `feat` | 첫 진입 시 우측 패널이 문항 설정 대신 로직 탭으로 시작하도록 변경 |
 | 46 | 2026-08-31 12:29:31 | [`1e5c1d3`](https://github.com/minzzn/walla-survey-flow/commit/1e5c1d3) | `feat` | 우측 패널 "가이드" 버튼에 로직 설정 가이드 팝업(간단히 보기/자세히 보기) 연결 |
 | 47 | 2026-08-31 12:33:32 | [`34d63fd`](https://github.com/minzzn/walla-survey-flow/commit/34d63fd) | `fix` | 가이드 팝업 닫기(X) 아이콘을 피그마 실제 에셋으로 교체 |
+| 48 | 2026-08-31 12:49:18 | [`70cdfd5`](https://github.com/minzzn/walla-survey-flow/commit/70cdfd5) | `feat` | 로직 캔버스에서 실제 로직이 설정된 문항은 응답별 이동 행이 있는 카드로 펼쳐지도록 구현 (Q5 분기 레이아웃 포함) |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~47번)입니다.
+2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
