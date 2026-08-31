@@ -1486,11 +1486,14 @@
       var qid = getBlockQuestionRefId(block);
       var moveTarget = getBlockMoveTargetId(block);
       if (!moveTarget) return;
-      var isAuto = block.getAttribute('data-auto') === 'true';
+      // 자동 생성 블록이든 사용자가 직접 만든 로직이든, 이동 대상이 원래 순서상
+      // 바로 다음 문항과 같으면 굳이 Qn 배지를 보여줄 필요가 없다 -- 실제로 흐름을
+      // 건너뛰는(스킵하는) 로직일 때만 아이콘+번호 배지로 눈에 띄게 한다.
+      var isNextQuestion = moveTarget === nextQuestionAfter(qid);
       getSelectedAnswerTexts(block).forEach(function(answerText){
         var optionEl = findOptionEl(qid, answerText);
         if (!optionEl) return;
-        if (isAuto) setOptionNextHint(optionEl); else setOptionPill(optionEl, moveTarget);
+        if (isNextQuestion) setOptionNextHint(optionEl); else setOptionPill(optionEl, moveTarget);
       });
     });
   }
