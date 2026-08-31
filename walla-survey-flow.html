@@ -248,6 +248,26 @@
   /* 캔버스에서 아직 어떤 문항도 활성화하지 않았을 때(로직 탭 기본값)의 안내 문구 */
   .rp-empty-hint{width:333px;padding:80px 0;text-align:center;font-size:14px;color:var(--neutral-400);}
 
+  /* 로직 설정 가이드 팝업 (간단히 보기 / 자세히 보기) */
+  .guide-popover{
+    position:fixed;width:322px;background:var(--white);border-radius:16px;
+    box-shadow:0 4px 20px rgba(0,0,0,.14);padding:24px;z-index:1000;display:none;
+  }
+  .guide-popover.show{display:block;}
+  .guide-popover-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+  .guide-popover-header span{font-size:18px;font-weight:700;color:var(--neutral-800);}
+  .guide-popover-header img{width:20px;height:20px;cursor:pointer;}
+  .guide-popover-body.hidden{display:none;}
+  .guide-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;font-size:16px;line-height:22px;}
+  .guide-step:nth-last-child(2){margin-bottom:0;}
+  .guide-step b{color:var(--skyblue-500);font-weight:700;flex-shrink:0;}
+  .guide-step span{color:var(--neutral-800);}
+  .guide-section{margin-bottom:16px;}
+  .guide-section:nth-last-child(2){margin-bottom:0;}
+  .guide-section b{display:block;font-size:16px;font-weight:700;color:var(--neutral-800);margin-bottom:4px;}
+  .guide-section p{font-size:14px;color:var(--neutral-500);line-height:1.5;}
+  .guide-footer-link{margin-top:20px;font-size:14px;font-weight:700;color:var(--skyblue-500);cursor:pointer;}
+
   .rp-logic-list{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;}
 
   .logic-detail{
@@ -797,7 +817,7 @@
           <span>로직</span>
           <div class="q-label hidden" id="rpQuestionLabelWrap"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b id="rpQuestionLabel">Q5</b></div>
         </div>
-        <div class="guide-btn"><span>가이드</span><img src="assets/icon-help.svg" alt=""></div>
+        <div class="guide-btn" onclick="toggleGuidePopover(event)"><span>가이드</span><img src="assets/icon-help.svg" alt=""></div>
       </div>
 
       <p class="rp-empty-hint" id="rpEmptyHint">문항을 선택해 주세요</p>
@@ -811,6 +831,36 @@
         <span>새 로직 추가</span>
       </div>
     </div>
+    </div>
+  </div>
+
+  <!-- 로직 설정 가이드 팝업: 우측 패널 "가이드" 버튼으로 열고, 기본은 요약(간단히 보기)
+       상태로 열려서 "자세히 보기"/"간단히 보기"로 두 상태를 오갈 수 있다 (피그마 node 624:9376). -->
+  <div class="guide-popover" id="guidePopover">
+    <div class="guide-popover-header">
+      <span>로직 설정 가이드</span>
+      <img src="assets/icon-cancel-x.svg" alt="" onclick="closeGuidePopover()">
+    </div>
+    <div class="guide-popover-body" id="guideCollapsedBody">
+      <div class="guide-step"><b>1.</b><span>조건을 선택하세요.</span></div>
+      <div class="guide-step"><b>2.</b><span>실행 결과를 정하세요.</span></div>
+      <div class="guide-step"><b>3.</b><span>이동할 문항을 고르세요.</span></div>
+      <div class="guide-footer-link" onclick="setGuideExpanded(true)">자세히 보기 →</div>
+    </div>
+    <div class="guide-popover-body hidden" id="guideExpandedBody">
+      <div class="guide-section">
+        <b>조건</b>
+        <p>어떤 문항의 어떤 답변일 때 로직이 걸릴지 정합니다. 조건을 여러 개 걸면 사이사이의 그리고(AND) · 또는(OR) 버튼으로 관계를 정할 수 있어요.</p>
+      </div>
+      <div class="guide-section">
+        <b>실행 결과</b>
+        <p>조건이 맞았을 때 무엇을 할지 고릅니다. 문항 이동 · 관련 문항 표시 · 설문 종료 중 하나예요.</p>
+      </div>
+      <div class="guide-section">
+        <b>이동할 문항</b>
+        <p>문항 이동과 관련 문항 표시는 갈 곳이 필요합니다. 설문 종료를 고르면 이 항목은 나오지 않아요.</p>
+      </div>
+      <div class="guide-footer-link" onclick="setGuideExpanded(false)">← 간단히 보기</div>
     </div>
   </div>
 
@@ -1533,6 +1583,40 @@
     refreshRpLogicListForQuestion(currentQuestionId);
     syncOptionLogicPills();
   }
+
+  // ---------------- 로직 설정 가이드 팝업: "가이드" 버튼으로 토글 ----------------
+  function setGuideExpanded(isExpanded){
+    var collapsed = document.getElementById('guideCollapsedBody');
+    var expanded = document.getElementById('guideExpandedBody');
+    if (collapsed) collapsed.classList.toggle('hidden', isExpanded);
+    if (expanded) expanded.classList.toggle('hidden', !isExpanded);
+  }
+  function closeGuidePopover(){
+    var popover = document.getElementById('guidePopover');
+    if (popover) popover.classList.remove('show');
+  }
+  function toggleGuidePopover(evt){
+    evt.stopPropagation();
+    var popover = document.getElementById('guidePopover');
+    var btn = evt.currentTarget;
+    if (!popover) return;
+    var wasShown = popover.classList.contains('show');
+    closeGuidePopover();
+    if (wasShown) return; // 같은 버튼을 다시 누르면 토글로 닫기만 한다.
+
+    setGuideExpanded(false); // 열 때마다 항상 요약(간단히 보기) 상태부터 시작한다.
+    popover.classList.add('show');
+    var r = btn.getBoundingClientRect();
+    var left = r.right - popover.offsetWidth;
+    popover.style.left = Math.max(4, left) + 'px';
+    popover.style.top = (r.bottom + 8) + 'px';
+  }
+  document.addEventListener('click', function(evt){
+    var popover = document.getElementById('guidePopover');
+    if (!popover || !popover.classList.contains('show')) return;
+    if (evt.target.closest('#guidePopover') || evt.target.closest('.guide-btn')) return;
+    closeGuidePopover();
+  });
 
   // ---------------- 로직 미리보기 popover: hover (desktop) + tap (mobile) ----------------
   (function(){
