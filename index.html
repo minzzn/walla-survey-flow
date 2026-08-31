@@ -987,9 +987,9 @@
   var QUESTION_ORDER = ['Q5', 'Q6', 'Q7', 'Q8'];
   // 각 문항 핀 바로 아래에서 다음 문항으로 뻗어나가는 연결선의 id.
   // Q5는 분기 카드로 펼쳐지면 선이 두 개(q5LinePath: 그 외 응답, q5ExtraPath: Q8로
-  // 바로 가는 로직1 직행선)라서, Q5가 활성화됐을 때 둘 다 같이 파란색이 되어야 한다.
+  // 바로 가는 로직1 직행선)로 갈라져서, 이 단순한 "선택된 문항이면 파란색" 규칙
+  // 대신 updateQ5LineColors()가 어느 로직 블록이 펼쳐져 있는지를 보고 따로 정한다.
   var QUESTION_OUTGOING_PATHS = {
-    Q5: ['q5LinePath', 'q5ExtraPath'],
     Q6: ['q6LinePath'],
     Q7: ['q7LinePath'],
     Q8: ['q8LinePath']
@@ -1317,6 +1317,30 @@
     var q8Bottom = q8.offsetTop + q8.offsetHeight;
     var q8to9 = document.getElementById('q8LinePath');
     if (q8to9) q8to9.setAttribute('d', 'M 710 ' + q8Bottom + ' V 865');
+
+    updateQ5LineColors(q5, q5Branching);
+  }
+  // Q5의 선이 두 개로 갈라지는 분기 상태에서는, 문항이 선택됐다고 무작정 둘 다
+  // 파란색으로 켜는 게 아니라 지금 펼쳐져(활성화되어) 있는 로직 블록 하나만 파란색이
+  // 되어야 한다 (피그마 node 615:10470) -- 로직1이 펼쳐져 있으면 그 로직이 가리키는
+  // 직행선만, "그 외 응답"(자동 블록)이 펼쳐져 있으면 그 곡선만 파란색이 된다.
+  function updateQ5LineColors(q5, q5Branching){
+    var q5LinePath = document.getElementById('q5LinePath');
+    var q5ExtraPath = document.getElementById('q5ExtraPath');
+    if (!q5LinePath || !q5ExtraPath) return;
+    var isSelected = q5.classList.contains('selected');
+
+    if (!isSelected || !q5Branching){
+      q5LinePath.setAttribute('stroke', isSelected ? '#007eff' : '#d1d5dc');
+      q5ExtraPath.setAttribute('stroke', '#d1d5dc');
+      return;
+    }
+    var explicitBlock = getConfiguredLogicBlocks('Q5')[0];
+    var autoBlock = document.querySelector('#rpLogicList .logic-detail[data-auto="true"][data-question="Q5"]');
+    var explicitActive = !!explicitBlock && !explicitBlock.classList.contains('collapsed');
+    var autoActive = !!autoBlock && !autoBlock.classList.contains('collapsed');
+    q5ExtraPath.setAttribute('stroke', explicitActive ? '#007eff' : '#d1d5dc');
+    q5LinePath.setAttribute('stroke', autoActive ? '#007eff' : '#d1d5dc');
   }
   function updateAllFlowNodes(){
     QUESTION_ORDER.forEach(function(qid){ updateFlowNodeContent(qid); });
@@ -1336,6 +1360,7 @@
     var wasCollapsed = block.classList.contains('collapsed');
     collapseAllLogicBlocks();
     if (wasCollapsed) block.classList.remove('collapsed'); // 접혀 있던 걸 클릭하면 펼치고, 펼쳐진 걸 다시 클릭하면 전부 기본 상태로 되돌아간다.
+    updateAllFlowNodes(); // 어느 로직이 펼쳐져 있는지가 바뀌었으니 캔버스의 활성 선도 다시 계산한다.
   }
   // 문항별 답변 옵션(중앙 편집 패널의 qep-option 텍스트와 동일하게 유지) + 조건 옵션 목록.
   var QUESTION_OPTIONS = {
