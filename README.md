@@ -104,6 +104,7 @@ https://walla-survey-flow.netlify.app
 | 78 | 2026-08-31 19:06:28 | [`e00d765`](https://github.com/minzzn/walla-survey-flow/commit/e00d765) | `fix` | 분기 선이 문항 카드 뒤에 가려 어디로 가는지 안 보이던 문제 수정 (카드 폭을 확실히 벗어나도록 lane 계산 조정) |
 | 79 | 2026-08-31 19:12:52 | [`a1e7643`](https://github.com/minzzn/walla-survey-flow/commit/a1e7643) | `fix` | 편집 탭 옵션 이동 표시 및 로직 탭 캔버스 카드에서 "다음 문항으로" 텍스트를 없애고 항상 Qn 배지로 표시 |
 | 80 | 2026-08-31 19:16:25 | [`6688681`](https://github.com/minzzn/walla-survey-flow/commit/6688681) | `fix` | 편집 탭 옵션 이동 드롭다운 목록에서 바로 다음 문항 선택지 제거 |
+| 81 | 2026-08-31 19:20:39 | [`0776c04`](https://github.com/minzzn/walla-survey-flow/commit/0776c04) | `fix` | 이동 대상이 바로 다음 문항이면 편집/로직 탭 모두에서 아이콘+Qn 배지를 아예 표시하지 않도록 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
