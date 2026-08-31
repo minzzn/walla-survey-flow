@@ -87,6 +87,7 @@ https://walla-survey-flow.netlify.app
 | 61 | 2026-08-31 15:09:04 | [`6f0ffbd`](https://github.com/minzzn/walla-survey-flow/commit/6f0ffbd) | `feat` | 자동 생성된 "그 외 응답" 로직을 삭제하면 다시 자동으로 생기지 않고 계속 삭제된 채로 유지되도록 구현 |
 | 62 | 2026-08-31 15:18:50 | [`dcb50ba`](https://github.com/minzzn/walla-survey-flow/commit/dcb50ba) | `fix` | 카드가 커져서 캔버스 기본 높이(977px)를 넘으면 연결선이 SVG 자체 클리핑으로 안 보이던 문제 수정 |
 | 63 | 2026-08-31 15:30:08 | [`e37527e`](https://github.com/minzzn/walla-survey-flow/commit/e37527e) | `feat` | Q5 전용이던 분기 그래프 시각화를 Q6까지 일반화 (예: 6->7 대 6->8) |
+| 64 | 2026-08-31 15:37:51 | [`c42c2ea`](https://github.com/minzzn/walla-survey-flow/commit/c42c2ea) | `fix` | Q5->Q8처럼 두 문항을 건너뛸 때 중간 연결선이 엉뚱한 위치(x좌표 고정)에 그려지던 문제 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
