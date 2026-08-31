@@ -196,28 +196,6 @@
   .q5-card.selected .q5-body{display:flex;}
   .q5-body > p{font-size:16px;color:var(--neutral-400);}
 
-  .logic-row{
-    height:50px;border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;
-  }
-  .logic-row.grey{background:var(--neutral-100);}
-  .logic-row.blue{background:var(--skyblue-100);}
-  .logic-row-left{display:flex;align-items:center;gap:18px;flex:1;min-width:0;}
-  .logic-row-num{display:flex;align-items:center;gap:18px;width:53px;flex-shrink:0;}
-  .logic-row-num span{font-size:14px;font-weight:700;white-space:nowrap;}
-  .logic-row.grey .logic-row-num span{color:var(--neutral-600);}
-  .logic-row.blue .logic-row-num span{color:var(--skyblue-500);}
-  .logic-row-num .divider{width:1px;height:16px;background:var(--neutral-300);}
-  .logic-chips{display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
-  .logic-chip-box{
-    background:var(--white);border:1px solid var(--neutral-300);border-radius:6px;
-    height:26px;padding:0 8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  }
-  .logic-row.blue .logic-chip-box{border-color:var(--skyblue-200);}
-  .logic-chip-box span{font-size:14px;color:var(--neutral-800);white-space:nowrap;}
-  .logic-or{font-size:14px;color:var(--neutral-600);flex-shrink:0;}
-  .dest-pill{display:flex;align-items:center;gap:6px;flex-shrink:0;}
-  .dest-pill img{width:16px;height:16px;}
-
   /* ---------------- Left panel ---------------- */
   .left-panel-wrap{
     position:absolute;left:16px;top:16px;display:flex;align-items:flex-end;gap:12px;
@@ -611,34 +589,6 @@
         </div>
         <div class="q5-body">
           <p>응답에 따른 이동</p>
-
-          <div class="logic-row grey">
-            <div class="logic-row-left">
-              <div class="logic-row-num"><span>로직1</span></div>
-              <div class="logic-chips">
-                <div class="logic-chip-box"><span>1. 처음이에요</span></div>
-              </div>
-            </div>
-            <div class="dest-pill">
-              <img src="assets/icon-dest-arrow-grey.svg" alt="">
-              <div class="q-label grey"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q1</b></div>
-            </div>
-          </div>
-
-          <div class="logic-row blue">
-            <div class="logic-row-left">
-              <div class="logic-row-num"><span>로직2</span></div>
-              <div class="logic-chips">
-                <div class="logic-chip-box"><span>2. 가끔 참여해요</span></div>
-                <span class="logic-or">또는</span>
-                <div class="logic-chip-box"><span>3.자주 참여해요</span></div>
-              </div>
-            </div>
-            <div class="dest-pill">
-              <img src="assets/icon-dest-arrow-blue.svg" alt="">
-              <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q1</b></div>
-            </div>
-          </div>
         </div>
       </div>
 
