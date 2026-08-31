@@ -205,7 +205,13 @@
   .branch-num-badge.active{border-color:var(--skyblue-500);color:var(--skyblue-500);}
 
   /* connectors */
-  svg.connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+  /* overflow:visible이 필요하다 -- 로직으로 카드가 커지면 Q8/제출하기 같은
+     연결선 좌표가 캔버스의 기본 높이(977px)를 넘어갈 수 있는데, SVG는 기본이
+     overflow:hidden이라 그 구간의 선이 통째로 잘려 안 보인다. 캔버스를
+     팬(스크롤)해도 이건 SVG 자기 좌표 기준의 클리핑이라 그대로 안 보였다.
+     바깥 .center-canvas의 overflow:hidden + 팬 기능이 실제 화면 노출은 그대로
+     담당하므로, 여기서만 풀어주면 된다. */
+  svg.connectors{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:1;}
 
   /* collaborator caret */
   .collab-caret{position:absolute;left:350px;top:30px;width:6px;height:9px;pointer-events:none;}
