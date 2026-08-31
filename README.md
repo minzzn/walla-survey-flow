@@ -64,9 +64,10 @@ https://walla-survey-flow.netlify.app
 | 38 | 2026-08-31 10:36:06 | [`98753c0`](https://github.com/minzzn/walla-survey-flow/commit/98753c0) | `feat` | 캔버스에서 문항을 클릭하면 로직이 없을 경우 자동으로 첫 로직 블록을 만들어 펼쳐서 보여줌 |
 | 39 | 2026-08-31 10:52:40 | [`181b578`](https://github.com/minzzn/walla-survey-flow/commit/181b578) | `feat` | 중앙 패널 옵션 호버 시 나오는 이동 아이콘으로 이동 대상을 바로 편집하는 인라인 드롭다운 추가, Q5의 죽은 정적 이동 표시 제거 |
 | 40 | 2026-08-31 11:00:34 | [`cc8589d`](https://github.com/minzzn/walla-survey-flow/commit/cc8589d) | `fix` | 이동 대상 드롭다운 항목을 피그마 디자인대로 체크박스 없는 문항 배지 스타일로 수정 (우측 패널 이동 드롭다운도 동일 적용) |
+| 41 | 2026-08-31 11:13:06 | [`38c36cb`](https://github.com/minzzn/walla-survey-flow/commit/38c36cb) | `fix` | 이동 아이콘 활성 색상을 피그마 디자인대로 수정, 이동 대상 선택 시 우측 패널이 해당 로직으로 자동으로 펼쳐지도록 개선 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~40번)입니다.
+2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~41번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
