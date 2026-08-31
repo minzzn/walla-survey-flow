@@ -100,6 +100,7 @@ https://walla-survey-flow.netlify.app
 | 74 | 2026-08-31 17:07:47 | [`53b4b07`](https://github.com/minzzn/walla-survey-flow/commit/53b4b07) | `fix` | 분기 선 활성화를 로직1 선택 여부 기준의 상호 배타적 상태로 수정 (둘 다 비활성인 애매한 상태 제거) |
 | 75 | 2026-08-31 17:21:42 | [`a9273ed`](https://github.com/minzzn/walla-survey-flow/commit/a9273ed) | `feat` | "선택하지 않았을 때" 조건일 때 실제로 걸리는 답변(보완집합) 기준으로 배지·칩·그 외 응답 계산 |
 | 76 | 2026-08-31 17:46:22 | [`703db5a`](https://github.com/minzzn/walla-survey-flow/commit/703db5a) | `fix` | 여러 옵션이 하나로 합쳐진 로직 블록에서 옵션 하나만 이동 대상을 바꾸면 다른 옵션도 같이 바뀌던 문제 수정 |
+| 77 | 2026-08-31 18:55:22 | [`19e0f52`](https://github.com/minzzn/walla-survey-flow/commit/19e0f52) | `feat` | 답변이 세 곳 이상의 서로 다른 문항으로 나뉘는 분기도 그래프에 전부 표시하도록 일반화 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
