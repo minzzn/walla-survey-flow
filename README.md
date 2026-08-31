@@ -78,6 +78,7 @@ https://walla-survey-flow.netlify.app
 | 52 | 2026-08-31 13:38:52 | [`a8f0018`](https://github.com/minzzn/walla-survey-flow/commit/a8f0018) | `fix` | Q8로 가는 로직이 활성화돼도 그 직행선이 항상 회색으로 남아있던 버그 수정 |
 | 53 | 2026-08-31 13:49:31 | [`e1660be`](https://github.com/minzzn/walla-survey-flow/commit/e1660be) | `fix` | Q5 분기 선 색상이 문항 선택이 아니라 지금 펼쳐진(활성화된) 로직 블록 기준으로 켜지도록 수정 |
 | 54 | 2026-08-31 14:06:27 | [`985dd68`](https://github.com/minzzn/walla-survey-flow/commit/985dd68) | `feat` | 분기 선 위에 답변 번호("2 OR 3")와 활성 상태를 보여주는 알약 배지 추가 |
+| 55 | 2026-08-31 14:13:24 | [`ea4170b`](https://github.com/minzzn/walla-survey-flow/commit/ea4170b) | `fix` | 로직이 설정된 Q5의 선택이 해제되면 분기 레이아웃 자체가 사라지던 버그 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
