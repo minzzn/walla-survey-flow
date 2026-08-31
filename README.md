@@ -92,6 +92,7 @@ https://walla-survey-flow.netlify.app
 | 66 | 2026-08-31 15:58:19 | [`be0b690`](https://github.com/minzzn/walla-survey-flow/commit/be0b690) | `fix` | 동시 분기에서 Q6 배지가 Q7 카드에 가려지고 두 선과 겹쳐 보이던 문제 수정 |
 | 67 | 2026-08-31 16:03:08 | [`a82f36a`](https://github.com/minzzn/walla-survey-flow/commit/a82f36a) | `fix` | (잘못 짚은 수정 - 68번에서 되돌림) 중앙 패널 옵션 로직 아이콘의 기본 흰색 배경 제거 |
 | 68 | 2026-08-31 16:08:14 | [`ec4067e`](https://github.com/minzzn/walla-survey-flow/commit/ec4067e) | `fix` | 67번 되돌리고, 실제로는 편집/로직 탭의 "로직" 아이콘 SVG에 박혀있던 흰 배경 사각형을 제거 |
+| 69 | 2026-08-31 16:22:42 | [`0bc51d6`](https://github.com/minzzn/walla-survey-flow/commit/0bc51d6) | `feat` | 로직 캔버스 카드도 이동 대상이 다음 문항이면 배지 대신 "다음 문항으로" 텍스트로 표시 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
