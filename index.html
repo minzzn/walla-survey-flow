@@ -1209,7 +1209,11 @@
     var node = document.querySelector('#canvasContent .flow-pill[data-question="' + qid + '"]');
     if (!node) return;
     var configured = getConfiguredLogicBlocks(qid);
-    var shouldExpand = node.classList.contains('selected') && configured.length > 0;
+    // 카드가 분기 카드로 펼쳐지는 건 실제로 로직이 설정됐는지만으로 정해진다 --
+    // 지금 이 문항이 선택돼 있는지는 상관없다. 선택 여부는 선의 강조 색(파란색)에만
+    // 영향을 준다 (updateQ5LineColors). 그러지 않으면 다른 문항을 클릭하는 순간
+    // 이미 설정해둔 로직의 분기 레이아웃이 통째로 사라져 버린다.
+    var shouldExpand = configured.length > 0;
     node.classList.toggle('expanded', shouldExpand);
 
     var body = node.querySelector('.flow-pill-body');
@@ -1356,15 +1360,21 @@
     if (!q5LinePath || !q5ExtraPath) return;
     var isSelected = q5.classList.contains('selected');
 
-    if (!isSelected || !q5Branching){
+    if (!q5Branching){
+      // 로직이 아예 없어서 선이 하나뿐인 상태에서는 문항 선택 여부로만 이 선을 켠다.
       q5LinePath.setAttribute('stroke', isSelected ? '#007eff' : '#d1d5dc');
       q5ExtraPath.setAttribute('stroke', '#d1d5dc');
+      if (document.getElementById('q5ExtraBadge')) document.getElementById('q5ExtraBadge').style.display = 'none';
+      if (document.getElementById('q5ElseBadge')) document.getElementById('q5ElseBadge').style.display = 'none';
       return;
     }
     var explicitBlock = getConfiguredLogicBlocks('Q5')[0];
     var autoBlock = document.querySelector('#rpLogicList .logic-detail[data-auto="true"][data-question="Q5"]');
-    var explicitActive = !!explicitBlock && !explicitBlock.classList.contains('collapsed');
-    var autoActive = !!autoBlock && !autoBlock.classList.contains('collapsed');
+    // 로직이 설정돼 있으면(분기 상태면) Q5가 지금 선택 안 돼 있어도 분기 레이아웃과
+    // 배지는 그대로 유지된다 -- "어떤 로직 선이 파란색으로 강조되는지"만 지금 이
+    // 문항이 선택돼 있고, 그 블록이 펼쳐져 있을 때로 제한한다.
+    var explicitActive = isSelected && !!explicitBlock && !explicitBlock.classList.contains('collapsed');
+    var autoActive = isSelected && !!autoBlock && !autoBlock.classList.contains('collapsed');
     q5ExtraPath.setAttribute('stroke', explicitActive ? '#007eff' : '#d1d5dc');
     q5LinePath.setAttribute('stroke', autoActive ? '#007eff' : '#d1d5dc');
 
