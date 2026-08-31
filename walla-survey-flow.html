@@ -1351,13 +1351,18 @@
     var sourceEl = allPills[qid];
     var sourceIdx = QUESTION_ORDER.indexOf(qid);
     var sourceBottom = sourceEl.offsetTop + sourceEl.offsetHeight;
+    // qid 자신이 다른 문항(예: Q5)의 분기 때문에 옆 컬럼(297px)으로 비켜나 있을
+    // 수도 있으므로, x좌표를 710으로 고정하지 않고 실제 위치에서 읽는다. 안
+    // 그러면 이 선이 실제 핀 위치와 동떨어진 곳에 떠 있는 것처럼 보인다.
+    var sourceX = svgX(parseInt(sourceEl.style.left, 10));
     var immediateNextQid = QUESTION_ORDER[sourceIdx + 1];
     var immediateNextEl = immediateNextQid ? allPills[immediateNextQid] : null;
 
     if (!branchResult.branching){
       linePathEl.style.display = '';
       if (immediateNextEl){
-        linePathEl.setAttribute('d', 'M 710 ' + sourceBottom + ' V ' + immediateNextEl.offsetTop);
+        var nextX = svgX(parseInt(immediateNextEl.style.left, 10));
+        linePathEl.setAttribute('d', connectorPath(sourceX, sourceBottom, nextX, immediateNextEl.offsetTop));
       }
       if (elseBadgeEl) elseBadgeEl.style.display = 'none';
       return;
@@ -1370,7 +1375,8 @@
     }
     linePathEl.style.display = '';
     var ctrlY = sourceBottom + 57;
-    linePathEl.setAttribute('d', 'M 710 ' + sourceBottom + ' C 710 ' + ctrlY + ', 487 ' + ctrlY + ', 487 ' + immediateNextEl.offsetTop);
+    var nextX2 = svgX(parseInt(immediateNextEl.style.left, 10));
+    linePathEl.setAttribute('d', 'M ' + sourceX + ' ' + sourceBottom + ' C ' + sourceX + ' ' + ctrlY + ', ' + nextX2 + ' ' + ctrlY + ', ' + nextX2 + ' ' + immediateNextEl.offsetTop);
     if (elseBadgeEl){
       elseBadgeEl.style.display = 'flex';
       // 곡선의 중점은 베지어 t=0.5로 손수 계산하는 것보다 실제 경로 길이의
