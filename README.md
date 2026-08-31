@@ -96,6 +96,7 @@ https://walla-survey-flow.netlify.app
 | 70 | 2026-08-31 16:28:54 | [`64bc8a5`](https://github.com/minzzn/walla-survey-flow/commit/64bc8a5) | `feat` | 이동 목적지가 같아진 로직 블록들을 자동으로 하나로 합치도록 구현 |
 | 71 | 2026-08-31 16:40:51 | [`372f5f9`](https://github.com/minzzn/walla-survey-flow/commit/372f5f9) | `feat` | 로직 블록 병합을 이동 대상 변경뿐 아니라 모든 상태 변경 경로에서 실시간으로 적용 |
 | 72 | 2026-08-31 16:47:36 | [`667004b`](https://github.com/minzzn/walla-survey-flow/commit/667004b) | `fix` | 자동 "그 외" 블록도 이동 대상이 같으면 병합 대상에 포함하도록 수정 |
+| 73 | 2026-08-31 17:01:20 | [`6b93a11`](https://github.com/minzzn/walla-survey-flow/commit/6b93a11) | `feat` | 자동 "그 외" 블록의 답변도 직접 수정 가능하도록 구현 (수정 시 명시적 로직으로 승격) |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
