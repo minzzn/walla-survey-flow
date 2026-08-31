@@ -59,9 +59,10 @@ https://walla-survey-flow.netlify.app
 | 33 | 2026-08-29 12:47:39 | [`1df5c15`](https://github.com/minzzn/walla-survey-flow/commit/1df5c15) | `fix` | Q5 카드가 접힌 상태일 때 연결선이 카드 아래 빈 공간에서 끊겨 보이던 버그 수정 |
 | 34 | 2026-08-29 12:52:00 | [`81ff12f`](https://github.com/minzzn/walla-survey-flow/commit/81ff12f) | `fix` | "2 또는 3" 분기 라벨이 카드 접힘/펼침 상태와 무관하게 항상 분기선 중앙에 오도록 수정 |
 | 35 | 2026-08-31 09:16:21 | [`6e31410`](https://github.com/minzzn/walla-survey-flow/commit/6e31410) | `feat` | 첫 화면에서 모든 문항이 로직 없는 빈 상태로 시작하도록 변경 (Q5 예시 로직 2개 제거) |
+| 36 | 2026-08-31 09:21:07 | [`8f168e1`](https://github.com/minzzn/walla-survey-flow/commit/8f168e1) | `feat` | 로직 캔버스의 Q5 카드에 남아있던 하드코딩된 로직1/로직2 행도 제거 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
-2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35번)입니다.
+2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~36번)입니다.
 
 - 저장소: https://github.com/minzzn/walla-survey-flow
 - PR: https://github.com/minzzn/walla-survey-flow/pull/1
