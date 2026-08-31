@@ -1526,9 +1526,15 @@
     var autoBlock = document.querySelector('#rpLogicList .logic-detail[data-auto="true"][data-question="' + qid + '"]');
     // 로직이 설정돼 있으면(분기 상태면) 이 문항이 지금 선택 안 돼 있어도 분기
     // 레이아웃과 배지는 그대로 유지된다 -- "어떤 로직 선이 파란색으로 강조되는지"만
-    // 지금 이 문항이 선택돼 있고, 그 블록이 펼쳐져 있을 때로 제한한다.
-    var explicitActive = isSelected && !!explicitBlock && !explicitBlock.classList.contains('collapsed');
-    var autoActive = isSelected && !!autoBlock && !autoBlock.classList.contains('collapsed');
+    // 지금 이 문항이 선택돼 있을 때로 제한한다.
+    //
+    // 두 선의 활성 여부는 로직1이 펼쳐져 있는지 하나만으로 정해지는 서로 반대
+    // 상태다 -- 로직1이 선택(펼쳐짐) 안 됐으면 항상 그 외가 선택된 것과 똑같이
+    // 보여준다(그 반대도 마찬가지). 로직1도 그 외도 둘 다 접혀 있어서 어느 쪽도
+    // 활성화되지 않는 애매한 상태는 만들지 않는다.
+    var explicitExpanded = !!explicitBlock && !explicitBlock.classList.contains('collapsed');
+    var explicitActive = isSelected && explicitExpanded;
+    var autoActive = isSelected && !!autoBlock && !explicitExpanded;
     extraPath.setAttribute('stroke', explicitActive ? '#007eff' : '#d1d5dc');
     linePath.setAttribute('stroke', autoActive ? '#007eff' : '#d1d5dc');
 
