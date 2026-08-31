@@ -76,6 +76,7 @@ https://walla-survey-flow.netlify.app
 | 50 | 2026-08-31 13:25:40 | [`894366a`](https://github.com/minzzn/walla-survey-flow/commit/894366a) | `feat` | 옵션 하나에 로직을 걸면 나머지 옵션은 자동으로 "다음 문항으로" 로직이 생성되도록 구현 |
 | 51 | 2026-08-31 13:30:56 | [`02ae6c7`](https://github.com/minzzn/walla-survey-flow/commit/02ae6c7) | `feat` | 이동 대상이 바로 다음 문항이면 Qn 배지 대신 "다음 문항으로" 텍스트를 보여주도록 변경 |
 | 52 | 2026-08-31 13:38:52 | [`a8f0018`](https://github.com/minzzn/walla-survey-flow/commit/a8f0018) | `fix` | Q8로 가는 로직이 활성화돼도 그 직행선이 항상 회색으로 남아있던 버그 수정 |
+| 53 | 2026-08-31 13:49:31 | [`e1660be`](https://github.com/minzzn/walla-survey-flow/commit/e1660be) | `fix` | Q5 분기 선 색상이 문항 선택이 아니라 지금 펼쳐진(활성화된) 로직 블록 기준으로 켜지도록 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
