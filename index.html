@@ -1035,6 +1035,11 @@
     setRpMode(true);
     revealLogicPanelForQuestion(qid);
 
+    // 이 문항에 로직이 하나도 없으면, "새 로직 추가"를 한 번 더 누르지 않아도 바로
+    // 편집할 수 있도록 첫 로직 블록을 자동으로 만들어서 펼쳐둔다.
+    var hasExistingLogic = document.querySelectorAll('#rpLogicList .logic-detail[data-question="' + qid + '"]').length > 0;
+    if (!hasExistingLogic) addNewLogic();
+
     // 문항 바로 아래에서 다음 문항으로 나가는 연결선 -- 그 문항이 활성화됐을 때만
     // 파란색으로 켜지고, 나머지는 전부 회색으로 되돌아간다.
     Object.keys(QUESTION_OUTGOING_PATHS).forEach(function(q){
