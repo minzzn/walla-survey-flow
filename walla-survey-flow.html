@@ -159,42 +159,11 @@
   }
   .flow-pill .q-tag{font-size:14px;color:var(--neutral-400);white-space:nowrap;}
 
-  /* branch label pill: 기본은 회색, 관련 문항(Q5)이 활성화됐을 때만 파란색으로 켜진다. */
-  .branch-pill{
-    position:absolute;background:var(--white);border:2px solid var(--neutral-300);
-    border-radius:14px;padding:5px 18px;display:flex;align-items:center;justify-content:center;
-  }
-  .branch-pill span{font-size:14px;font-weight:700;color:var(--neutral-400);white-space:nowrap;}
-  .branch-pill.active{border-color:var(--skyblue-500);}
-  .branch-pill.active span{color:var(--skyblue-500);}
-
   /* connectors */
   svg.connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
 
   /* collaborator caret */
   .collab-caret{position:absolute;left:350px;top:30px;width:6px;height:9px;pointer-events:none;}
-
-  /* ---------------- Q5 card ----------------
-     기본(선택 안 됨)은 다른 문항 핀과 같은 접힌 한 줄 상태이고, 이 문항이
-     활성화됐을 때만 "응답에 따른 이동" 로직 목록이 있는 카드로 펼쳐진다. */
-  .q5-card{
-    position:absolute;left:470px;top:133px;width:480px;cursor:pointer;
-    background:var(--white);border:1px solid var(--neutral-300);border-radius:12px;
-    overflow:hidden;z-index:8;
-  }
-  .q5-card.selected{border-radius:20px;border-color:var(--skyblue-500);box-shadow:0 0 10px rgba(0,126,255,.2);}
-  .q5-head{
-    height:40px;border-bottom:none;
-    display:flex;align-items:center;justify-content:space-between;padding:0 12px;
-  }
-  .q5-card.selected .q5-head{height:50px;border-bottom:1px solid var(--neutral-200);padding:8px 16px;align-items:flex-end;}
-  .q5-head-left{display:flex;align-items:center;gap:8px;}
-  .q5-head-left p{font-size:16px;color:var(--neutral-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .q5-edit-link{font-size:14px;color:var(--azure-61);white-space:nowrap;cursor:pointer;display:none;}
-  .q5-card.selected .q5-edit-link{display:block;}
-  .q5-body{padding:20px 16px;display:none;flex-direction:column;gap:8px;}
-  .q5-card.selected .q5-body{display:flex;}
-  .q5-body > p{font-size:16px;color:var(--neutral-400);}
 
   /* ---------------- Left panel ---------------- */
   .left-panel-wrap{
@@ -276,6 +245,8 @@
   .guide-btn{display:flex;align-items:center;gap:3px;cursor:pointer;}
   .guide-btn span{font-size:14px;color:var(--neutral-500);}
   .guide-btn img{width:14px;height:14px;}
+  /* 캔버스에서 아직 어떤 문항도 활성화하지 않았을 때(로직 탭 기본값)의 안내 문구 */
+  .rp-empty-hint{width:333px;padding:80px 0;text-align:center;font-size:14px;color:var(--neutral-400);}
 
   .rp-logic-list{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;}
 
@@ -542,18 +513,14 @@
       <div class="terminal-node" style="left:618px;top:54px;"><span>시작</span></div>
       <div class="terminal-node" style="left:618px;top:865px;"><span>제출하기</span></div>
 
-      <!-- connectors -->
+      <!-- connectors: 로직이 하나도 없으면 문항들이 분기 없이 한 줄로 곧게 이어진다. -->
       <svg class="connectors">
         <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path id="q5BranchPath" d="M 710 363 C 710 420, 487 420, 487 484" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path id="q5BranchPath2" d="M 710 363 V 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path id="q6LinePath" d="M 487 524 V 581" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path id="q7LinePath" d="M 487 621 C 487 690, 600 690, 600 771" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
-        <path id="q8LinePath" d="M 710 811 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q5LinePath" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q6LinePath" d="M 710 356 V 499" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q7LinePath" d="M 710 539 V 682" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q8LinePath" d="M 710 722 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
       </svg>
-
-      <!-- branch label -->
-      <div class="branch-pill" id="q5BranchPill" style="left:557px;top:408px;"><span>2 또는 3</span></div>
 
       <!-- collaborator caret -->
       <div class="collab-caret">
@@ -561,35 +528,26 @@
         <img src="assets/icon-caret-2.svg" alt="" style="position:absolute;left:0;top:0;width:6px;height:1px;">
       </div>
 
-      <!-- Q6 / Q7 / Q8 flow pills -->
-      <div class="flow-pill" data-question="Q6" onclick="activateLogicForQuestion('Q6')" style="left:297px;top:484px;">
-        <div class="q-label"><b>Q6</b></div>
+      <!-- Q5~Q8: 로직 미설정 상태에서는 전부 같은 모양의 핀으로 세로 한 줄에 배치된다. -->
+      <div class="flow-pill" data-question="Q5" onclick="activateLogicForQuestion('Q5')" style="left:520px;top:133px;">
+        <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+        <span class="q-text">원데이 클래스 참여 경험이 어느 정도인가요?</span>
+        <span class="q-tag">→ 다음 질문</span>
+      </div>
+      <div class="flow-pill" data-question="Q6" onclick="activateLogicForQuestion('Q6')" style="left:520px;top:316px;">
+        <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
         <span class="q-text">아래 분야의 선호도를 알려주세요.</span>
         <span class="q-tag">→ 다음 질문</span>
       </div>
-      <div class="flow-pill" data-question="Q7" onclick="activateLogicForQuestion('Q7')" style="left:297px;top:581px;">
-        <div class="q-label"><b>Q7</b></div>
+      <div class="flow-pill" data-question="Q7" onclick="activateLogicForQuestion('Q7')" style="left:520px;top:499px;">
+        <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q7</b></div>
         <span class="q-text">지금까지 참여한 클래스 전</span>
         <span class="q-tag">→ 다음 질문</span>
       </div>
-      <div class="flow-pill" data-question="Q8" onclick="activateLogicForQuestion('Q8')" style="left:520px;top:771px;">
-        <div class="q-label"><b>Q8</b></div>
+      <div class="flow-pill" data-question="Q8" onclick="activateLogicForQuestion('Q8')" style="left:520px;top:682px;">
+        <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
         <span class="q-text">보통 어떤 경로로 클래스를 찾나요</span>
         <span class="q-tag">→ 다음 질문</span>
-      </div>
-
-      <!-- Q5 card -->
-      <div class="q5-card" data-question="Q5" onclick="activateLogicForQuestion('Q5')">
-        <div class="q5-head">
-          <div class="q5-head-left">
-            <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
-            <p>원데이 클래스 참여 경험이 어느 정도 인가요?</p>
-          </div>
-          <div class="q5-edit-link">문항 편집</div>
-        </div>
-        <div class="q5-body">
-          <p>응답에 따른 이동</p>
-        </div>
       </div>
 
       </div>
@@ -822,16 +780,18 @@
       <div class="rp-title-row">
         <div class="rp-title-left">
           <span>로직</span>
-          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b id="rpQuestionLabel">Q5</b></div>
+          <div class="q-label hidden" id="rpQuestionLabelWrap"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b id="rpQuestionLabel">Q5</b></div>
         </div>
         <div class="guide-btn"><span>가이드</span><img src="assets/icon-help.svg" alt=""></div>
       </div>
+
+      <p class="rp-empty-hint" id="rpEmptyHint">문항을 선택해 주세요</p>
 
       <div class="rp-logic-list hidden" id="rpLogicList">
       </div>
       <!-- /rp-logic-list -->
 
-      <div class="rp-cta" onclick="addNewLogic()">
+      <div class="rp-cta hidden" id="rpCta" onclick="addNewLogic()">
         <img src="assets/icon-plus.svg" alt="">
         <span>새 로직 추가</span>
       </div>
@@ -856,9 +816,6 @@
       questionEditPanel.classList.add('hidden');
       canvasContent.classList.remove('hidden');
       if (controlPanel) controlPanel.classList.remove('hidden');
-      // 캔버스가 display:none인 동안은 카드 높이를 잴 수 없어 0으로 계산되므로,
-      // 실제로 보이게 된 지금 다시 계산해서 Q5 연결선이 끊겨 보이지 않게 한다.
-      updateQ5ConnectorPaths();
     } else {
       canvasContent.classList.add('hidden');
       questionEditPanel.classList.remove('hidden');
@@ -877,9 +834,11 @@
   }
   function switchCanvasTab(el, isLogic){
     setCanvasMode(isLogic);
+    if (isLogic) resetLogicSelection(); // 로직 탭에 새로 들어올 때마다 "문항을 선택해 주세요"부터 시작한다.
   }
   function switchRpTab(el, isLogic){
     setRpMode(isLogic);
+    if (isLogic) resetLogicSelection();
   }
 
   // 중앙 편집 패널의 문항 제목/옵션 텍스트를 사용자가 직접 고칠 수 있으므로, 이 값들은
@@ -893,10 +852,9 @@
     Q8: '보통 어떤 경로로 클래스를 찾나요?'
   };
   var QUESTION_ORDER = ['Q5', 'Q6', 'Q7', 'Q8'];
-  // 각 문항 카드/핀 바로 아래에서 다음 문항으로 뻗어나가는 연결선의 id 목록.
-  // Q5는 분기가 2개라 선도 2개다.
+  // 각 문항 핀 바로 아래에서 다음 문항으로 뻗어나가는 연결선의 id.
   var QUESTION_OUTGOING_PATHS = {
-    Q5: ['q5BranchPath', 'q5BranchPath2'],
+    Q5: ['q5LinePath'],
     Q6: ['q6LinePath'],
     Q7: ['q7LinePath'],
     Q8: ['q8LinePath']
@@ -1010,10 +968,7 @@
       scrollWithinQuestionPanel(target);
     }
 
-    var rpLabel = document.getElementById('rpQuestionLabel');
-    if (rpLabel) rpLabel.textContent = qid;
-
-    refreshRpLogicListForQuestion(qid);
+    revealLogicPanelForQuestion(qid);
   }
 
   // #rpLogicList는 모든 문항의 로직 블록을 같이 담고 있는 하나의 컨테이너라서,
@@ -1032,6 +987,43 @@
 
   // 로직 탭이 활성화된 중앙 캔버스에서 문항 카드/핀을 클릭하면, 캔버스 모드는 그대로
   // 두고(편집 화면으로 전환하지 않고) 그 문항 기준으로 우측 패널을 로직 탭으로 활성화한다.
+  // 우측 패널 로직 탭의 "문항을 선택해 주세요" 안내 문구를 숨기고, 실제 문항 배지 +
+  // 로직 목록/CTA 버튼을 보여준다. activateLogicForQuestion과 selectQuestion 둘 다 쓴다.
+  function revealLogicPanelForQuestion(qid){
+    var rpLabel = document.getElementById('rpQuestionLabel');
+    if (rpLabel) rpLabel.textContent = qid;
+    var labelWrap = document.getElementById('rpQuestionLabelWrap');
+    if (labelWrap) labelWrap.classList.remove('hidden');
+    var hint = document.getElementById('rpEmptyHint');
+    if (hint) hint.classList.add('hidden');
+    var rpCta = document.getElementById('rpCta');
+    if (rpCta) rpCta.classList.remove('hidden');
+    refreshRpLogicListForQuestion(qid); // 이 문항의 실제 로직 유무에 따라 rpLogicList는 알아서 보이거나 숨는다.
+  }
+
+  // 로직 캔버스가 처음 열렸을 때, 또는 우측 패널이 로직 탭으로 막 전환됐을 때의 기본값.
+  // 어떤 문항도 아직 활성화되지 않았다는 뜻이므로, 문항 배지/로직 목록/CTA를 다 숨기고
+  // "문항을 선택해 주세요" 안내만 보여준다. 캔버스의 문항 핀/연결선도 전부 회색으로 되돌린다.
+  function resetLogicSelection(){
+    document.querySelectorAll('#canvasContent [data-question]').forEach(function(el){
+      el.classList.remove('selected');
+    });
+    Object.keys(QUESTION_OUTGOING_PATHS).forEach(function(q){
+      QUESTION_OUTGOING_PATHS[q].forEach(function(id){
+        var path = document.getElementById(id);
+        if (path) path.setAttribute('stroke', '#d1d5dc');
+      });
+    });
+    var labelWrap = document.getElementById('rpQuestionLabelWrap');
+    if (labelWrap) labelWrap.classList.add('hidden');
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (rpLogicList) rpLogicList.classList.add('hidden');
+    var rpCta = document.getElementById('rpCta');
+    if (rpCta) rpCta.classList.add('hidden');
+    var hint = document.getElementById('rpEmptyHint');
+    if (hint) hint.classList.remove('hidden');
+  }
+
   function activateLogicForQuestion(qid){
     currentQuestionId = qid;
     document.querySelectorAll('#canvasContent [data-question]').forEach(function(el){
@@ -1040,15 +1032,11 @@
     var target = document.querySelector('#canvasContent [data-question="' + qid + '"]');
     if (target) target.classList.add('selected');
 
-    var rpLabel = document.getElementById('rpQuestionLabel');
-    if (rpLabel) rpLabel.textContent = qid;
-    refreshRpLogicListForQuestion(qid);
     setRpMode(true);
+    revealLogicPanelForQuestion(qid);
 
-    // 문항에서 다음 문항으로 나가는 연결선 -- 문항 핀/카드와 마찬가지로 그 문항이
-    // 활성화됐을 때만 파란색으로 켜지고, 나머지는 전부 회색으로 되돌아간다.
-    var branchPill = document.getElementById('q5BranchPill');
-    if (branchPill) branchPill.classList.toggle('active', qid === 'Q5');
+    // 문항 바로 아래에서 다음 문항으로 나가는 연결선 -- 그 문항이 활성화됐을 때만
+    // 파란색으로 켜지고, 나머지는 전부 회색으로 되돌아간다.
     Object.keys(QUESTION_OUTGOING_PATHS).forEach(function(q){
       var active = q === qid;
       QUESTION_OUTGOING_PATHS[q].forEach(function(id){
@@ -1056,31 +1044,6 @@
         if (path) path.setAttribute('stroke', active ? '#007eff' : '#d1d5dc');
       });
     });
-    updateQ5ConnectorPaths();
-  }
-
-  // Q5 카드는 접힘/펼침에 따라 실제 높이가 바뀌므로, 카드 바로 아래에서 시작하는
-  // 두 연결선의 시작점도 매번 카드의 현재 높이에 맞춰 다시 계산한다. 그러지 않으면
-  // 접혔을 때 선이 카드 아래쪽 빈 공간에서 끊겨 보인다.
-  function updateQ5ConnectorPaths(){
-    var q5 = document.querySelector('.q5-card');
-    var p1 = document.getElementById('q5BranchPath');
-    var p2 = document.getElementById('q5BranchPath2');
-    if (!q5 || !p1 || !p2) return;
-    var bottomY = q5.offsetTop + q5.offsetHeight;
-    var ctrlY = bottomY + 57; // 원래 곡선(363 -> 420)과 동일한 상대 오프셋을 유지한다.
-    p1.setAttribute('d', 'M 710 ' + bottomY + ' C 710 ' + ctrlY + ', 487 ' + ctrlY + ', 487 484');
-    p2.setAttribute('d', 'M 710 ' + bottomY + ' V 771');
-
-    // "2 또는 3" 라벨을 곡선(q5BranchPath) 길이의 정중앙 위에 계속 맞춘다.
-    // 곡선 모양이 카드 높이에 따라 계속 바뀌므로, 베지어 t=0.5 지점이 아니라
-    // getPointAtLength로 실제 호의 중간 지점을 구해야 어느 모양에서도 선 위에 온다.
-    var pill = document.getElementById('q5BranchPill');
-    if (pill && p1.getTotalLength){
-      var mid = p1.getPointAtLength(p1.getTotalLength() / 2);
-      pill.style.left = (mid.x - pill.offsetWidth / 2) + 'px';
-      pill.style.top = (mid.y - pill.offsetHeight / 2) + 'px';
-    }
   }
 
   // ---------------- 로직 블록 아코디언: 선택한 블록만 파란 테두리로 펼쳐지고
