@@ -81,6 +81,7 @@ https://walla-survey-flow.netlify.app
 | 55 | 2026-08-31 14:13:24 | [`ea4170b`](https://github.com/minzzn/walla-survey-flow/commit/ea4170b) | `fix` | 로직이 설정된 Q5의 선택이 해제되면 분기 레이아웃 자체가 사라지던 버그 수정 |
 | 56 | 2026-08-31 14:17:23 | [`5f60ccd`](https://github.com/minzzn/walla-survey-flow/commit/5f60ccd) | `fix` | 다른 문항이 활성화되면 Q5 카드는 한 줄로 접히되 분기 레이아웃/선은 유지되도록 수정 |
 | 57 | 2026-08-31 14:28:19 | [`9195305`](https://github.com/minzzn/walla-survey-flow/commit/9195305) | `fix` | 분기 그래프가 로직1의 실제 이동 대상(5->7 등)을 따라가지 않고 항상 5->6/5->8로 고정돼 있던 문제 수정 |
+| 58 | 2026-08-31 14:34:56 | [`1ad6fe2`](https://github.com/minzzn/walla-survey-flow/commit/1ad6fe2) | `fix` | 선택지가 모두 같은 로직으로 몰려 카드가 펼쳐지면 다음 문항 박스와 겹치던 문제 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
