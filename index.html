@@ -316,6 +316,12 @@
     box-shadow:0 8px 20px rgba(0,0,0,.14);z-index:1000;overflow:hidden;
   }
   .ld-dd-list{max-height:220px;overflow-y:auto;}
+  /* 옵션 이동 드롭다운처럼 목록 위에 안내 문구가 붙는 경우 */
+  .ld-dd-menu-head{
+    height:35px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;
+    font-size:14px;color:var(--neutral-800);border-bottom:1px solid var(--neutral-200);
+  }
+  .ld-dd-menu-head img{width:16px;height:16px;}
   .ld-dd-item{
     display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:14px;color:var(--neutral-800);
     cursor:pointer;border-bottom:1px solid var(--neutral-100);
@@ -410,6 +416,8 @@
   }
   .qep-action-btn img{width:20px;height:20px;}
   .qep-action-btn.edit img{transform:rotate(90deg);}
+  .qep-action-btn.edit.dd-open{background:var(--skyblue-500);border-color:var(--skyblue-500);}
+  .qep-action-btn.edit.dd-open img{filter:brightness(0) invert(1);}
 
   .qep-row-actions{display:flex;align-items:center;justify-content:space-between;width:100%;}
   .qep-add-group{display:flex;align-items:center;gap:6px;}
@@ -563,34 +571,22 @@
             <div class="qep-options">
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">1.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">처음이에요</span></span>
-                <div class="qep-dest-pill">
-                  <img class="route-icon" src="assets/icon-route.svg" alt="">
-                  <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
-                </div>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="이동 제거"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">2.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">가끔 참여해요</span></span>
-                <div class="qep-dest-pill">
-                  <img class="route-icon" src="assets/icon-route.svg" alt="">
-                  <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
-                </div>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="이동 제거"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">3.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">자주 참여해요</span></span>
-                <div class="qep-dest-pill">
-                  <img class="route-icon" src="assets/icon-route.svg" alt="">
-                  <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
-                </div>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="이동 제거"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
@@ -611,28 +607,28 @@
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">1.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">온라인 베이킹</span></span>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">2.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">드로잉</span></span>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">3.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">가죽공예</span></span>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">4.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">향수·캔들</span></span>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
@@ -685,28 +681,28 @@
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">1.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">SNS</span></span>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">2.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">지인추천</span></span>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">3.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">포털검색</span></span>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
               <div class="qep-option">
                 <span class="qep-option-text"><span class="qep-num">4.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">플랫폼 앱</span></span>
                 <div class="qep-option-actions">
-                  <div class="qep-action-btn edit" title="이동 문항 수정"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
                   <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
                 </div>
               </div>
@@ -1308,6 +1304,76 @@
     if (evt.target.closest('.ld-dd-menu')) return;
     closeFieldDropdown();
   });
+
+  // ---------------- 중앙 편집 패널: 옵션 호버 시 나오는 "이동" 아이콘으로 그 옵션의
+  // 이동 대상을 오른쪽 패널을 거치지 않고 바로 바꾼다 (피그마 node 600:7295). ----------------
+  function findLogicBlockForOption(qid, answerText){
+    var blocks = document.querySelectorAll('#rpLogicList .logic-detail');
+    for (var i = 0; i < blocks.length; i++){
+      if (getBlockQuestionRefId(blocks[i]) !== qid) continue;
+      if (getSelectedAnswerTexts(blocks[i]).indexOf(answerText) !== -1) return blocks[i];
+    }
+    return null;
+  }
+  function positionOptionDropdown(menu, optionEl){
+    var r = optionEl.getBoundingClientRect();
+    var width = 220;
+    menu.style.width = width + 'px';
+    menu.style.left = Math.max(4, r.right - width) + 'px';
+    var top = r.bottom + 4;
+    var menuHeight = menu.offsetHeight;
+    if (top + menuHeight > window.innerHeight) top = Math.max(4, r.top - menuHeight - 4);
+    menu.style.top = top + 'px';
+  }
+  // 이 옵션을 답변으로 선택해둔 로직 블록을 찾아 이동 대상을 바꾸고, 그런 블록이
+  // 아직 없으면 새로 만들어서(이 옵션을 답변으로 선택한 채) 이동 대상을 지정한다.
+  function setOptionMoveTarget(qid, answerText, targetQid){
+    var block = findLogicBlockForOption(qid, answerText);
+    if (!block){
+      var prevCurrent = currentQuestionId;
+      currentQuestionId = qid;
+      addNewLogic();
+      currentQuestionId = prevCurrent;
+      var blocks = document.querySelectorAll('#rpLogicList .logic-detail[data-question="' + qid + '"]');
+      block = blocks[blocks.length - 1];
+      toggleAnswerOption(block, answerText);
+    }
+    setBlockMoveTarget(block, targetQid);
+  }
+  function openOptionMoveDropdown(evt, iconEl){
+    evt.stopPropagation();
+    var wasOpen = iconEl.classList.contains('dd-open');
+    closeFieldDropdown();
+    if (wasOpen) return;
+
+    var optionEl = iconEl.closest('.qep-option');
+    var qBlock = iconEl.closest('.qep-block');
+    if (!optionEl || !qBlock) return;
+    var qid = qBlock.getAttribute('data-question');
+    var answerText = optionEl.querySelector('.qep-option-edit').textContent.trim();
+    var existingBlock = findLogicBlockForOption(qid, answerText);
+    var currentTarget = existingBlock ? getBlockMoveTargetId(existingBlock) : null;
+
+    var menu = document.createElement('div');
+    menu.className = 'ld-dd-menu';
+    var head = document.createElement('div');
+    head.className = 'ld-dd-menu-head';
+    head.innerHTML = '<span>어디로 이동 할까요?</span><img src="assets/icon-dropdown-chevron.svg" alt="">';
+    menu.appendChild(head);
+
+    QUESTION_ORDER.filter(function(q){ return q !== qid; }).forEach(function(targetQid){
+      var item = buildDropdownItem(targetQid + '. ' + getQuestionTitle(targetQid), targetQid === currentTarget, function(){
+        setOptionMoveTarget(qid, answerText, targetQid);
+        closeFieldDropdown();
+      });
+      menu.appendChild(item);
+    });
+
+    iconEl.classList.add('dd-open');
+    document.body.appendChild(menu);
+    positionOptionDropdown(menu, optionEl);
+    window.addEventListener('scroll', closeFieldDropdown, true);
+  }
 
   function nextQuestionAfter(qid){
     var idx = QUESTION_ORDER.indexOf(qid);
