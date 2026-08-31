@@ -1642,7 +1642,7 @@
         return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
       }).join('');
     }
-    syncOptionLogicPills();
+    syncOptionLogicPills(block);
     syncOpenAnswerDropdown(block);
     updateAllFlowNodes();
   }
@@ -1715,7 +1715,8 @@
       '<p class="qep-next-label">다음 문항으로</p>';
     optionEl.insertBefore(pill, optionEl.querySelector('.qep-option-actions'));
   }
-  function syncOptionLogicPills(){
+  function syncOptionLogicPills(preferBlock){
+    mergeLogicBlocksByTarget(preferBlock); // 이동 대상이 같아진 로직 블록들을 먼저 하나로 합친다.
     syncAutoElseLogic(); // 옵션 중 하나라도 로직이 걸리면, 나머지 옵션은 자동으로 "다음 문항으로" 블록에 묶인다.
     document.querySelectorAll('.qep-option .qep-dest-pill').forEach(function(p){ p.remove(); });
     document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(block){
@@ -1828,47 +1829,53 @@
         headChips.appendChild(targetLabel);
       }
     }
-    syncOptionLogicPills();
+    syncOptionLogicPills(block);
     updateAllFlowNodes();
-
-    var ownQid = block.getAttribute('data-question');
-    if (ownQid && mergeLogicBlocksByTarget(ownQid, block)){
-      // 병합으로 답변 구성이 바뀌었으니 옵션 표시/캔버스도 다시 맞춘다.
-      syncOptionLogicPills();
-      updateAllFlowNodes();
-    }
   }
 
-  // 같은 문항 목록 안에서 이동 대상이 서로 같아진 사용자 로직 블록들(자동
-  // "그 외" 블록은 제외)을 하나로 합친다 -- 방금 이동 대상을 바꾼 블록을
-  // 살려두고, 나머지 블록들의 답변을 그 블록에 합친 뒤 지운다. 방금 편집
-  // 중이던 블록이 사라지지 않고 그대로 남아있어야 자연스럽기 때문이다.
-  function mergeLogicBlocksByTarget(qid, keepBlock){
+  // 이동 대상이 서로 같아진 사용자 로직 블록들(자동 "그 외" 블록은 제외)을
+  // 문항마다 하나로 합친다. syncOptionLogicPills 맨 앞에서 항상 호출되므로,
+  // 답변 변경/블록 추가삭제/이동 대상 변경 등 어느 경로로 상태가 바뀌든 실시간
+  // 으로 반영된다. preferBlock이 주어지고 그 블록이 합쳐질 그룹에 속해 있으면
+  // 그 블록을 살려두고(방금 사용자가 보고 있던 블록이 사라지지 않도록), 아니면
+  // 그냥 목록에서 먼저 나오는 블록을 살려둔다.
+  function mergeLogicBlocksByTarget(preferBlock){
     var rpLogicList = document.getElementById('rpLogicList');
-    if (!rpLogicList) return false;
-    var target = getBlockMoveTargetId(keepBlock);
-    if (!target) return false;
-    var sameTarget = Array.from(rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]:not([data-auto="true"])'))
-      .filter(function(b){ return getBlockMoveTargetId(b) === target; });
-    if (sameTarget.length < 2) return false;
-
-    var mergedAnswers = [];
-    sameTarget.forEach(function(b){
-      getSelectedAnswerTexts(b).forEach(function(a){
-        if (mergedAnswers.indexOf(a) === -1) mergedAnswers.push(a);
+    if (!rpLogicList) return;
+    QUESTION_ORDER.forEach(function(qid){
+      var blocks = Array.from(rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]:not([data-auto="true"])'));
+      var byTarget = {};
+      blocks.forEach(function(b){
+        // 아직 답변을 하나도 안 고른 블록(예: 방금 "새 로직 추가"로 막 만든 빈
+        // 블록)은 병합 대상에서 제외한다 -- 안 그러면 다른 블록과 우연히 같은
+        // 기본 대상을 가진 것만으로 사용자가 손대기도 전에 사라져 버린다.
+        if (getSelectedAnswerTexts(b).length === 0) return;
+        var target = getBlockMoveTargetId(b);
+        if (!target) return;
+        (byTarget[target] = byTarget[target] || []).push(b);
       });
+      Object.keys(byTarget).forEach(function(target){
+        var group = byTarget[target];
+        if (group.length < 2) return;
+        var keep = (preferBlock && group.indexOf(preferBlock) !== -1) ? preferBlock : group[0];
+        var mergedAnswers = [];
+        group.forEach(function(b){
+          getSelectedAnswerTexts(b).forEach(function(a){
+            if (mergedAnswers.indexOf(a) === -1) mergedAnswers.push(a);
+          });
+        });
+        var wrap = getAnswerChipsWrap(keep);
+        if (wrap){
+          wrap.innerHTML = mergedAnswers.length
+            ? mergedAnswers.map(function(opt){
+                return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+              }).join('')
+            : '<p class="ld-placeholder">답변을 선택해주세요</p>';
+        }
+        group.forEach(function(b){ if (b !== keep) b.remove(); });
+      });
+      renumberLogicBlocks(qid);
     });
-    var wrap = getAnswerChipsWrap(keepBlock);
-    if (wrap){
-      wrap.innerHTML = mergedAnswers.length
-        ? mergedAnswers.map(function(opt){
-            return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
-          }).join('')
-        : '<p class="ld-placeholder">답변을 선택해주세요</p>';
-    }
-    sameTarget.forEach(function(b){ if (b !== keepBlock) b.remove(); });
-    renumberLogicBlocks(qid);
-    return true;
   }
 
   function openFieldDropdown(evt, fieldEl, type){
@@ -2121,7 +2128,7 @@
     refreshRpLogicListForQuestion(qid);
     collapseAllLogicBlocks(); // 새로 만든 로직은 바로 편집할 수 있게 펼친 채로 두고 나머지만 접는다.
     block.classList.remove('collapsed');
-    syncOptionLogicPills();
+    syncOptionLogicPills(block);
     updateAllFlowNodes();
   }
 
