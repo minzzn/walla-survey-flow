@@ -74,6 +74,7 @@ https://walla-survey-flow.netlify.app
 | 48 | 2026-08-31 12:49:18 | [`70cdfd5`](https://github.com/minzzn/walla-survey-flow/commit/70cdfd5) | `feat` | 로직 캔버스에서 실제 로직이 설정된 문항은 응답별 이동 행이 있는 카드로 펼쳐지도록 구현 (Q5 분기 레이아웃 포함) |
 | 49 | 2026-08-31 13:08:25 | [`8de4803`](https://github.com/minzzn/walla-survey-flow/commit/8de4803) | `fix` | Q5 분기 로직을 추가했다가 삭제하면 곡선 커넥터가 예전 좌표에 남아있던 버그 수정 |
 | 50 | 2026-08-31 13:25:40 | [`894366a`](https://github.com/minzzn/walla-survey-flow/commit/894366a) | `feat` | 옵션 하나에 로직을 걸면 나머지 옵션은 자동으로 "다음 문항으로" 로직이 생성되도록 구현 |
+| 51 | 2026-08-31 13:30:56 | [`02ae6c7`](https://github.com/minzzn/walla-survey-flow/commit/02ae6c7) | `feat` | 이동 대상이 바로 다음 문항이면 Qn 배지 대신 "다음 문항으로" 텍스트를 보여주도록 변경 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
