@@ -83,6 +83,7 @@ https://walla-survey-flow.netlify.app
 | 57 | 2026-08-31 14:28:19 | [`9195305`](https://github.com/minzzn/walla-survey-flow/commit/9195305) | `fix` | 분기 그래프가 로직1의 실제 이동 대상(5->7 등)을 따라가지 않고 항상 5->6/5->8로 고정돼 있던 문제 수정 |
 | 58 | 2026-08-31 14:34:56 | [`1ad6fe2`](https://github.com/minzzn/walla-survey-flow/commit/1ad6fe2) | `fix` | 선택지가 모두 같은 로직으로 몰려 카드가 펼쳐지면 다음 문항 박스와 겹치던 문제 수정 |
 | 59 | 2026-08-31 14:41:46 | [`d0e80da`](https://github.com/minzzn/walla-survey-flow/commit/d0e80da) | `fix` | Q6/Q7도 로직으로 펼쳐지면 다음 카드와 겹치던 문제 수정 (모든 카드를 실제 높이 기준으로 이어 붙이도록 일반화) |
+| 60 | 2026-08-31 14:48:03 | [`2f48805`](https://github.com/minzzn/walla-survey-flow/commit/2f48805) | `fix` | Q8에 로직 설정 시 카드가 "제출하기" 종료 노드와 겹치던 문제 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
