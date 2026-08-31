@@ -85,6 +85,7 @@ https://walla-survey-flow.netlify.app
 | 59 | 2026-08-31 14:41:46 | [`d0e80da`](https://github.com/minzzn/walla-survey-flow/commit/d0e80da) | `fix` | Q6/Q7도 로직으로 펼쳐지면 다음 카드와 겹치던 문제 수정 (모든 카드를 실제 높이 기준으로 이어 붙이도록 일반화) |
 | 60 | 2026-08-31 14:48:03 | [`2f48805`](https://github.com/minzzn/walla-survey-flow/commit/2f48805) | `fix` | Q8에 로직 설정 시 카드가 "제출하기" 종료 노드와 겹치던 문제 수정 |
 | 61 | 2026-08-31 15:09:04 | [`6f0ffbd`](https://github.com/minzzn/walla-survey-flow/commit/6f0ffbd) | `feat` | 자동 생성된 "그 외 응답" 로직을 삭제하면 다시 자동으로 생기지 않고 계속 삭제된 채로 유지되도록 구현 |
+| 62 | 2026-08-31 15:18:50 | [`dcb50ba`](https://github.com/minzzn/walla-survey-flow/commit/dcb50ba) | `fix` | 카드가 커져서 캔버스 기본 높이(977px)를 넘으면 연결선이 SVG 자체 클리핑으로 안 보이던 문제 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
