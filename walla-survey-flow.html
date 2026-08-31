@@ -1254,6 +1254,13 @@
       q8.style.left = '520px'; q8.style.top = '682px';
       if (extraPath) extraPath.style.display = 'none';
       if (extraBadge) extraBadge.style.display = 'none';
+      // 분기 카드가 접히면 Q5->Q6 선도 곡선(그 외 응답)이 아니라 원래의 직선으로
+      // 되돌려야 한다. 안 그러면 로직 삭제 후에도 예전 곡선 좌표가 그대로 남는다.
+      var q5LinePath = document.getElementById('q5LinePath');
+      if (q5LinePath){
+        var q5BottomLinear = q5.offsetTop + q5.offsetHeight;
+        q5LinePath.setAttribute('d', 'M 710 ' + q5BottomLinear + ' V 316');
+      }
     } else {
       var q5Bottom = q5.offsetTop + q5.offsetHeight;
       var q6Top = q5Bottom + 120;
