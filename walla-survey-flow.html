@@ -1209,11 +1209,11 @@
     var node = document.querySelector('#canvasContent .flow-pill[data-question="' + qid + '"]');
     if (!node) return;
     var configured = getConfiguredLogicBlocks(qid);
-    // 카드가 분기 카드로 펼쳐지는 건 실제로 로직이 설정됐는지만으로 정해진다 --
-    // 지금 이 문항이 선택돼 있는지는 상관없다. 선택 여부는 선의 강조 색(파란색)에만
-    // 영향을 준다 (updateQ5LineColors). 그러지 않으면 다른 문항을 클릭하는 순간
-    // 이미 설정해둔 로직의 분기 레이아웃이 통째로 사라져 버린다.
-    var shouldExpand = configured.length > 0;
+    // 카드가 "응답에 따른 이동" 내용까지 펼쳐 보여주는 건 이 문항이 지금 선택돼
+    // 있을 때뿐이다 -- 다른 문항이 활성화되면 카드는 다시 한 줄짜리로 접힌다.
+    // (Q6/Q7 위치나 분기 선 자체는 이것과 별개로 updateFlowLayout이 로직 설정
+    // 여부만 보고 유지한다.)
+    var shouldExpand = node.classList.contains('selected') && configured.length > 0;
     node.classList.toggle('expanded', shouldExpand);
 
     var body = node.querySelector('.flow-pill-body');
@@ -1264,7 +1264,10 @@
     var elseBadge = document.getElementById('q5ElseBadge');
     if (!q5 || !q6 || !q7 || !q8) return;
 
-    var q5Branching = q5.classList.contains('expanded') && getConfiguredLogicBlocks('Q5').length > 0;
+    // Q6/Q7 위치와 분기 선의 존재 여부는 Q5 카드가 지금 펼쳐져 보이는지(.expanded,
+    // 선택 여부에 좌우됨)와 무관하게, 실제로 로직이 설정돼 있는지만으로 정해진다.
+    // 그래야 다른 문항을 보고 있어도 Q5의 분기 레이아웃 자체는 그대로 유지된다.
+    var q5Branching = getConfiguredLogicBlocks('Q5').length > 0;
     if (!q5Branching){
       q6.style.left = '520px'; q6.style.top = '316px';
       q7.style.left = '520px'; q7.style.top = '499px';
