@@ -98,6 +98,7 @@ https://walla-survey-flow.netlify.app
 | 72 | 2026-08-31 16:47:36 | [`667004b`](https://github.com/minzzn/walla-survey-flow/commit/667004b) | `fix` | 자동 "그 외" 블록도 이동 대상이 같으면 병합 대상에 포함하도록 수정 |
 | 73 | 2026-08-31 17:01:20 | [`6b93a11`](https://github.com/minzzn/walla-survey-flow/commit/6b93a11) | `feat` | 자동 "그 외" 블록의 답변도 직접 수정 가능하도록 구현 (수정 시 명시적 로직으로 승격) |
 | 74 | 2026-08-31 17:07:47 | [`53b4b07`](https://github.com/minzzn/walla-survey-flow/commit/53b4b07) | `fix` | 분기 선 활성화를 로직1 선택 여부 기준의 상호 배타적 상태로 수정 (둘 다 비활성인 애매한 상태 제거) |
+| 75 | 2026-08-31 17:21:42 | [`a9273ed`](https://github.com/minzzn/walla-survey-flow/commit/a9273ed) | `feat` | "선택하지 않았을 때" 조건일 때 실제로 걸리는 답변(보완집합) 기준으로 배지·칩·그 외 응답 계산 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
