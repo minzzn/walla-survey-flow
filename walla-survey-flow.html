@@ -606,7 +606,7 @@
 
       <!-- 시작 / 제출하기 -->
       <div class="terminal-node" style="left:618px;top:54px;"><span>시작</span></div>
-      <div class="terminal-node" style="left:618px;top:865px;"><span>제출하기</span></div>
+      <div class="terminal-node" id="submitNode" style="left:618px;top:865px;"><span>제출하기</span></div>
 
       <!-- connectors: 로직이 하나도 없으면 문항들이 분기 없이 한 줄로 곧게 이어지고,
            Q5에 로직이 설정되면(updateFlowLayout) Q6/Q7이 옆으로 비켜나고 Q5->Q8
@@ -1381,9 +1381,14 @@
         svgX(parseInt(q8.style.left, 10)), q8.offsetTop
       ));
     }
+    // "제출하기" 종료 노드도 865px에 고정해두면 Q8이 로직으로 펼쳐졌을 때 겹친다.
+    // Q8의 실제 아랫변 기준으로 같은 GAP만큼 띄워서 이어 붙인다.
     var q8Bottom = q8.offsetTop + q8.offsetHeight;
+    var submitTop = q8Bottom + GAP;
+    var submitNode = document.getElementById('submitNode');
+    if (submitNode) submitNode.style.top = submitTop + 'px';
     var q8to9 = document.getElementById('q8LinePath');
-    if (q8to9) q8to9.setAttribute('d', 'M 710 ' + q8Bottom + ' V 865');
+    if (q8to9) q8to9.setAttribute('d', 'M 710 ' + q8Bottom + ' V ' + submitTop);
 
     updateQ5LineColors(q5, q5Branching);
   }
