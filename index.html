@@ -1830,6 +1830,45 @@
     }
     syncOptionLogicPills();
     updateAllFlowNodes();
+
+    var ownQid = block.getAttribute('data-question');
+    if (ownQid && mergeLogicBlocksByTarget(ownQid, block)){
+      // 병합으로 답변 구성이 바뀌었으니 옵션 표시/캔버스도 다시 맞춘다.
+      syncOptionLogicPills();
+      updateAllFlowNodes();
+    }
+  }
+
+  // 같은 문항 목록 안에서 이동 대상이 서로 같아진 사용자 로직 블록들(자동
+  // "그 외" 블록은 제외)을 하나로 합친다 -- 방금 이동 대상을 바꾼 블록을
+  // 살려두고, 나머지 블록들의 답변을 그 블록에 합친 뒤 지운다. 방금 편집
+  // 중이던 블록이 사라지지 않고 그대로 남아있어야 자연스럽기 때문이다.
+  function mergeLogicBlocksByTarget(qid, keepBlock){
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!rpLogicList) return false;
+    var target = getBlockMoveTargetId(keepBlock);
+    if (!target) return false;
+    var sameTarget = Array.from(rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]:not([data-auto="true"])'))
+      .filter(function(b){ return getBlockMoveTargetId(b) === target; });
+    if (sameTarget.length < 2) return false;
+
+    var mergedAnswers = [];
+    sameTarget.forEach(function(b){
+      getSelectedAnswerTexts(b).forEach(function(a){
+        if (mergedAnswers.indexOf(a) === -1) mergedAnswers.push(a);
+      });
+    });
+    var wrap = getAnswerChipsWrap(keepBlock);
+    if (wrap){
+      wrap.innerHTML = mergedAnswers.length
+        ? mergedAnswers.map(function(opt){
+            return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+          }).join('')
+        : '<p class="ld-placeholder">답변을 선택해주세요</p>';
+    }
+    sameTarget.forEach(function(b){ if (b !== keepBlock) b.remove(); });
+    renumberLogicBlocks(qid);
+    return true;
   }
 
   function openFieldDropdown(evt, fieldEl, type){
