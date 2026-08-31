@@ -340,6 +340,16 @@
   }
   .ld-dd-item.checked .ld-dd-check::after{display:block;}
 
+  /* "이동" 대상 선택 전용 드롭다운 항목: 체크박스 없이 문항 배지만 보여준다
+     (피그마 node 600:8812, Logic_Panel_dropdown). */
+  .ld-dd-item-move{
+    display:flex;align-items:center;gap:4px;padding:8px 12px;cursor:pointer;
+    border-bottom:1px solid var(--neutral-200);
+  }
+  .ld-dd-item-move:last-child{border-bottom:none;}
+  .ld-dd-item-move:hover{background:var(--neutral-100);}
+  .ld-dd-item-move.selected{background:var(--skyblue-100);}
+
   .ld-add-condition{
     display:flex;align-items:center;justify-content:center;gap:10px;height:68px;cursor:pointer;
   }
@@ -1102,6 +1112,18 @@
     return item;
   }
 
+  // "이동" 대상 선택 전용 항목: 체크박스 없이 문항 배지(아이콘+Qn)만 보여준다.
+  function buildMoveDropdownItem(qid, selected, onSelect){
+    var item = document.createElement('div');
+    item.className = 'ld-dd-item-move' + (selected ? ' selected' : '');
+    item.innerHTML = '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + qid + '</b></div>';
+    item.addEventListener('click', function(e){
+      e.stopPropagation();
+      onSelect(item);
+    });
+    return item;
+  }
+
   function getAnswerChipsWrap(block){
     return block.querySelector('.ld-answer-chips');
   }
@@ -1273,8 +1295,9 @@
       });
     } else if (type === 'move'){
       var ownQid = block.getAttribute('data-question');
+      var currentMoveTarget = getBlockMoveTargetId(block);
       QUESTION_ORDER.filter(function(q){ return q !== ownQid; }).forEach(function(qid){
-        var item = buildDropdownItem(qid + '. ' + getQuestionTitle(qid), false, function(){
+        var item = buildMoveDropdownItem(qid, qid === currentMoveTarget, function(){
           setBlockMoveTarget(block, qid);
           closeFieldDropdown();
         });
@@ -1358,11 +1381,11 @@
     menu.className = 'ld-dd-menu';
     var head = document.createElement('div');
     head.className = 'ld-dd-menu-head';
-    head.innerHTML = '<span>어디로 이동 할까요?</span><img src="assets/icon-dropdown-chevron.svg" alt="">';
+    head.innerHTML = '<span>어디로 이동 할까요</span><img src="assets/icon-dropdown-chevron.svg" alt="">';
     menu.appendChild(head);
 
     QUESTION_ORDER.filter(function(q){ return q !== qid; }).forEach(function(targetQid){
-      var item = buildDropdownItem(targetQid + '. ' + getQuestionTitle(targetQid), targetQid === currentTarget, function(){
+      var item = buildMoveDropdownItem(targetQid, targetQid === currentTarget, function(){
         setOptionMoveTarget(qid, answerText, targetQid);
         closeFieldDropdown();
       });
