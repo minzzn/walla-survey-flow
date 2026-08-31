@@ -1843,7 +1843,11 @@
     var rpLogicList = document.getElementById('rpLogicList');
     if (!rpLogicList) return;
     QUESTION_ORDER.forEach(function(qid){
-      var blocks = Array.from(rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]:not([data-auto="true"])'));
+      // 자동 "그 외" 블록도 병합 대상에 포함한다 -- 사용자가 만든 로직과 이동
+      // 대상이 같아지면(예: 로직1도 Q8, 남은 답변 전부인 그 외도 Q8), 그
+      // 문항의 모든 답변이 결국 같은 곳으로 가는 것이므로 굳이 따로 둘 이유가
+      // 없다.
+      var blocks = Array.from(rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]'));
       var byTarget = {};
       blocks.forEach(function(b){
         // 아직 답변을 하나도 안 고른 블록(예: 방금 "새 로직 추가"로 막 만든 빈
@@ -1857,7 +1861,15 @@
       Object.keys(byTarget).forEach(function(target){
         var group = byTarget[target];
         if (group.length < 2) return;
-        var keep = (preferBlock && group.indexOf(preferBlock) !== -1) ? preferBlock : group[0];
+        // 자동 블록이 섞여 있으면 항상 사용자가 만든(비자동) 블록을 살려둔다 --
+        // 합쳐진 결과는 더 이상 "그 외"라는 자동 개념이 아니라 명시적인 로직이다.
+        var keep;
+        if (preferBlock && group.indexOf(preferBlock) !== -1 && preferBlock.getAttribute('data-auto') !== 'true'){
+          keep = preferBlock;
+        } else {
+          keep = group.filter(function(b){ return b.getAttribute('data-auto') !== 'true'; })[0] || group[0];
+        }
+        if (keep.getAttribute('data-auto') === 'true') keep.removeAttribute('data-auto');
         var mergedAnswers = [];
         group.forEach(function(b){
           getSelectedAnswerTexts(b).forEach(function(a){
