@@ -1,0 +1,2702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Walla · 설문 로직 빌더</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --skyblue-100:#e5f2ff;
+    --skyblue-200:#c2e0ff;
+    --skyblue-500:#007eff;
+    --skyblue-700:#0058b3;
+    --grey-96:#eaf2ff;
+    --neutral-100:#f3f4f6;
+    --neutral-200:#e5e7eb;
+    --neutral-300:#d1d5dc;
+    --neutral-400:#99a1af;
+    --neutral-500:#6a7282;
+    --neutral-600:#4a5565;
+    --neutral-700:#364153;
+    --neutral-800:#1e2939;
+    --azure-48:#6a758a;
+    --azure-61:#4285f4;
+    --grey-13:#212121;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Noto Sans KR',sans-serif;
+    background:#e9eaec;
+    color:var(--grey-13);
+    -webkit-font-smoothing:antialiased;
+  }
+  .icon-chip{
+    background:var(--grey-96);
+    width:22px;height:22px;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .icon-chip img{width:14px;height:14px;}
+  .q-label{display:flex;align-items:center;gap:2px;flex-shrink:0;}
+  .q-label b{font-weight:700;font-size:14px;color:var(--skyblue-700);white-space:nowrap;}
+  .q-label.grey b{color:var(--neutral-500);}
+
+  /* ---------------- Stage ---------------- */
+  .stage{
+    width:1440px;margin:24px auto;position:relative;
+    background:var(--white);
+    box-shadow:0 12px 40px rgba(20,20,30,.18);
+    border-radius:4px; overflow:hidden;
+  }
+
+  /* ---------------- Top bar ---------------- */
+  .topbar{
+    height:48px;border-bottom:1px solid var(--neutral-300);
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;
+    background:var(--white); position:relative; z-index:20;
+  }
+  .tb-left{display:flex;align-items:center;gap:17px;}
+  .tb-logo{width:30px;height:23.08px;}
+  .tb-crumb{display:flex;align-items:center;gap:12px;height:100%;}
+  .tb-crumb span{font-size:14px;color:var(--azure-48);white-space:nowrap;}
+  .tb-crumb img{width:11.8px;height:11.8px;}
+
+  .tb-tabs{
+    background:#fafafa;border-radius:11px;display:flex;align-items:center;
+    justify-content:center;padding:2.5px;height:34px;
+  }
+  .tb-tabs .tab{
+    padding:2px 8px;border-radius:9px;font-size:14px;font-weight:500;
+    color:var(--grey-13);text-align:center;white-space:nowrap;height:28px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.5;
+  }
+  .tb-tabs .tab.active{background:var(--white);opacity:1;box-shadow:0 1px 1px rgba(0,0,0,.05);}
+
+  .tb-right{display:flex;align-items:center;gap:13px;}
+  .tb-icon-group{display:flex;align-items:center;gap:7px;}
+  .tb-icon-btn{
+    background:var(--neutral-100);border-radius:9px;width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .tb-icon-btn img{width:15px;height:15px;}
+  .tb-publish{
+    background:var(--skyblue-500);border-radius:9px;height:30px;padding:0 7px;
+    min-width:63px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .tb-publish span{color:#fff;font-size:14px;font-weight:500;}
+  .tb-avatar{width:27px;height:27px;border-radius:50%;overflow:hidden;flex-shrink:0;}
+  .tb-avatar img{width:100%;height:100%;object-fit:cover;}
+
+  /* ---------------- Workspace / canvas ---------------- */
+  .workspace{position:relative;width:1440px;height:977px;}
+  .center-canvas{
+    position:absolute;inset:0;overflow:hidden;
+    background-image:url('assets/canvas-bg.png');
+    background-repeat:repeat;background-size:551px 478px;background-position:0px 0px;
+    cursor:grab;touch-action:none;
+  }
+  .center-canvas.panning{cursor:grabbing;}
+  .center-canvas.locked{cursor:default;}
+  .canvas-content{
+    position:absolute;inset:0;
+    transform:translate(0px,0px);
+    will-change:transform;
+  }
+
+  /* toolbar (동시 편집 + 편집/로직 tabs) */
+  .canvas-toolbar{position:absolute;right:396px;top:10px;display:flex;align-items:center;gap:8px;z-index:10;}
+  .badge{
+    background:var(--neutral-100);border-radius:7.4px;display:flex;align-items:center;gap:2px;
+    padding:3.4px 6.7px;
+  }
+  .badge .dot{width:6.7px;height:6.7px;border-radius:50%;background:#7bf1a8;}
+  .badge span{font-size:14px;color:var(--azure-48);}
+  .canvas-tabs{
+    background:var(--neutral-100);border-radius:11px;display:flex;align-items:center;
+    justify-content:center;padding:2px;height:40px;width:145px;
+  }
+  .canvas-tabs .ctab{
+    flex:1;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    gap:4px;cursor:pointer;font-size:14px;color:var(--grey-13);
+  }
+  .canvas-tabs .ctab.active{background:var(--white);box-shadow:0 1px 1px rgba(0,0,0,.05);font-weight:500;}
+  .canvas-tabs .ctab img{width:14px;height:14px;}
+
+  /* flow legend popover */
+  .flow-legend{
+    position:absolute;right:396px;top:50px;background:var(--white);
+    border:1px solid var(--neutral-200);border-radius:12px;
+    box-shadow:0 4px 6px rgba(0,0,0,.03);
+    padding:16px;display:none;flex-direction:column;gap:10px;z-index:9;
+  }
+  .flow-legend.show{display:flex;}
+  .logic-info-icon{cursor:pointer;}
+  /* 로직 탭이 활성화되어 있을 때만 정보 아이콘이 호버/탭에 반응 */
+  .canvas-tabs .ctab:not(.active) .logic-info-icon{pointer-events:none;opacity:.5;}
+  .flow-legend > p{font-size:14px;color:var(--neutral-800);}
+  .legend-item{display:flex;align-items:center;gap:8px;}
+  .legend-item span{font-size:14px;color:var(--azure-48);white-space:nowrap;}
+  .legend-item img{width:24px;height:2px;}
+
+  /* terminal nodes (시작 / 제출하기) */
+  .terminal-node{
+    position:absolute;width:184px;background:var(--white);
+    border:1px solid var(--neutral-300);border-radius:8px;
+    padding:12px 64px;display:flex;align-items:center;justify-content:center;
+  }
+  .terminal-node span{font-size:14px;font-weight:500;color:var(--neutral-500);white-space:nowrap;}
+
+  /* flow pill nodes: 기본은 한 줄 핀이고, 실제 로직이 설정된 채로 선택되면
+     .expanded가 붙어 "응답에 따른 이동" 카드로 펼쳐진다. */
+  .flow-pill{
+    position:absolute;width:380px;background:var(--white);z-index:8;
+    border:1px solid var(--neutral-300);border-radius:12px;cursor:pointer;overflow:hidden;
+  }
+  .flow-pill.selected{border-color:var(--skyblue-500);}
+  .flow-pill.expanded{border-radius:20px;box-shadow:0 0 10px rgba(0,126,255,.15);}
+
+  .flow-pill-head{height:40px;padding:9px 12px;display:flex;align-items:center;gap:2px;}
+  .flow-pill.expanded .flow-pill-head{
+    height:50px;padding:8px 16px;align-items:flex-end;border-bottom:1px solid var(--neutral-200);
+  }
+  .flow-pill .q-text{
+    flex:1;font-size:16px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .flow-pill .q-tag{font-size:14px;color:var(--neutral-400);white-space:nowrap;}
+  .flow-pill.expanded .q-tag{display:none;}
+  .flow-pill-edit-link{font-size:14px;color:var(--azure-61);white-space:nowrap;cursor:pointer;display:none;}
+  .flow-pill.expanded .flow-pill-edit-link{display:block;}
+
+  .flow-pill-body{display:none;}
+  .flow-pill.expanded .flow-pill-body{
+    display:flex;flex-direction:column;gap:10px;padding:20px 16px;
+  }
+  .flow-pill-body > p{font-size:16px;color:var(--neutral-400);margin:0;}
+
+  .logic-row{
+    height:50px;border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;
+  }
+  .logic-row.grey{background:var(--neutral-100);}
+  .logic-row.blue{background:var(--skyblue-100);}
+  .logic-row-left{display:flex;align-items:center;gap:18px;flex:1;min-width:0;}
+  .logic-row-num{display:flex;align-items:center;gap:18px;width:53px;flex-shrink:0;}
+  .logic-row-num span{font-size:14px;font-weight:700;white-space:nowrap;color:var(--skyblue-500);}
+  .logic-else-label{font-size:14px;font-weight:700;color:var(--neutral-500);white-space:nowrap;}
+  .logic-chips{display:flex;align-items:center;gap:2px;flex:1;min-width:0;flex-wrap:wrap;}
+  .logic-chip-box{
+    background:var(--white);border:1px solid var(--neutral-300);border-radius:6px;
+    height:26px;padding:0 8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .logic-chip-box span{font-size:14px;color:var(--neutral-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;}
+  .logic-or{font-size:14px;color:var(--neutral-600);flex-shrink:0;}
+  .dest-pill{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .dest-pill img{width:16px;height:16px;}
+
+  /* 여러 갈래로 나가는 연결선 중 특정 로직 번호를 표시하는 동그란 배지 */
+  /* 분기 선 위의 "몇 번 응답" 알약 배지. 기본은 회색(비활성), 그 선의 로직이
+     지금 펼쳐져 있을 때만 파란색(활성)이 된다 (피그마 node 615:11522). */
+  .branch-num-badge{
+    position:absolute;padding:4px 16px;border-radius:20px;background:var(--white);
+    border:2px solid var(--neutral-500);color:var(--neutral-500);font-size:14px;font-weight:700;
+    white-space:nowrap;display:flex;align-items:center;justify-content:center;
+    transform:translate(-50%,-50%);z-index:9; /* .flow-pill은 z-index:8이라 그 위에 있어야 배지가 카드에 가려지지 않는다 */
+  }
+  .branch-num-badge.active{border-color:var(--skyblue-500);color:var(--skyblue-500);}
+
+  /* connectors */
+  /* overflow:visible이 필요하다 -- 로직으로 카드가 커지면 Q8/제출하기 같은
+     연결선 좌표가 캔버스의 기본 높이(977px)를 넘어갈 수 있는데, SVG는 기본이
+     overflow:hidden이라 그 구간의 선이 통째로 잘려 안 보인다. 캔버스를
+     팬(스크롤)해도 이건 SVG 자기 좌표 기준의 클리핑이라 그대로 안 보였다.
+     바깥 .center-canvas의 overflow:hidden + 팬 기능이 실제 화면 노출은 그대로
+     담당하므로, 여기서만 풀어주면 된다. */
+  svg.connectors{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:1;}
+
+  /* collaborator caret */
+  .collab-caret{position:absolute;left:350px;top:30px;width:6px;height:9px;pointer-events:none;}
+
+  /* ---------------- Left panel ---------------- */
+  .left-panel-wrap{
+    position:absolute;left:16px;top:16px;display:flex;align-items:flex-end;gap:12px;
+    filter:drop-shadow(-1px 0 4px rgba(54,65,83,.12));z-index:10;
+  }
+  .field-panel{
+    width:280px;height:752px;background:var(--white);border:1px solid var(--neutral-100);
+    border-radius:16px;display:flex;flex-direction:column;overflow:hidden;
+  }
+  .field-panel-top{height:525px;position:relative;}
+  .fp-header{
+    height:45px;display:flex;align-items:center;justify-content:space-between;padding:10px;
+  }
+  .fp-header span{font-size:14px;font-weight:700;color:var(--neutral-500);}
+  .fp-add-btn{
+    width:32px;height:32px;border-radius:11px;background:#f6f6f6;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .fp-add-btn img{width:16px;height:16px;}
+  .fp-list{display:flex;flex-direction:column;gap:8px;padding:0 12px;}
+
+  .page-divider{display:flex;align-items:center;justify-content:center;gap:4px;padding:4px 8px 0;}
+  .page-divider .line{width:88px;height:2px;border-top:2px dashed rgba(107,119,140,.5);}
+  .page-divider span{font-size:14px;font-weight:500;color:rgba(107,119,140,.5);white-space:nowrap;}
+
+  .fp-row{
+    display:flex;align-items:center;gap:3px;border-radius:11px;padding:9px 12px;overflow:hidden;
+  }
+  .fp-row.selected{background:var(--grey-96);}
+  .fp-row p{
+    flex:1;font-size:14px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+  }
+
+  .field-panel-bottom{height:209px;}
+  .fp-header2{height:45px;display:flex;align-items:center;justify-content:space-between;padding:10px;}
+  .fp-header2 span{font-size:14px;font-weight:700;color:var(--neutral-500);}
+
+  .control-panel{
+    background:var(--white);box-shadow:0 0 1px rgba(0,0,0,.08);display:flex;flex-direction:column;
+  }
+  .ctrl-btn{
+    width:33px;height:37px;display:flex;align-items:center;justify-content:center;
+    border-bottom:1px solid var(--neutral-100);cursor:pointer;
+  }
+  .ctrl-btn:last-child{border-bottom:none;}
+  .ctrl-btn img{width:10px;height:10px;}
+  .ctrl-btn img.icon-zoom-out-img{height:1.56px;}
+  .ctrl-btn.disabled{cursor:not-allowed;opacity:.4;}
+
+  /* ---------------- Right panel ---------------- */
+  .right-panel{
+    position:absolute;left:1055px;top:16px;bottom:16px;width:369px;
+    border:1px solid var(--neutral-100);border-top:none;border-radius:16px;
+    box-shadow:1px 0 8px rgba(54,65,83,.12);background:var(--white);overflow:hidden;z-index:10;
+    display:flex;flex-direction:column;
+  }
+  .rp-tabs{display:flex;}
+  .rp-tabs .rtab{
+    flex:1;height:44px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;
+    cursor:pointer;
+  }
+  .rp-tabs .rtab.inactive{background:var(--neutral-100);border-top-left-radius:16px;}
+  .rp-tabs .rtab.active{background:var(--white);border-top-right-radius:16px;}
+  .rp-tabs .rtab span{font-size:16px;font-weight:700;}
+  .rp-tabs .rtab.inactive span{color:var(--neutral-400);}
+  .rp-tabs .rtab.active span{color:var(--skyblue-500);}
+
+  .rp-body{
+    padding:10px 0 16px;display:flex;flex-direction:column;align-items:center;gap:16px;
+    flex:1;min-height:0;overflow-y:auto;scroll-behavior:smooth;
+  }
+  /* overflow:auto로 스크롤시키려는 의도인데 flex-shrink 기본값(1) 때문에
+     내용이 넘칠 때 자식들(제목행/로직목록/CTA버튼 등)이 찌그러지던 버그 수정 */
+  .rp-body > *{flex-shrink:0;}
+  .rp-title-row{display:flex;align-items:center;justify-content:space-between;padding-top:18px;width:333px;}
+  .rp-title-left{display:flex;align-items:center;gap:10px;}
+  .rp-title-left > span{font-size:16px;font-weight:700;color:var(--neutral-600);}
+  .guide-btn{display:flex;align-items:center;gap:3px;cursor:pointer;}
+  .guide-btn span{font-size:14px;color:var(--neutral-500);}
+  .guide-btn img{width:14px;height:14px;}
+  /* 캔버스에서 아직 어떤 문항도 활성화하지 않았을 때(로직 탭 기본값)의 안내 문구 */
+  .rp-empty-hint{width:333px;padding:80px 0;text-align:center;font-size:14px;color:var(--neutral-400);}
+
+  /* 로직 설정 가이드 팝업 (간단히 보기 / 자세히 보기) */
+  .guide-popover{
+    position:fixed;width:322px;background:var(--white);border-radius:16px;
+    box-shadow:0 4px 20px rgba(0,0,0,.14);padding:24px;z-index:1000;display:none;
+  }
+  .guide-popover.show{display:block;}
+  .guide-popover-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+  .guide-popover-header span{font-size:18px;font-weight:700;color:var(--neutral-800);}
+  .guide-popover-header img{width:20px;height:20px;cursor:pointer;}
+  .guide-popover-body.hidden{display:none;}
+  .guide-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;font-size:16px;line-height:22px;}
+  .guide-step:nth-last-child(2){margin-bottom:0;}
+  .guide-step b{color:var(--skyblue-500);font-weight:700;flex-shrink:0;}
+  .guide-step span{color:var(--neutral-800);}
+  .guide-section{margin-bottom:16px;}
+  .guide-section:nth-last-child(2){margin-bottom:0;}
+  .guide-section b{display:block;font-size:16px;font-weight:700;color:var(--neutral-800);margin-bottom:4px;}
+  .guide-section p{font-size:14px;color:var(--neutral-500);line-height:1.5;}
+  .guide-footer-link{margin-top:20px;font-size:14px;font-weight:700;color:var(--skyblue-500);cursor:pointer;}
+
+  .rp-logic-list{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;}
+
+  .logic-detail{
+    width:333px;background:var(--white);border:1px solid var(--skyblue-500);border-radius:10px;overflow:hidden;
+  }
+  /* 선택되지 않은(기본) 로직 블록: 헤더만 보이는 회색 테두리 요약 행.
+     선택하면 .collapsed가 빠지면서 파란 테두리 + 전체 편집 폼이 펼쳐진다. */
+  .logic-detail.collapsed{border-color:var(--neutral-200);}
+  .logic-detail.collapsed .ld-head{border-bottom:none;}
+  .logic-detail.collapsed .ld-spacer,
+  .logic-detail.collapsed .ld-content,
+  .logic-detail.collapsed .ld-add-condition,
+  .logic-detail.collapsed .ld-move{display:none;}
+  .ld-head{
+    height:59px;background:var(--white);border-bottom:1px solid var(--neutral-100);
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
+  }
+  .ld-head-left{display:flex;align-items:center;gap:6px;}
+  .ld-head-num{display:flex;align-items:center;}
+  .ld-arrow-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;}
+  .ld-arrow-icon img{width:20px;height:20px;transform:rotate(-90deg) scaleY(-1);}
+  .ld-head-num-inner{padding:2px 8px;}
+  .ld-head-num-inner span{font-size:14px;font-weight:700;color:var(--skyblue-500);}
+  .ld-head-chips{display:flex;align-items:center;gap:4px;}
+  .ld-head-chips img{width:20px;height:20px;}
+  .ld-trash{width:16px;height:16px;cursor:pointer;}
+  .ld-trash img{width:16px;height:16px;}
+
+  .ld-content{padding:0 18px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .ld-field-row{display:flex;align-items:center;gap:12px;width:100%;}
+  .ld-field-row > p{font-size:14px;color:var(--azure-48);white-space:nowrap;flex-shrink:0;}
+
+  .ld-select{
+    flex:1;min-width:0;height:38px;border:1px solid var(--neutral-200);border-radius:10px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
+  }
+  .ld-select p{font-size:14px;color:var(--neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  .ld-select p.ld-placeholder{color:var(--neutral-400);}
+  .ld-select img{width:16px;height:16px;flex-shrink:0;}
+
+  .ld-answer{
+    flex:1;min-width:0;min-height:38px;border:1px solid var(--neutral-200);border-radius:10px;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;cursor:pointer;
+  }
+  /* 답변을 여러 개 고르면 칩이 박스 밖으로 넘치는 대신 줄바꿈되며 필드 높이가 늘어난다. */
+  .ld-answer-chips{display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:1;min-width:0;}
+  .ans-chip{
+    background:var(--neutral-100);border:1px solid var(--neutral-300);border-radius:6px;
+    height:24px;padding:0 8px;display:flex;align-items:center;gap:2px;width:96px;flex-shrink:0;
+  }
+  .ans-chip span{font-size:14px;color:var(--neutral-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  .ans-chip img{width:16px;height:16px;flex-shrink:0;cursor:pointer;}
+  .ld-answer > img{width:16px;height:16px;flex-shrink:0;align-self:flex-start;margin-top:3px;}
+
+  .ld-select-left{display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
+  .ld-select-left p{font-size:14px;color:var(--neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ld-placeholder{color:var(--neutral-400);font-size:14px;}
+
+  /* 문항/답변/조건/이동 필드가 열렸을 때의 활성 테두리 강조 */
+  .ld-select.dd-open,.ld-answer.dd-open,.ld-move-select.dd-open{border-color:var(--skyblue-500);}
+
+  /* 필드 드롭다운 메뉴: overflow:hidden인 상위 컨테이너(logic-detail, right-panel)에
+     잘리지 않도록 document.body에 직접 붙이고 position:fixed로 필드 아래에 위치시킨다. */
+  .ld-dd-menu{
+    position:fixed;background:var(--white);border:1px solid var(--neutral-200);border-radius:10px;
+    box-shadow:0 8px 20px rgba(0,0,0,.14);z-index:1000;overflow:hidden;
+  }
+  .ld-dd-list{max-height:220px;overflow-y:auto;}
+  /* 옵션 이동 드롭다운처럼 목록 위에 안내 문구가 붙는 경우 */
+  .ld-dd-menu-head{
+    height:35px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;
+    font-size:14px;color:var(--neutral-800);border-bottom:1px solid var(--neutral-200);
+  }
+  .ld-dd-menu-head img{width:16px;height:16px;}
+  .ld-dd-item{
+    display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:14px;color:var(--neutral-800);
+    cursor:pointer;border-bottom:1px solid var(--neutral-100);
+  }
+  .ld-dd-item:last-child{border-bottom:none;}
+  .ld-dd-item:hover{background:var(--neutral-100);}
+  .ld-dd-item span:last-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ld-dd-check{
+    width:16px;height:16px;flex-shrink:0;border:1.5px solid var(--neutral-300);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+  }
+  .ld-dd-item.checked .ld-dd-check{background:var(--skyblue-500);border-color:var(--skyblue-500);}
+  .ld-dd-check::after{
+    content:'';width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;
+    transform:rotate(45deg) translate(-1px,-1px);display:none;
+  }
+  .ld-dd-item.checked .ld-dd-check::after{display:block;}
+
+  /* "이동" 대상 선택 전용 드롭다운 항목: 체크박스 없이 문항 배지만 보여준다
+     (피그마 node 600:8812, Logic_Panel_dropdown). */
+  .ld-dd-item-move{
+    display:flex;align-items:center;gap:4px;padding:8px 12px;cursor:pointer;
+    border-bottom:1px solid var(--neutral-200);
+  }
+  .ld-dd-item-move:last-child{border-bottom:none;}
+  .ld-dd-item-move:hover{background:var(--neutral-100);}
+  .ld-dd-item-move.selected{background:var(--skyblue-100);}
+
+  .ld-add-condition{
+    display:flex;align-items:center;justify-content:center;gap:10px;height:68px;cursor:pointer;
+  }
+  .ld-add-condition img{width:20px;height:20px;}
+  .ld-add-condition span{font-size:14px;font-weight:700;color:#429fff;}
+
+  .ld-move{
+    width:100%;background:var(--skyblue-100);height:68px;display:flex;align-items:center;gap:8px;padding:12px 10px;
+  }
+  .ld-move-label{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .ld-move-label img{width:20px;height:20px;transform:rotate(180deg) scaleY(-1);}
+  .ld-move-label span{font-size:14px;font-weight:700;color:var(--skyblue-500);}
+  .ld-move-select{
+    flex:1;min-width:0;height:38px;background:var(--white);border:1px solid var(--neutral-200);border-radius:10px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer;
+  }
+  .ld-move-select-left{display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
+  .ld-move-select-left p{font-size:14px;color:var(--neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ld-move-select img{width:16px;height:16px;flex-shrink:0;}
+
+  .rp-cta{
+    width:333px;height:40px;background:var(--skyblue-500);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+  }
+  .rp-cta img{width:14px;height:14px;}
+  .rp-cta span{font-size:14px;font-weight:500;color:#fff;}
+
+  .hidden{display:none !important;}
+
+  /* ---------------- Question edit-list panel (문항 설정) ---------------- */
+  .question-edit-panel{
+    position:absolute;left:341px;right:385px;top:16px;bottom:16px;
+    background:var(--white);border-radius:16px;overflow-y:auto;scroll-behavior:smooth;
+    box-shadow:0 4px 6px rgba(0,0,0,.03);z-index:8;
+  }
+  .qep-inner{
+    display:flex;flex-direction:column;align-items:center;gap:100px;
+    padding:48px 62px;
+    /* 마지막 문항들도 패널 상단 위치까지 스크롤될 수 있도록 넉넉한 여유 공간을
+       처음부터 고정으로 확보해둔다 (동적 JS 계산은 타이밍에 따라 불안정했음). */
+    padding-bottom:900px;
+  }
+  .qep-block{
+    width:100%;max-width:599px;display:flex;flex-direction:column;gap:22px;
+    padding:12px;border:1px solid transparent;border-radius:8px;cursor:pointer;
+    transition:border-color .15s ease;scroll-margin:24px;
+  }
+  .qep-block.selected{border-color:var(--skyblue-500);}
+  .qep-title{font-weight:700;font-size:18px;color:var(--grey-13);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .qep-title-row{display:flex;align-items:center;gap:22px;width:100%;}
+  .qep-title-row .qep-title{flex:1;min-width:0;}
+  /* 문항 제목/옵션 텍스트의 번호(Qn., 1. 등)는 고정이고 그 뒤의 텍스트만 고칠 수 있다. */
+  .qep-title-text,.qep-option-edit{outline:none;border-radius:4px;padding:0 2px;margin:0 -2px;cursor:text;}
+  .qep-title-text:focus,.qep-option-edit:focus{background:var(--skyblue-100);}
+  .qep-badge{
+    background:var(--skyblue-100);color:var(--skyblue-500);font-weight:700;font-size:14px;
+    padding:2px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0;
+  }
+  .qep-options{display:flex;flex-direction:column;gap:6px;width:100%;}
+  .qep-option{
+    background:#fbfbfb;min-height:50px;border-radius:14px;padding:0 8px 0 12px;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .qep-option-text{font-size:16px;color:var(--grey-13);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .qep-dest-pill{display:flex;align-items:center;gap:7px;height:32px;padding:0 8px;border-radius:15px;flex-shrink:0;}
+  .qep-dest-pill img.route-icon{width:16px;height:16px;}
+  /* 이동/삭제 버튼은 옵션 행에 마우스를 올렸을 때만(또는 모바일에서 탭했을 때만) 보임 */
+  .qep-option-actions{display:none;gap:4px;flex-shrink:0;}
+  .qep-option:hover .qep-option-actions,
+  .qep-option.touch-active .qep-option-actions{display:flex;}
+  .qep-action-btn{
+    position:relative;width:32px;height:32px;border:1px solid var(--neutral-200);border-radius:7px;
+    background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  }
+  .qep-action-btn img{width:20px;height:20px;}
+  .qep-action-btn.edit img{transform:rotate(90deg);}
+  /* 드롭다운이 열려 있을 때: 하늘색 배경(#e5f2ff) + 파란 테두리 + 파란 아이콘.
+     피그마가 이 상태에 미리 파란색으로 칠해둔 별도 에셋(icon-hover-edit-active.svg)을
+     그대로 쓴다 (원본 회색 아이콘을 CSS로 다시 칠하는 대신). */
+  .qep-action-btn.edit.dd-open{background:var(--skyblue-100);border-color:var(--skyblue-500);}
+  .qep-action-btn.edit.dd-open img{opacity:0;}
+  .qep-action-btn.edit.dd-open::after{
+    content:'';position:absolute;width:20px;height:20px;
+    background-image:url('assets/icon-hover-edit-active.svg');
+    background-size:contain;background-repeat:no-repeat;background-position:center;
+    transform:rotate(90deg);
+  }
+
+  .qep-row-actions{display:flex;align-items:center;justify-content:space-between;width:100%;}
+  .qep-add-group{display:flex;align-items:center;gap:6px;}
+  .qep-add-btn{display:flex;align-items:center;gap:2px;padding:6px 4px;border-radius:8px;background:var(--white);cursor:pointer;}
+  .qep-add-btn img{width:18px;height:18px;}
+  .qep-add-btn span{font-size:11.8px;font-weight:500;color:#0080ff;white-space:nowrap;}
+  .qep-more-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+  /* 원본 SVG가 14.41x3.38(가로로 넓고 얇음) 비율인데 16x16 정사각형으로 강제 확대되어
+     점 3개가 세로 막대처럼 찌그러지던 버그 수정 (비율 유지) */
+  .qep-more-btn img{width:16px;height:3.75px;}
+
+  /* Q9/Q10 주관식(자유 서술형) -- 답변 옵션이 없으므로 입력창 미리보기만 보여준다. */
+  .qep-text-preview{
+    background:#fbfbfb;height:50px;border-radius:14px;padding:12px 10px;box-sizing:border-box;
+    display:flex;align-items:center;font-size:16px;color:var(--grey-13);width:100%;
+  }
+
+  /* Q7 rating scale */
+  .qep-rating{display:flex;flex-direction:column;gap:16px;width:100%;}
+  .qep-rating-range{display:flex;justify-content:space-between;width:100%;}
+  .qep-range-btn{
+    background:#fbfbfb;height:40px;width:64px;border-radius:12.8px;
+    display:flex;align-items:center;justify-content:space-between;padding:8px 8px 8px 10px;cursor:pointer;
+  }
+  .qep-range-btn span{font-size:14px;color:var(--grey-13);}
+  .qep-range-btn img{width:16px;height:16px;}
+  .qep-rating-numbers{display:flex;gap:8px;justify-content:center;width:100%;}
+  .qep-rating-num{
+    background:#fbfbfb;height:40px;flex:1;max-width:40px;border-radius:10.8px;
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:var(--grey-13);
+  }
+  .qep-rating-labels{display:flex;justify-content:space-between;width:100%;gap:8px;}
+  .qep-rating-label{
+    background:#fbfbfb;height:40px;width:186px;max-width:45%;border-radius:12.8px;
+    display:flex;align-items:center;padding:0 10px;font-size:14px;color:var(--grey-13);
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="tb-left">
+      <img class="tb-logo" src="assets/logo.svg" alt="walla logo">
+      <div class="tb-crumb">
+        <span>New Workspace</span>
+        <img src="assets/chevron-breadcrumb.svg" alt="">
+        <span>새 프로젝트</span>
+      </div>
+    </div>
+    <div class="tb-tabs">
+      <div class="tab active">만들기</div>
+      <div class="tab">연동하기</div>
+      <div class="tab">공유하기</div>
+      <div class="tab">결과보기</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-icon-group">
+        <div class="tb-icon-btn"><img src="assets/icon-survey-settings.svg" alt=""></div>
+        <div class="tb-icon-btn"><img src="assets/icon-topbar-2.svg" alt=""></div>
+        <div class="tb-icon-btn"><img src="assets/icon-topbar-3.svg" alt=""></div>
+        <div class="tb-publish"><span>게시하기</span></div>
+      </div>
+      <div class="tb-avatar"><img src="assets/avatar.png" alt="우승연"></div>
+    </div>
+  </div>
+
+  <!-- Workspace -->
+  <div class="workspace">
+    <div class="center-canvas">
+
+      <!-- toolbar -->
+      <div class="canvas-toolbar">
+        <div class="badge"><span class="dot"></span><span>동시 편집</span></div>
+        <div class="canvas-tabs">
+          <div class="ctab active" onclick="switchCanvasTab(this,false)">
+            <img src="assets/icon-edit-tab.svg" alt="">
+            편집
+          </div>
+          <div class="ctab" onclick="switchCanvasTab(this,true)">
+            <img src="assets/icon-logic-tab.svg" alt="" style="transform:rotate(90deg)">
+            로직
+            <img src="assets/icon-chevron-small.svg" alt="로직 정보" class="logic-info-icon" id="logicInfoIcon">
+          </div>
+        </div>
+      </div>
+
+      <!-- flow legend popover -->
+      <div class="flow-legend" id="flowLegend">
+        <p>로직 미리보기</p>
+        <div class="legend-item">
+          <img src="assets/icon-legend-line-solid.svg" alt="">
+          <span>선택한 응답에 따른 이동</span>
+        </div>
+        <div class="legend-item">
+          <img src="assets/icon-legend-line-dashed.svg" alt="">
+          <span>기본 흐름 / 그 외 응답</span>
+        </div>
+      </div>
+
+      <!-- pannable canvas content -->
+      <div class="canvas-content hidden" id="canvasContent">
+
+      <!-- 시작 / 제출하기 -->
+      <div class="terminal-node" style="left:618px;top:54px;"><span>시작</span></div>
+      <div class="terminal-node" id="submitNode" style="left:618px;top:1231px;"><span>제출하기</span></div>
+
+      <!-- connectors: 로직이 하나도 없으면 문항들이 분기 없이 한 줄로 곧게 이어지고,
+           Q5에 로직이 설정되면(updateFlowLayout) Q6/Q7이 옆으로 비켜나고 Q5->Q8
+           직행선(q5ExtraPath)이 추가로 나타난다. -->
+      <svg class="connectors">
+        <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q5LinePath" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q5ExtraPath" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
+        <path id="q5ExtraPath2" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
+        <path id="q6LinePath" d="M 710 356 V 499" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q6ExtraPath" d="M 710 356 V 499" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
+        <path id="q7LinePath" d="M 710 539 V 682" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q7ExtraPath" d="M 710 539 V 682" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
+        <path id="q7ExtraPath2" d="M 710 539 V 682" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
+        <path id="q8LinePath" d="M 710 722 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q8ExtraPath" d="M 710 722 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
+        <path id="q9LinePath" d="M 710 905 V 1048" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q10LinePath" d="M 710 1088 V 1231" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+      </svg>
+      <div class="branch-num-badge" id="q5ExtraBadge" style="display:none;">1</div>
+      <div class="branch-num-badge" id="q5ElseBadge" style="display:none;"></div>
+      <div class="branch-num-badge" id="q5ExtraBadge2" style="display:none;"></div>
+      <div class="branch-num-badge" id="q6ExtraBadge" style="display:none;"></div>
+      <div class="branch-num-badge" id="q6ElseBadge" style="display:none;"></div>
+      <div class="branch-num-badge" id="q7ExtraBadge" style="display:none;"></div>
+      <div class="branch-num-badge" id="q7ElseBadge" style="display:none;"></div>
+      <div class="branch-num-badge" id="q7ExtraBadge2" style="display:none;"></div>
+      <div class="branch-num-badge" id="q8ExtraBadge" style="display:none;"></div>
+      <div class="branch-num-badge" id="q8ElseBadge" style="display:none;"></div>
+
+      <!-- collaborator caret -->
+      <div class="collab-caret">
+        <img src="assets/icon-caret-1.svg" alt="" style="position:absolute;left:3px;top:5px;width:1px;height:8px;">
+        <img src="assets/icon-caret-2.svg" alt="" style="position:absolute;left:0;top:0;width:6px;height:1px;">
+      </div>
+
+      <!-- Q5~Q8: 로직 미설정 상태에서는 전부 같은 모양의 핀으로 세로 한 줄에 배치되고,
+           선택한 문항에 실제 로직이 있으면 카드로 펼쳐지며 응답별 이동 행이 나타난다. -->
+      <div class="flow-pill" data-question="Q5" onclick="activateLogicForQuestion('Q5')" style="left:520px;top:133px;">
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+          <span class="q-text">원데이 클래스 참여 경험이 어느 정도인가요?</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
+      </div>
+      <div class="flow-pill" data-question="Q6" onclick="activateLogicForQuestion('Q6')" style="left:520px;top:316px;">
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
+          <span class="q-text">아래 분야의 선호도를 알려주세요.</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
+      </div>
+      <div class="flow-pill" data-question="Q7" onclick="activateLogicForQuestion('Q7')" style="left:520px;top:499px;">
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q7</b></div>
+          <span class="q-text">지금까지 참여한 클래스 전</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
+      </div>
+      <div class="flow-pill" data-question="Q8" onclick="activateLogicForQuestion('Q8')" style="left:520px;top:682px;">
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
+          <span class="q-text">보통 어떤 경로로 클래스를 찾나요</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
+      </div>
+      <div class="flow-pill" data-question="Q9" onclick="activateLogicForQuestion('Q9')" style="left:520px;top:865px;">
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q9</b></div>
+          <span class="q-text">불만족 하신 이유는 무엇인가요?</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
+      </div>
+      <div class="flow-pill" data-question="Q10" onclick="activateLogicForQuestion('Q10')" style="left:520px;top:1048px;">
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q10</b></div>
+          <span class="q-text">만족하신 이유는 무엇인가요?</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
+      </div>
+
+      </div>
+      <!-- /pannable canvas content -->
+
+      <!-- 문항 설정 : question edit-list panel -->
+      <div class="question-edit-panel" id="questionEditPanel">
+        <div class="qep-inner">
+
+          <!-- Q5 -->
+          <div class="qep-block selected" data-question="Q5" onclick="selectQuestion('Q5')">
+            <p class="qep-title"><span class="qep-num">Q5.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q5" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">원데이 클래스 참여 경험이 어느 정도인가요?</span></p>
+            <div class="qep-options">
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">1.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">처음이에요</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="이동 제거"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">2.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">가끔 참여해요</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="이동 제거"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">3.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">자주 참여해요</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="이동 제거"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+          <!-- Q6 -->
+          <div class="qep-block" data-question="Q6" onclick="selectQuestion('Q6')">
+            <p class="qep-title"><span class="qep-num">Q6.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q6" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">아래 분야의 선호도를 알려주세요</span></p>
+            <div class="qep-options">
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">1.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">온라인 베이킹</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">2.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">드로잉</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">3.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">가죽공예</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">4.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">향수·캔들</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+          <!-- Q7 -->
+          <div class="qep-block" data-question="Q7" onclick="selectQuestion('Q7')">
+            <p class="qep-title"><span class="qep-num">Q7.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q7" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">지금까지 참여한 클래스는 전반에 얼마나 만족하시나요</span></p>
+            <div class="qep-rating">
+              <div class="qep-rating-range">
+                <div class="qep-range-btn"><span>1</span><img src="assets/icon-range-chevron.svg" alt=""></div>
+                <div class="qep-range-btn"><span>5</span><img src="assets/icon-range-chevron.svg" alt=""></div>
+              </div>
+              <div class="qep-rating-numbers">
+                <div class="qep-rating-num">1</div>
+                <div class="qep-rating-num">2</div>
+                <div class="qep-rating-num">3</div>
+                <div class="qep-rating-num">4</div>
+                <div class="qep-rating-num">5</div>
+              </div>
+              <div class="qep-rating-labels">
+                <div class="qep-rating-label">매우 불만족</div>
+                <div class="qep-rating-label">만족</div>
+              </div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+          <!-- Q8 -->
+          <div class="qep-block" data-question="Q8" onclick="selectQuestion('Q8')">
+            <div class="qep-title-row">
+              <p class="qep-title"><span class="qep-num">Q8.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q8" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">보통 어떤 경로로 클래스를 찾나요?</span></p>
+              <span class="qep-badge">다중 선택형</span>
+            </div>
+            <div class="qep-options">
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">1.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">SNS</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">2.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">지인추천</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">3.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">포털검색</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+              <div class="qep-option">
+                <span class="qep-option-text"><span class="qep-num">4.</span> <span class="qep-option-edit" contenteditable="true" spellcheck="false" onfocus="captureOldText(this)" onblur="commitOptionEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">플랫폼 앱</span></span>
+                <div class="qep-option-actions">
+                  <div class="qep-action-btn edit" title="이동 문항 수정" onclick="openOptionMoveDropdown(event,this)"><img src="assets/icon-hover-edit.svg" alt=""></div>
+                  <div class="qep-action-btn" title="옵션 삭제"><img src="assets/icon-hover-x.svg" alt=""></div>
+                </div>
+              </div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+          <!-- Q9: 주관식(자유 서술형) -- 답변 옵션이 없어 로직을 걸 수 없고, 다음
+               문항으로 이동만 가능하다. -->
+          <div class="qep-block" data-question="Q9" onclick="selectQuestion('Q9')">
+            <div class="qep-title-row">
+              <p class="qep-title"><span class="qep-num">Q9.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q9" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">불만족 하신 이유는 무엇인가요?</span></p>
+              <span class="qep-badge">주관식</span>
+            </div>
+            <div class="qep-options">
+              <div class="qep-text-preview">주관식 입력</div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+          <!-- Q10: 주관식(자유 서술형) -->
+          <div class="qep-block" data-question="Q10" onclick="selectQuestion('Q10')">
+            <div class="qep-title-row">
+              <p class="qep-title"><span class="qep-num">Q10.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q10" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">만족하신 이유는 무엇인가요?</span></p>
+              <span class="qep-badge">주관식</span>
+            </div>
+            <div class="qep-options">
+              <div class="qep-text-preview">주관식 입력</div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Left panel -->
+      <div class="left-panel-wrap">
+        <div class="field-panel">
+          <div class="field-panel-top">
+            <div class="fp-header">
+              <span>설문 필드</span>
+              <div class="fp-add-btn"><img src="assets/icon-add-field.svg" alt=""></div>
+            </div>
+            <div class="fp-list">
+              <div class="page-divider"><div class="line"></div><span>페이지 구분</span><div class="line"></div></div>
+
+              <div class="fp-row selected" data-question="Q5" onclick="selectQuestion('Q5')">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q5</b></div>
+                <p>원데이 클래스 참여 경험이 어느 정도 인가요?</p>
+              </div>
+              <div class="fp-row" data-question="Q6" onclick="selectQuestion('Q6')">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q6</b></div>
+                <p>아래 분야의 선호도를 알려주세요.</p>
+              </div>
+              <div class="fp-row" data-question="Q7" onclick="selectQuestion('Q7')">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q7</b></div>
+                <p>지금까지 참여한 클래스 전</p>
+              </div>
+              <div class="fp-row" data-question="Q8" onclick="selectQuestion('Q8')">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
+                <p>보통 어떤 경로로 클래스를...</p>
+              </div>
+              <div class="fp-row" data-question="Q9" onclick="selectQuestion('Q9')">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q9</b></div>
+                <p>불만족 하신 이유는 무엇인가요?</p>
+              </div>
+              <div class="fp-row" data-question="Q10" onclick="selectQuestion('Q10')">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q10</b></div>
+                <p>만족하신 이유는 무엇인가요?</p>
+              </div>
+            </div>
+          </div>
+          <div class="field-panel-bottom">
+            <div class="fp-header2">
+              <span>엔딩 필드</span>
+              <div class="fp-add-btn"><img src="assets/icon-add-field.svg" alt=""></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-panel hidden" id="controlPanel">
+          <div class="ctrl-btn" id="btnZoomIn" title="확대"><img src="assets/icon-zoom-in.svg" alt=""></div>
+          <div class="ctrl-btn" id="btnZoomOut" title="축소"><img class="icon-zoom-out-img" src="assets/icon-zoom-out.svg" alt=""></div>
+          <div class="ctrl-btn" id="btnFitView" title="화면에 맞추기"><img src="assets/icon-fit-view.svg" alt=""></div>
+          <div class="ctrl-btn" id="btnToggleLock" title="캔버스 이동/확대 잠금"><img id="lockIcon" src="assets/icon-toggle-interactivity.svg" alt=""></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right panel -->
+    <div class="right-panel">
+      <div class="rp-tabs">
+        <div class="rtab inactive" onclick="switchRpTab(this,false)"><span>문항 설정</span></div>
+        <div class="rtab active" onclick="switchRpTab(this,true)"><span>로직</span></div>
+      </div>
+      <div class="rp-body" id="rpBody">
+      <div class="rp-title-row">
+        <div class="rp-title-left">
+          <span>로직</span>
+          <div class="q-label hidden" id="rpQuestionLabelWrap"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b id="rpQuestionLabel">Q5</b></div>
+        </div>
+        <div class="guide-btn" onclick="toggleGuidePopover(event)"><span>가이드</span><img src="assets/icon-help.svg" alt=""></div>
+      </div>
+
+      <p class="rp-empty-hint" id="rpEmptyHint">문항을 선택해 주세요</p>
+      <p class="rp-empty-hint hidden" id="rpNoLogicHint">주관식 문항은 로직을 설정할 수 없어요.<br>다음 문항으로만 이동해요.</p>
+
+      <div class="rp-logic-list hidden" id="rpLogicList">
+      </div>
+      <!-- /rp-logic-list -->
+
+      <div class="rp-cta hidden" id="rpCta" onclick="addNewLogic()">
+        <img src="assets/icon-plus.svg" alt="">
+        <span>새 로직 추가</span>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- 로직 설정 가이드 팝업: 우측 패널 "가이드" 버튼으로 열고, 기본은 요약(간단히 보기)
+       상태로 열려서 "자세히 보기"/"간단히 보기"로 두 상태를 오갈 수 있다 (피그마 node 624:9376). -->
+  <div class="guide-popover" id="guidePopover">
+    <div class="guide-popover-header">
+      <span>로직 설정 가이드</span>
+      <img src="assets/icon-guide-close.svg" alt="" onclick="closeGuidePopover()">
+    </div>
+    <div class="guide-popover-body" id="guideCollapsedBody">
+      <div class="guide-step"><b>1.</b><span>조건을 선택하세요.</span></div>
+      <div class="guide-step"><b>2.</b><span>실행 결과를 정하세요.</span></div>
+      <div class="guide-step"><b>3.</b><span>이동할 문항을 고르세요.</span></div>
+      <div class="guide-footer-link" onclick="setGuideExpanded(true)">자세히 보기 →</div>
+    </div>
+    <div class="guide-popover-body hidden" id="guideExpandedBody">
+      <div class="guide-section">
+        <b>조건</b>
+        <p>어떤 문항의 어떤 답변일 때 로직이 걸릴지 정합니다. 조건을 여러 개 걸면 사이사이의 그리고(AND) · 또는(OR) 버튼으로 관계를 정할 수 있어요.</p>
+      </div>
+      <div class="guide-section">
+        <b>실행 결과</b>
+        <p>조건이 맞았을 때 무엇을 할지 고릅니다. 문항 이동 · 관련 문항 표시 · 설문 종료 중 하나예요.</p>
+      </div>
+      <div class="guide-section">
+        <b>이동할 문항</b>
+        <p>문항 이동과 관련 문항 표시는 갈 곳이 필요합니다. 설문 종료를 고르면 이 항목은 나오지 않아요.</p>
+      </div>
+      <div class="guide-footer-link" onclick="setGuideExpanded(false)">← 간단히 보기</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // 중앙 캔버스(편집/로직)와 우측 패널(문항 설정/로직)은 서로 독립적인 탭이다 --
+  // 중앙이 편집 화면이어도 우측에서 로직 탭을 고르면 로직 패널이 보여야 하고, 그 반대도 마찬가지다.
+  function setCanvasMode(isLogic){
+    var ctabs = document.querySelectorAll('.canvas-tabs .ctab');
+    ctabs.forEach(function(t){ t.classList.remove('active'); });
+    ctabs[isLogic ? 1 : 0].classList.add('active');
+
+    var canvasContent = document.getElementById('canvasContent');
+    var questionEditPanel = document.getElementById('questionEditPanel');
+    var controlPanel = document.getElementById('controlPanel');
+    if (isLogic){
+      questionEditPanel.classList.add('hidden');
+      canvasContent.classList.remove('hidden');
+      if (controlPanel) controlPanel.classList.remove('hidden');
+      // 캔버스가 display:none인 동안은 카드 높이를 잴 수 없어 레이아웃 계산이 다
+      // 0으로 나오므로, 실제로 보이게 된 지금 다시 계산한다.
+      updateAllFlowNodes();
+    } else {
+      canvasContent.classList.add('hidden');
+      questionEditPanel.classList.remove('hidden');
+      if (controlPanel) controlPanel.classList.add('hidden');
+    }
+  }
+  function setRpMode(isLogic){
+    var rtabs = document.querySelectorAll('.rp-tabs .rtab');
+    rtabs.forEach(function(t){ t.classList.remove('active'); t.classList.add('inactive'); });
+    var activeRtab = rtabs[isLogic ? 1 : 0];
+    activeRtab.classList.remove('inactive');
+    activeRtab.classList.add('active');
+
+    var rpBody = document.getElementById('rpBody');
+    if (rpBody) rpBody.classList.toggle('hidden', !isLogic);
+  }
+  function switchCanvasTab(el, isLogic){
+    setCanvasMode(isLogic);
+    if (isLogic) resetLogicSelection(); // 로직 탭에 새로 들어올 때마다 "문항을 선택해 주세요"부터 시작한다.
+  }
+  function switchRpTab(el, isLogic){
+    setRpMode(isLogic);
+    if (isLogic) resetLogicSelection();
+  }
+
+  // 중앙 편집 패널의 문항 제목/옵션 텍스트를 사용자가 직접 고칠 수 있으므로, 이 값들은
+  // 더 이상 고정 상수가 아니라 항상 현재 DOM(.qep-title-text / .qep-option-edit)에서
+  // 읽어온다. 아래 두 객체는 해당 DOM이 없는 경우(Q7 척도형 문항의 답변 옵션 등)에만
+  // 쓰이는 기본값이다.
+  var QUESTION_TITLES = {
+    Q5: '원데이 클래스 참여 경험이 어느 정도인가요?',
+    Q6: '아래 분야의 선호도를 알려주세요.',
+    Q7: '지금까지 참여한 클래스는 전반에 얼마나 만족하시나요',
+    Q8: '보통 어떤 경로로 클래스를 찾나요?',
+    Q9: '불만족 하신 이유는 무엇인가요?',
+    Q10: '만족하신 이유는 무엇인가요?'
+  };
+  var QUESTION_ORDER = ['Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10'];
+  // Q9/Q10은 주관식(자유 서술형)이라 답변을 몇 가지로 나눌 수 없어 로직 자체를
+  // 걸 수 없다 -- 다른 문항의 이동 대상(스킵 목적지)으로는 그대로 쓰일 수 있고,
+  // 자기 자신은 항상 다음 문항으로만 넘어간다.
+  var NO_LOGIC_QUESTIONS = ['Q9', 'Q10'];
+  // 각 문항 핀 바로 아래에서 다음 문항으로 뻗어나가는 연결선의 id.
+  // Q5는 분기 카드로 펼쳐지면 선이 두 개(q5LinePath: 그 외 응답, q5ExtraPath: Q8로
+  // 바로 가는 로직1 직행선)로 갈라져서, 이 단순한 "선택된 문항이면 파란색" 규칙
+  // 대신 updateQ5LineColors()가 어느 로직 블록이 펼쳐져 있는지를 보고 따로 정한다.
+  var QUESTION_OUTGOING_PATHS = {
+    Q6: ['q6LinePath'],
+    Q7: ['q7LinePath'],
+    Q8: ['q8LinePath'],
+    Q9: ['q9LinePath'],
+    Q10: ['q10LinePath']
+  };
+  var currentQuestionId = 'Q5';
+
+  function getQuestionTitle(qid){
+    var el = document.querySelector('.qep-block[data-question="' + qid + '"] .qep-title-text');
+    var text = el ? el.textContent.trim() : '';
+    return text || QUESTION_TITLES[qid] || qid;
+  }
+  function getQuestionOptionTexts(qid){
+    var block = document.querySelector('.qep-block[data-question="' + qid + '"]');
+    var editables = block ? block.querySelectorAll('.qep-option-edit') : [];
+    if (!editables.length) return QUESTION_OPTIONS[qid] || [];
+    return Array.from(editables).map(function(el){ return el.textContent.trim(); });
+  }
+
+  // ---------------- 문항 제목 / 옵션 텍스트 인라인 편집 ----------------
+  function handleEditableKeydown(evt){
+    if (evt.key === 'Enter'){
+      evt.preventDefault(); // 한 줄짜리 라벨이라 줄바꿈 대신 입력을 확정한다.
+      evt.target.blur();
+    }
+  }
+  function captureOldText(el){
+    el.setAttribute('data-prev-text', el.textContent.trim());
+  }
+  function commitTitleEdit(el){
+    var oldText = el.getAttribute('data-prev-text') || '';
+    var newText = el.textContent.trim();
+    if (!newText) newText = oldText; // 완전히 지우고 나가면 원래 텍스트로 되돌린다.
+    if (el.textContent !== newText) el.textContent = newText;
+    if (newText === oldText) return;
+    var qid = el.getAttribute('data-question');
+    if (qid) syncQuestionTitleEverywhere(qid, newText);
+  }
+  function commitOptionEdit(el){
+    var oldText = el.getAttribute('data-prev-text') || '';
+    var newText = el.textContent.trim();
+    if (!newText) newText = oldText;
+    if (el.textContent !== newText) el.textContent = newText;
+    if (newText === oldText) return;
+    var qBlock = el.closest('.qep-block');
+    var qid = qBlock ? qBlock.getAttribute('data-question') : null;
+    if (qid) syncOptionTextEverywhere(qid, oldText, newText);
+  }
+  // 문항 제목을 고치면 왼쪽 필드 목록 미리보기와, 우측 패널에서 이 문항을 참조 중인
+  // 로직 블록의 "문항"/"이동" 표시 텍스트를 같이 갱신한다.
+  function syncQuestionTitleEverywhere(qid, newTitle){
+    var fpRowP = document.querySelector('.fp-row[data-question="' + qid + '"] p');
+    if (fpRowP) fpRowP.textContent = newTitle;
+    document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(block){
+      if (getBlockQuestionRefId(block) === qid){
+        var title = block.querySelector('.ld-question-title');
+        if (title) title.textContent = newTitle;
+      }
+      if (getBlockMoveTargetId(block) === qid){
+        var moveTitle = block.querySelector('.ld-move-select-left p');
+        if (moveTitle) moveTitle.textContent = newTitle;
+      }
+    });
+  }
+  // 옵션 텍스트를 고치면, 그 문항을 참조하는 로직 블록 중 이 옵션을 답변으로 골라둔
+  // 칩의 표시 텍스트를 같이 갱신하고, 중앙 패널의 "→ Qn" 표시 동기화도 다시 맞춘다.
+  function syncOptionTextEverywhere(qid, oldText, newText){
+    document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(block){
+      if (getBlockQuestionRefId(block) !== qid) return;
+      var chipsWrap = getAnswerChipsWrap(block);
+      if (!chipsWrap) return;
+      chipsWrap.querySelectorAll('.ans-chip span').forEach(function(span){
+        if (span.textContent === oldText) span.textContent = newText;
+      });
+    });
+    syncOptionLogicPills();
+  }
+
+  // target을 questionEditPanel 안에서만 세로 중앙으로 스크롤한다.
+  // scrollIntoView는 상위 스크롤 조상(문서 전체)까지 같이 움직일 수 있어서
+  // 대신 패널의 scrollTop을 직접 계산해 이 패널만 스크롤되게 한다.
+  // 마지막 문항들(Q7, Q8 등)은 아래에 더 스크롤할 콘텐츠가 없어서
+  // 상단 위치까지 끌어올릴 여유 공간이 부족할 수 있다. 패널 높이만큼
+  // 하단 여백을 미리 확보해서 어떤 문항이든 상단 위치까지 스크롤되게 한다.
+  function scrollWithinQuestionPanel(target){
+    var panel = document.getElementById('questionEditPanel');
+    if (!panel || !target) return;
+    var TOP_OFFSET = 32; // 중앙 정렬 대신 패널 상단에서 이만큼 여백을 두고 위치시킨다.
+    var panelRect = panel.getBoundingClientRect();
+    var targetRect = target.getBoundingClientRect();
+    var targetTopWithinPanel = (targetRect.top - panelRect.top) + panel.scrollTop;
+    var desired = targetTopWithinPanel - TOP_OFFSET;
+    desired = Math.max(0, Math.min(desired, panel.scrollHeight - panel.clientHeight));
+    panel.scrollTop = desired; // CSS scroll-behavior:smooth animates this
+  }
+
+  // 왼쪽 필드 목록에서 문항을 선택하면 중앙 캔버스를 문항 편집 화면으로 전환하고
+  // 해당 문항으로 스크롤 + 테두리 하이라이트한다. 우측 패널은 별개 탭이라
+  // 현재 문항 설정/로직 중 무엇을 보고 있었든 그 상태를 그대로 유지한다.
+  function selectQuestion(qid){
+    currentQuestionId = qid;
+    document.querySelectorAll('.fp-row').forEach(function(r){ r.classList.remove('selected'); });
+    var rowEl = document.querySelector('.fp-row[data-question="' + qid + '"]');
+    if (rowEl) rowEl.classList.add('selected');
+
+    setCanvasMode(false);
+
+    document.querySelectorAll('.qep-block').forEach(function(b){ b.classList.remove('selected'); });
+    var target = document.querySelector('.qep-block[data-question="' + qid + '"]');
+    if (target){
+      target.classList.add('selected');
+      scrollWithinQuestionPanel(target);
+    }
+
+    revealLogicPanelForQuestion(qid);
+  }
+
+  // #rpLogicList는 모든 문항의 로직 블록을 같이 담고 있는 하나의 컨테이너라서,
+  // 문항을 바꿀 때마다 그 문항 소유의 블록만 보이게 하고 나머지는 숨긴다.
+  function refreshRpLogicListForQuestion(qid){
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!rpLogicList) return;
+    var anyVisible = false;
+    rpLogicList.querySelectorAll('[data-question]').forEach(function(el){
+      // 자동 "그 외" 블록이 바로 다음 문항(기본 흐름)을 가리키고 있으면 우측
+      // 패널 목록에는 아예 보여주지 않는다 -- 그래프의 기본 연결선은 로직
+      // 설정 여부와 무관하게 항상 그려지므로 그쪽에서 이미 나타나고, 패널에는
+      // 아무 조작도 필요 없는 빈 "그 외 응답" 줄만 남아 잡음이 된다. 실제로
+      // 건너뛰는 대상으로 바뀌면 다시 나타난다.
+      var isDefaultAuto = el.getAttribute('data-auto') === 'true' && getBlockMoveTargetId(el) === nextQuestionAfter(qid);
+      var match = el.getAttribute('data-question') === qid && !isDefaultAuto;
+      el.classList.toggle('hidden', !match);
+      if (match) anyVisible = true;
+    });
+    rpLogicList.classList.toggle('hidden', !anyVisible);
+  }
+
+  // 로직 탭이 활성화된 중앙 캔버스에서 문항 카드/핀을 클릭하면, 캔버스 모드는 그대로
+  // 두고(편집 화면으로 전환하지 않고) 그 문항 기준으로 우측 패널을 로직 탭으로 활성화한다.
+  // 우측 패널 로직 탭의 "문항을 선택해 주세요" 안내 문구를 숨기고, 실제 문항 배지 +
+  // 로직 목록/CTA 버튼을 보여준다. activateLogicForQuestion과 selectQuestion 둘 다 쓴다.
+  function revealLogicPanelForQuestion(qid){
+    var rpLabel = document.getElementById('rpQuestionLabel');
+    if (rpLabel) rpLabel.textContent = qid;
+    var labelWrap = document.getElementById('rpQuestionLabelWrap');
+    if (labelWrap) labelWrap.classList.remove('hidden');
+    var hint = document.getElementById('rpEmptyHint');
+    if (hint) hint.classList.add('hidden');
+    var noLogicHint = document.getElementById('rpNoLogicHint');
+    var isNoLogic = NO_LOGIC_QUESTIONS.indexOf(qid) !== -1;
+    if (noLogicHint) noLogicHint.classList.toggle('hidden', !isNoLogic);
+    // 주관식(Q9/Q10)은 답변을 나눌 수 없어 로직 자체를 걸 수 없으므로, 목록과
+    // "새 로직 추가" 버튼 대신 안내 문구만 보여준다.
+    var rpCta = document.getElementById('rpCta');
+    if (rpCta) rpCta.classList.toggle('hidden', isNoLogic);
+    if (isNoLogic){
+      var rpLogicList = document.getElementById('rpLogicList');
+      if (rpLogicList) rpLogicList.classList.add('hidden');
+      return;
+    }
+    refreshRpLogicListForQuestion(qid); // 이 문항의 실제 로직 유무에 따라 rpLogicList는 알아서 보이거나 숨는다.
+  }
+
+  // 로직 캔버스가 처음 열렸을 때, 또는 우측 패널이 로직 탭으로 막 전환됐을 때의 기본값.
+  // 어떤 문항도 아직 활성화되지 않았다는 뜻이므로, 문항 배지/로직 목록/CTA를 다 숨기고
+  // "문항을 선택해 주세요" 안내만 보여준다. 캔버스의 문항 핀/연결선도 전부 회색으로 되돌린다.
+  function resetLogicSelection(){
+    document.querySelectorAll('#canvasContent [data-question]').forEach(function(el){
+      el.classList.remove('selected');
+    });
+    Object.keys(QUESTION_OUTGOING_PATHS).forEach(function(q){
+      QUESTION_OUTGOING_PATHS[q].forEach(function(id){
+        var path = document.getElementById(id);
+        if (path) path.setAttribute('stroke', '#d1d5dc');
+      });
+    });
+    var labelWrap = document.getElementById('rpQuestionLabelWrap');
+    if (labelWrap) labelWrap.classList.add('hidden');
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (rpLogicList) rpLogicList.classList.add('hidden');
+    var rpCta = document.getElementById('rpCta');
+    if (rpCta) rpCta.classList.add('hidden');
+    var hint = document.getElementById('rpEmptyHint');
+    if (hint) hint.classList.remove('hidden');
+    var noLogicHint = document.getElementById('rpNoLogicHint');
+    if (noLogicHint) noLogicHint.classList.add('hidden');
+    updateAllFlowNodes();
+  }
+
+  function activateLogicForQuestion(qid){
+    currentQuestionId = qid;
+    document.querySelectorAll('#canvasContent [data-question]').forEach(function(el){
+      el.classList.remove('selected');
+    });
+    var target = document.querySelector('#canvasContent [data-question="' + qid + '"]');
+    if (target) target.classList.add('selected');
+
+    setRpMode(true);
+    revealLogicPanelForQuestion(qid);
+
+    // 주관식(Q9/Q10)은 로직을 걸 수 없으므로 빈 로직 블록을 자동으로
+    // 만들어주지 않는다 -- revealLogicPanelForQuestion이 이미 안내 문구로
+    // 대체해 보여준다.
+    if (NO_LOGIC_QUESTIONS.indexOf(qid) === -1){
+      // 이 문항에 로직이 하나도 없으면, "새 로직 추가"를 한 번 더 누르지 않아도 바로
+      // 편집할 수 있도록 첫 로직 블록을 자동으로 만들어서 펼쳐둔다.
+      var hasExistingLogic = document.querySelectorAll('#rpLogicList .logic-detail[data-question="' + qid + '"]').length > 0;
+      if (!hasExistingLogic) addNewLogic();
+    }
+
+    // 문항 바로 아래에서 다음 문항으로 나가는 연결선 -- 그 문항이 활성화됐을 때만
+    // 파란색으로 켜지고, 나머지는 전부 회색으로 되돌아간다.
+    Object.keys(QUESTION_OUTGOING_PATHS).forEach(function(q){
+      var active = q === qid;
+      QUESTION_OUTGOING_PATHS[q].forEach(function(id){
+        var path = document.getElementById(id);
+        if (path) path.setAttribute('stroke', active ? '#007eff' : '#d1d5dc');
+      });
+    });
+
+    updateAllFlowNodes();
+  }
+
+  // ---------------- 로직이 실제로 설정된 문항은 캔버스에서 카드로 펼쳐진다 ----------------
+  // (피그마 node 615:10470). 답변을 하나도 안 고른 자동 생성 빈 블록은 "설정됨"으로
+  // 치지 않는다 -- activateLogicForQuestion이 클릭할 때마다 빈 블록을 만들어주므로,
+  // 그것만으로 카드가 펼쳐지면 아무 답변도 없는데 펼쳐진 것처럼 보인다.
+  // 자동 생성된 "다음 문항으로" 블록(data-auto)은 캔버스 카드가 이미 별도의 회색
+  // "그 외 응답" 행으로 같은 내용을 보여주고 있으므로, 여기서는 제외해 중복을 막는다.
+  function getConfiguredLogicBlocks(qid){
+    return Array.from(document.querySelectorAll('#rpLogicList .logic-detail:not([data-auto="true"])')).filter(function(b){
+      return getBlockQuestionRefId(b) === qid && getSelectedAnswerTexts(b).length > 0;
+    });
+  }
+  function updateFlowNodeContent(qid){
+    var node = document.querySelector('#canvasContent .flow-pill[data-question="' + qid + '"]');
+    if (!node) return;
+    var configured = getConfiguredLogicBlocks(qid);
+    // 카드가 "응답에 따른 이동" 내용까지 펼쳐 보여주는 건 이 문항이 지금 선택돼
+    // 있을 때뿐이다 -- 다른 문항이 활성화되면 카드는 다시 한 줄짜리로 접힌다.
+    // (Q6/Q7 위치나 분기 선 자체는 이것과 별개로 updateFlowLayout이 로직 설정
+    // 여부만 보고 유지한다.)
+    var shouldExpand = node.classList.contains('selected') && configured.length > 0;
+    node.classList.toggle('expanded', shouldExpand);
+
+    var body = node.querySelector('.flow-pill-body');
+    if (!body) return;
+    if (!shouldExpand){ body.innerHTML = ''; return; }
+
+    var html = '<p>응답에 따른 이동</p>';
+    var nextQ = nextQuestionAfter(qid);
+    // 이동 대상이 바로 다음 문항이면(=로직 없이도 원래 흘러가는 기본 경로),
+    // 아이콘+Qn 배지를 아예 보여주지 않는다 -- 실제로 흐름을 건너뛰는 경우만
+    // 눈에 띄게 표시한다.
+    function destPillHtml(target, arrowSrc){
+      if (!target || target === nextQ) return '';
+      return '<div class="dest-pill"><img src="' + arrowSrc + '" alt="">' +
+        '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + target + '</b></div></div>';
+    }
+    configured.forEach(function(block, i){
+      var answers = getEffectiveAnswerTexts(qid, block);
+      var target = getBlockMoveTargetId(block) || '';
+      var chips = answers.map(function(a, idx){
+        var sep = idx < answers.length - 1 ? '<span class="logic-or">또는</span>' : '';
+        return '<div class="logic-chip-box"><span>' + a + '</span></div>' + sep;
+      }).join('');
+      html +=
+        '<div class="logic-row blue">' +
+          '<div class="logic-row-left">' +
+            '<div class="logic-row-num"><span>로직' + (i + 1) + '</span></div>' +
+            '<div class="logic-chips">' + chips + '</div>' +
+          '</div>' +
+          destPillHtml(target, 'assets/icon-dest-arrow-blue.svg') +
+        '</div>';
+    });
+    // "그 외 응답" 행은 실제로 자동 블록이 존재할 때만 보여준다 -- 답변을 전부
+    // 명시적으로 배정했거나, 사용자가 자동 블록을 직접 지웠으면 이 행도 같이 없어진다.
+    var autoBlock = document.querySelector('#rpLogicList .logic-detail[data-auto="true"][data-question="' + qid + '"]');
+    if (autoBlock){
+      // 자동 블록의 실제 이동 대상을 읽는다 -- 기본값은 다음 문항이지만
+      // 사용자가 직접 다른 문항으로 바꿨을 수도 있다.
+      var elseTarget = getBlockMoveTargetId(autoBlock) || nextQ;
+      html +=
+        '<div class="logic-row grey">' +
+          '<div class="logic-row-left"><span class="logic-else-label">그 외 응답</span></div>' +
+          destPillHtml(elseTarget, 'assets/icon-dest-arrow-grey.svg') +
+        '</div>';
+    }
+    body.innerHTML = html;
+  }
+  // 두 점을 잇는 연결선을 만든다. x좌표가 같으면 직선, 다르면(컬럼이 바뀌면)
+  // 부드러운 S자 곡선이 된다 -- Q6/Q7이 실제로 어느 컬럼에 있는지에 따라
+  // 연결선 모양이 자동으로 달라지게 하기 위한 공용 헬퍼.
+  function connectorPath(x1, y1, x2, y2){
+    if (x1 === x2) return 'M ' + x1 + ' ' + y1 + ' V ' + y2;
+    var ctrlY = y1 + (y2 - y1) / 2;
+    return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ctrlY + ', ' + x2 + ' ' + ctrlY + ', ' + x2 + ' ' + y2;
+  }
+  // 문항 카드(.flow-pill)는 폭이 380px이고 배경이 불투명한 흰색이라, 카드
+  // 중심(메인 컬럼 x)에서 살짝(수십 px)만 부풀린 곡선은 여전히 카드 폭
+  // 안쪽이라 그 카드 뒤로 완전히 숨어버린다 -- 선이 카드에 가려 어디로
+  // 가는 선인지 안 보인다는 문제가 바로 이것이다. 카드 뒤에 숨지 않으려면
+  // 카드 가장자리(중심에서 190px)를 확실히 넘어서야 한다.
+  var CARD_HALF_WIDTH = 190; // .flow-pill width(380px)의 절반
+  // 분기 선 하나를 그린다. 답변이 세 곳 이상으로 나뉘어도 그중 여러 target이
+  // 전부 메인 컬럼(같은 x)에 남아있을 수 있다(예: 5->6, 5->7, 5->8이 동시에
+  // 걸리면 Q6/Q7/Q8 모두 건너뛰는 문항이 없어 셋 다 메인 컬럼에 그대로
+  // 남는다) -- 이때 x가 같다고 그냥 세로 직선을 그으면 여러 선이 완전히
+  // 겹치고, 조금만 부풀리면 카드 뒤에 숨는다. lane(0이면 직선, 1이면 카드
+  // 폭을 완전히 벗어날 만큼 오른쪽으로, 2면 왼쪽으로) 순서로 카드 바깥의
+  // 빈 공간을 지나가게 해서 항상 눈에 보이도록 한다.
+  //
+  // 시작점과 도착점의 x가 다른 경우(옆 컬럼으로 밀려난 문항에서 나가는
+  // 선)도 마찬가지 문제가 있다 -- 그 문항 자신도 답변이 여러 target으로
+  // 나뉘면(예: Q5의 분기 때문에 옆으로 밀려난 Q6가 스스로도 Q7/Q8로 갈리면),
+  // 두 선이 똑같은 지점에서 시작해 똑같은 높이(y1+57)에서 꺾이므로 갈라지는
+  // target까지 도착하기 전까지는 사실상 겹쳐 보인다. lane마다 꺾이는 높이를
+  // 다르게 줘서 시작하자마자 눈에 띄게 갈라지게 한다.
+  function branchPath(x1, y1, x2, y2, lane){
+    if (x1 !== x2){
+      var bendY = y1 + 57 + lane * 45;
+      return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + bendY + ', ' + x2 + ' ' + bendY + ', ' + x2 + ' ' + y2;
+    }
+    if (!lane) return 'M ' + x1 + ' ' + y1 + ' V ' + y2;
+    var side = (lane % 2 === 1) ? 1 : -1; // 홀수 lane은 오른쪽, 짝수 lane은 왼쪽으로 번갈아 카드를 피한다.
+    var magnitude = CARD_HALF_WIDTH + 30 + Math.floor((lane - 1) / 2) * 60;
+    var bendX = x1 + side * magnitude;
+    var ctrlY1 = y1 + 57;
+    var ctrlY2 = y2 - 40;
+    return 'M ' + x1 + ' ' + y1 + ' C ' + bendX + ' ' + ctrlY1 + ', ' + bendX + ' ' + ctrlY2 + ', ' + x1 + ' ' + y2;
+  }
+  function svgX(cssLeftPx){ return cssLeftPx + 190; }
+
+  // 카드 사이의 기본 간격 -- 접힌 카드 높이(42px)를 포함해 인접한 두 카드의
+  // top이 183px씩 벌어지도록 맞춘 값(183-42=141)이라, 어떤 카드가 로직으로
+  // 펼쳐져 실제 높이가 커져도 이 간격을 그 카드의 진짜 아랫변에 더하기만
+  // 하면 다음 카드와 항상 정확히 떨어진다.
+  var CARD_GAP = 141;
+
+  // qid(Q5 또는 Q6)에 실제로 설정된 로직1의 이동 대상이 바로 다음 문항이 아니면
+  // (건너뛰는 경우), 그 사이에 있는 문항들만 옆 컬럼으로 비켜나고 목표 문항부터
+  // 다시 메인 컬럼으로 합류한다. 예를 들어 6->8이면 Q7만 비켜나고 Q8이 목표
+  // 지점이 된다.
+  //
+  // Q5와 Q6가 동시에 분기할 수도 있다(예: 5->8이면서 6도 따로 8로 건너뜀).
+  // 이 경우 Q6 자신의 분기가 항상 우선한다 -- Q5가 이미 정해둔 Q7/Q8 위치
+  // 위에서, Q6 입장에서 다시 "Q7을 건너뛰고 Q8로" 재배치한다. 다만 Q6가
+  // 자기 분기가 없을 때는(가장 흔한 경우) forceLayout이 false면(Q5가 이미
+  // 분기 중이라 Q6 스스로 메인 레이아웃을 책임질 필요가 없을 때) 아무것도
+  // 건드리지 않고 Q5가 정해둔 위치를 그대로 둔다 -- 안 그러면 Q6가 옆
+  // 컬럼에 있으면서도 자기 아래에 새 메인 컬럼을 만들어버려 Q5의 분기를
+  // 덮어써 버린다.
+  //
+  // 실제 직행선(extraPath)은 여기서 바로 그리지 않는다 -- Q6의 분기가 Q5의
+  // 목표(Q8) 위치를 더 내릴 수도 있으므로, 모든 위치 계산이 끝난 뒤 별도로
+  // drawExtraPath를 호출해서 최종 위치 기준으로 그린다.
+  // qid의 답변이 실제로 나뉘어 가는 곳(로직1, 로직2, ... + 그 외)을 전부 모은다.
+  // mergeLogicBlocksByTarget이 이동 대상이 같은 블록은 항상 하나로 합쳐주므로,
+  // 여기 담기는 블록들은 서로 target이 겹치지 않는 게 보장된다 -- 즉 이 배열의
+  // 길이가 곧 이 문항에서 실제로 그려야 할 분기 선의 개수다.
+  function getBranchesForQuestion(qid){
+    var explicit = getConfiguredLogicBlocks(qid).map(function(b){
+      return { block: b, target: getBlockMoveTargetId(b), isAuto: false };
+    });
+    var autoBlock = document.querySelector('#rpLogicList .logic-detail[data-auto="true"][data-question="' + qid + '"]');
+    if (autoBlock){
+      explicit.push({ block: autoBlock, target: getBlockMoveTargetId(autoBlock) || nextQuestionAfter(qid), isAuto: true });
+    }
+    return explicit.filter(function(b){ return !!b.target; });
+  }
+
+  // qid 이후 문항들의 위치를 정한다. qid의 답변이 여러 target으로 나뉠 수
+  // 있으므로(예: 5->6, 5->7, 5->8 동시), 각 target이 아닌(=아무도 가지 않는)
+  // 문항만 옆 컬럼(297px)으로 비켜나고, 실제 target인 문항은 전부 메인 컬럼에
+  // 남는다. 곁다리로 비켜난 구간(연속된 "아무도 안 가는" 문항들)이 하나 끝날
+  // 때마다 메인 컬럼으로 다시 합류하는 지점에서 더 큰 간격을 준다.
+  function resolveBranchPositions(qid, allPills, forceLayout){
+    var sourceEl = allPills[qid];
+    var sourceIdx = QUESTION_ORDER.indexOf(qid);
+    var downstream = QUESTION_ORDER.slice(sourceIdx + 1);
+    var sourceBottom = sourceEl.offsetTop + sourceEl.offsetHeight;
+    var branches = getBranchesForQuestion(qid);
+    // target이 딱 하나뿐이고 그게 바로 다음 문항이면, 사실상 로직이 없는 것과
+    // 똑같은 모양(분기선 없이 밋밋한 한 줄)이어야 한다.
+    var isTrivial = branches.length === 1 && branches[0].target === QUESTION_ORDER[sourceIdx + 1];
+    var branching = branches.length > 0 && !isTrivial;
+
+    if (!branching){
+      if (forceLayout){
+        var prevBottom = sourceBottom;
+        downstream.forEach(function(dqid){
+          var el = allPills[dqid];
+          el.style.left = '520px';
+          el.style.top = (prevBottom + CARD_GAP) + 'px';
+          prevBottom = el.offsetTop + el.offsetHeight;
+        });
+      }
+      return { branching: false, branches: [] };
+    }
+
+    var targetIdxSet = {};
+    var maxTargetIdx = sourceIdx;
+    branches.forEach(function(b){
+      var idx = QUESTION_ORDER.indexOf(b.target);
+      targetIdxSet[idx] = true;
+      if (idx > maxTargetIdx) maxTargetIdx = idx;
+    });
+
+    var prevBottom = sourceBottom;      // 방금 배치한 요소(메인이든 사이드든)의 아랫변
+    var runAnchorBottom = sourceBottom; // 지금 진행 중인(또는 다음에 시작할) 사이드 구간의 시작 기준점
+    var inSideRun = false;
+    for (var i = sourceIdx + 1; i <= maxTargetIdx; i++){
+      var dqid = QUESTION_ORDER[i];
+      var el = allPills[dqid];
+      if (targetIdxSet[i]){
+        var top = inSideRun ? Math.max(prevBottom + 90, runAnchorBottom + 190) : (prevBottom + CARD_GAP);
+        el.style.left = '520px';
+        el.style.top = top + 'px';
+        prevBottom = el.offsetTop + el.offsetHeight;
+        runAnchorBottom = prevBottom;
+        inSideRun = false;
+      } else {
+        var sideTop = inSideRun ? (prevBottom + 57) : (runAnchorBottom + 120);
+        el.style.left = '297px';
+        el.style.top = sideTop + 'px';
+        prevBottom = el.offsetTop + el.offsetHeight;
+        inSideRun = true;
+      }
+    }
+    // 가장 먼 target 이후로는 더 이상 아무도 갈라지지 않으므로 그냥 평범하게 이어 붙인다.
+    QUESTION_ORDER.slice(maxTargetIdx + 1).forEach(function(dqid){
+      var el = allPills[dqid];
+      el.style.left = '520px';
+      el.style.top = (prevBottom + CARD_GAP) + 'px';
+      prevBottom = el.offsetTop + el.offsetHeight;
+    });
+
+    // 선 그리기(lane 배정)는 가까운 target부터 순서대로 하는 게 자연스러우므로 정렬해둔다.
+    branches = branches.slice().sort(function(a, b){
+      return QUESTION_ORDER.indexOf(a.target) - QUESTION_ORDER.indexOf(b.target);
+    });
+    return { branching: true, branches: branches };
+  }
+
+  // resolveBranchPositions로 모든 위치가 확정된 뒤, qid에서 갈라지는 선들을
+  // 최종 위치 기준으로 그린다. slots는 [{path, badge}, ...] 형태의 DOM id
+  // 목록으로, qid에서 나올 수 있는 최대 분기 개수만큼 미리 마련해둔 자리다.
+  // qid 자신이 옆 컬럼에 있을 수도 있으므로(다른 문항의 분기 때문에), 시작
+  // x좌표도 실제 위치에서 읽는다.
+  function drawBranchLines(qid, allPills, slots, result){
+    var sourceEl = allPills[qid];
+    var sourceBottom = sourceEl.offsetTop + sourceEl.offsetHeight;
+    var sourceX = svgX(parseInt(sourceEl.style.left, 10));
+
+    if (!result.branching){
+      var sourceIdx = QUESTION_ORDER.indexOf(qid);
+      var nextQid = QUESTION_ORDER[sourceIdx + 1];
+      var nextEl = nextQid ? allPills[nextQid] : null;
+      slots.forEach(function(slot, i){
+        var pathEl = document.getElementById(slot.path);
+        var badgeEl = document.getElementById(slot.badge);
+        if (i === 0 && pathEl && nextEl){
+          pathEl.style.display = '';
+          var nextX = svgX(parseInt(nextEl.style.left, 10));
+          pathEl.setAttribute('d', connectorPath(sourceX, sourceBottom, nextX, nextEl.offsetTop));
+        } else if (pathEl){
+          pathEl.style.display = 'none';
+        }
+        if (badgeEl) badgeEl.style.display = 'none';
+      });
+      return;
+    }
+
+    result.branches.forEach(function(branch, i){
+      var slot = slots[i];
+      if (!slot) return; // qid가 가질 수 있는 최대 분기 수를 넘는 경우는 없어야 하지만, 방어적으로 무시한다.
+      var pathEl = document.getElementById(slot.path);
+      var badgeEl = document.getElementById(slot.badge);
+      var targetEl = allPills[branch.target];
+      var targetX = svgX(parseInt(targetEl.style.left, 10));
+      var targetTop = targetEl.offsetTop; // 다른 문항의 분기가 이 위치를 더 내렸을 수 있어 지금 다시 읽는다.
+      if (pathEl){
+        pathEl.style.display = '';
+        // lane(i)을 넘겨주면 branchPath가 같은 컬럼이든 다른 컬럼이든 알아서
+        // 카드에 가리지 않고 서로 겹치지 않게 그린다.
+        pathEl.setAttribute('d', branchPath(sourceX, sourceBottom, targetX, targetTop, i));
+      }
+      if (badgeEl && pathEl){
+        badgeEl.style.display = 'flex';
+        // 실제 길이의 절반 지점에 찍으면, target이 멀어서 선이 길어질수록
+        // 그 중간 지점이 아래쪽의 다른 문항 카드 줄과 겹쳐버린다(예: Q7로
+        // 가는 선의 중점이 그 사이에 있는 Q6 카드 위에 찍히는 문제). 분기가
+        // 갈라지는 지점(문항 바로 아래) 근처에 찍으면 몇 번을 건너뛰든 배지가
+        // 항상 첫 카드가 시작되기 전 여백에 놓인다. 다만 전부 같은 길이에서
+        // 찍으면 여러 선이 갈라지는 초입에는 아직 서로 가까워서 배지끼리
+        // 겹친다 -- lane마다 조금씩 더 먼 지점에서 찍어 세로로도 살짝 벌려둔다.
+        var badgeLen = Math.min(60 + i * 32, pathEl.getTotalLength() / 2);
+        var midPoint = pathEl.getPointAtLength(badgeLen);
+        badgeEl.style.left = midPoint.x + 'px';
+        badgeEl.style.top = midPoint.y + 'px';
+      }
+    });
+    for (var j = result.branches.length; j < slots.length; j++){
+      var unusedPath = document.getElementById(slots[j].path);
+      var unusedBadge = document.getElementById(slots[j].badge);
+      if (unusedPath) unusedPath.style.display = 'none';
+      if (unusedBadge) unusedBadge.style.display = 'none';
+    }
+  }
+
+  function updateFlowLayout(){
+    var q5 = document.querySelector('.flow-pill[data-question="Q5"]');
+    var q6 = document.querySelector('.flow-pill[data-question="Q6"]');
+    var q7 = document.querySelector('.flow-pill[data-question="Q7"]');
+    var q8 = document.querySelector('.flow-pill[data-question="Q8"]');
+    var q9 = document.querySelector('.flow-pill[data-question="Q9"]');
+    var q10 = document.querySelector('.flow-pill[data-question="Q10"]');
+    if (!q5 || !q6 || !q7 || !q8 || !q9 || !q10) return;
+    var allPills = { Q5: q5, Q6: q6, Q7: q7, Q8: q8, Q9: q9, Q10: q10 };
+    var Q5_SLOTS = [
+      { path: 'q5LinePath', badge: 'q5ElseBadge' },
+      { path: 'q5ExtraPath', badge: 'q5ExtraBadge' },
+      { path: 'q5ExtraPath2', badge: 'q5ExtraBadge2' }
+    ];
+    var Q6_SLOTS = [
+      { path: 'q6LinePath', badge: 'q6ElseBadge' },
+      { path: 'q6ExtraPath', badge: 'q6ExtraBadge' }
+    ];
+    var Q7_SLOTS = [
+      { path: 'q7LinePath', badge: 'q7ElseBadge' },
+      { path: 'q7ExtraPath', badge: 'q7ExtraBadge' },
+      { path: 'q7ExtraPath2', badge: 'q7ExtraBadge2' }
+    ];
+    var Q8_SLOTS = [
+      { path: 'q8LinePath', badge: 'q8ElseBadge' },
+      { path: 'q8ExtraPath', badge: 'q8ExtraBadge' }
+    ];
+
+    // 1단계: 위치만 확정한다. Q5부터 순서대로 각자의 로직을 반영해 Q6~Q10의
+    // 위치를 조정한다 -- 이렇게 하면 5->8과 6->8처럼 여러 문항이 동시에
+    // 분기해도 전부 반영된다. 어떤 문항이 자기 로직이 없을 때는(가장 흔한
+    // 경우) 그 앞의 문항들 중 하나라도 이미 분기 중이면 아무것도 새로
+    // 건드리지 않는다(forceLayout=false) -- 안 그러면 뒤 문항이 옆 컬럼에
+    // 있으면서 그 아래에 새 메인 컬럼을 또 만들어 앞선 분기를 덮어써 버린다.
+    var anyBranchingSoFar = false;
+    var q5Result = resolveBranchPositions('Q5', allPills, true);
+    anyBranchingSoFar = anyBranchingSoFar || q5Result.branching;
+    var q6Result = resolveBranchPositions('Q6', allPills, !anyBranchingSoFar);
+    anyBranchingSoFar = anyBranchingSoFar || q6Result.branching;
+    var q7Result = resolveBranchPositions('Q7', allPills, !anyBranchingSoFar);
+    anyBranchingSoFar = anyBranchingSoFar || q7Result.branching;
+    var q8Result = resolveBranchPositions('Q8', allPills, !anyBranchingSoFar);
+
+    // 2단계: 위치가 모두 확정된 뒤에야 선을 그린다 -- 뒤 문항의 분기가 앞
+    // 문항의 목표 위치를 더 내렸을 수도 있어서, 미리 계산해둔 좌표로 그리면
+    // 서로 어긋난 채 허공에 뜬 선이 생긴다.
+    drawBranchLines('Q5', allPills, Q5_SLOTS, q5Result);
+    drawBranchLines('Q6', allPills, Q6_SLOTS, q6Result);
+    drawBranchLines('Q7', allPills, Q7_SLOTS, q7Result);
+    drawBranchLines('Q8', allPills, Q8_SLOTS, q8Result);
+
+    // "제출하기" 종료 노드도 고정 좌표에 두면 앞선 문항이 로직으로 펼쳐졌을 때
+    // 겹친다. 마지막 문항(Q10)의 실제 아랫변 기준으로 같은 간격만큼 띄운다.
+    var q10Bottom = q10.offsetTop + q10.offsetHeight;
+    var submitTop = q10Bottom + CARD_GAP;
+    var submitNode = document.getElementById('submitNode');
+    if (submitNode) submitNode.style.top = submitTop + 'px';
+    var q10toSubmit = document.getElementById('q10LinePath');
+    if (q10toSubmit) q10toSubmit.setAttribute('d', 'M ' + svgX(parseInt(q10.style.left, 10)) + ' ' + q10Bottom + ' V ' + submitTop);
+
+    // Q5~Q8 중 어떤 문항이든 하나의 로직이 9번과 10번을 동시에 이동 대상으로
+    // 삼으면(예: 7번 응답에 따라 9번 또는 10번으로 갈리는 경우), 그 둘은 서로
+    // 이어서 물어보는 다음 문항이 아니라 답변에 따라 둘 중 하나로만 끝나는
+    // 별도의 마무리 질문이다. 이때는 9번 자신의 기본 연결선도 10번이 아니라
+    // 제출하기로 곧장 이어지게 한다 -- 로직이 없는 평소에는(9->10->제출
+    // 순서를 그대로 물어보는 게 자연스러우므로) 이 처리를 하지 않는다.
+    var q9to10 = document.getElementById('q9LinePath');
+    if (q9to10){
+      var q9Bottom = q9.offsetTop + q9.offsetHeight;
+      var branchSources = [q5Result, q6Result, q7Result, q8Result];
+      // 10번을 실제로 몇 번 lane에 그렸는지도 같이 찾아둔다 -- 아래에서 이
+      // 제출 직행선이 그 lane과 겹치지 않는 반대편으로 부풀도록 골라야
+      // 두 선이 같은 자리에 포개져 하나처럼 보이는 일이 없다.
+      var q10Lane = -1;
+      branchSources.some(function(r){
+        if (!r.branching) return false;
+        var targets = r.branches.map(function(b){ return b.target; });
+        if (targets.indexOf('Q9') !== -1 && targets.indexOf('Q10') !== -1){
+          q10Lane = targets.indexOf('Q10');
+          return true;
+        }
+        return false;
+      });
+      if (q10Lane !== -1){
+        // 10번 카드 위를 지나가야 하므로, 카드에 가리지 않도록 branchPath의
+        // lane 부풀리기를 재사용해 옆으로 피해가는 곡선을 그린다. 10번으로
+        // 들어오는 실제 분기선(q10Lane)과 같은 쪽으로 부풀리면 두 곡선이
+        // 겹쳐서 한 선처럼 보이므로, 그 반대쪽 lane을 쓴다.
+        var q10Side = q10Lane % 2 === 1 ? 'right' : (q10Lane === 0 ? 'straight' : 'left');
+        var overrideLane = q10Side === 'right' ? 2 : 1;
+        q9to10.setAttribute('d', branchPath(
+          svgX(parseInt(q9.style.left, 10)), q9Bottom,
+          svgX(parseInt(q10.style.left, 10)), submitTop, overrideLane
+        ));
+      } else {
+        q9to10.setAttribute('d', connectorPath(
+          svgX(parseInt(q9.style.left, 10)), q9Bottom,
+          svgX(parseInt(q10.style.left, 10)), q10.offsetTop
+        ));
+      }
+    }
+
+    updateBranchLineColors('Q5', q5, q5Result, Q5_SLOTS);
+    updateBranchLineColors('Q6', q6, q6Result, Q6_SLOTS);
+    updateBranchLineColors('Q7', q7, q7Result, Q7_SLOTS);
+    updateBranchLineColors('Q8', q8, q8Result, Q8_SLOTS);
+  }
+  // Q5의 선이 두 개로 갈라지는 분기 상태에서는, 문항이 선택됐다고 무작정 둘 다
+  // 파란색으로 켜는 게 아니라 지금 펼쳐져(활성화되어) 있는 로직 블록 하나만 파란색이
+  // 되어야 한다 (피그마 node 615:10470) -- 로직1이 펼쳐져 있으면 그 로직이 가리키는
+  // 직행선만, "그 외 응답"(자동 블록)이 펼쳐져 있으면 그 곡선만 파란색이 된다.
+  // 답변 텍스트를 "몇 번" 옵션인지로 바꿔서 "2 OR 3"처럼 합친다 (피그마 node 615:11522의
+  // 선 위 배지 텍스트).
+  function getAnswerNumbersLabel(qid, block){
+    var opts = getQuestionOptionTexts(qid);
+    return getEffectiveAnswerTexts(qid, block)
+      .map(function(a){ return opts.indexOf(a) + 1; })
+      .filter(function(n){ return n > 0; })
+      .join(' OR ');
+  }
+  // qid(Q5 또는 Q6)가 분기 상태일 때, 지금 펼쳐져(활성화되어) 있는 로직 블록
+  // 하나의 선만 파란색이 되도록 한다 (피그마 node 615:10470, 615:11522) --
+  // 로직1이 펼쳐져 있으면 그 직행선만, "그 외 응답" 블록이 펼쳐져 있으면 그
+  // 곡선만 파란색이 된다. qid가 지금 선택돼 있지 않으면 둘 다 회색이다.
+  // qid에서 갈라지는 선(slots)들의 색/배지를 정한다. 로직이 하나도 없으면
+  // (branching=false) 문항 선택 여부로만 유일한 선을 켠다. 분기 중이면, 지금
+  // 실제로 펼쳐져 있는 로직 블록에 대응하는 선 하나만 파란색이 되고 나머지는
+  // 회색이다 -- 어느 블록도 펼쳐져 있지 않으면(전부 접혀 있으면) 셋 이상으로
+  // 나뉜 경우 "그중 하나를 대신 켠다"는 자연스러운 대응이 없으므로 전부
+  // 회색으로 둔다.
+  function updateBranchLineColors(qid, node, result, slots){
+    var isSelected = node.classList.contains('selected');
+
+    if (!result.branching){
+      slots.forEach(function(slot, i){
+        var pathEl = document.getElementById(slot.path);
+        var badgeEl = document.getElementById(slot.badge);
+        if (pathEl) pathEl.setAttribute('stroke', (i === 0 && isSelected) ? '#007eff' : '#d1d5dc');
+        if (badgeEl) badgeEl.style.display = 'none';
+      });
+      return;
+    }
+
+    result.branches.forEach(function(branch, i){
+      var slot = slots[i];
+      if (!slot) return;
+      var pathEl = document.getElementById(slot.path);
+      var badgeEl = document.getElementById(slot.badge);
+      var expanded = !branch.block.classList.contains('collapsed');
+      var active = isSelected && expanded;
+      if (pathEl) pathEl.setAttribute('stroke', active ? '#007eff' : '#d1d5dc');
+      if (badgeEl){
+        badgeEl.style.display = 'flex';
+        badgeEl.textContent = getAnswerNumbersLabel(qid, branch.block);
+        badgeEl.classList.toggle('active', active);
+      }
+    });
+  }
+  function updateAllFlowNodes(){
+    QUESTION_ORDER.forEach(function(qid){ updateFlowNodeContent(qid); });
+    updateFlowLayout();
+  }
+
+  // ---------------- 로직 블록 아코디언: 선택한 블록만 파란 테두리로 펼쳐지고
+  // 나머지는 헤더만 보이는 기본(회색 테두리) 상태로 접힌다. ----------------
+  function collapseAllLogicBlocks(){
+    document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(b){
+      b.classList.add('collapsed');
+    });
+  }
+  function toggleLogicBlock(headEl){
+    var block = headEl.closest('.logic-detail');
+    if (!block) return;
+    var wasCollapsed = block.classList.contains('collapsed');
+    collapseAllLogicBlocks();
+    if (wasCollapsed) block.classList.remove('collapsed'); // 접혀 있던 걸 클릭하면 펼치고, 펼쳐진 걸 다시 클릭하면 전부 기본 상태로 되돌아간다.
+    updateAllFlowNodes(); // 어느 로직이 펼쳐져 있는지가 바뀌었으니 캔버스의 활성 선도 다시 계산한다.
+  }
+  // 문항별 답변 옵션(중앙 편집 패널의 qep-option 텍스트와 동일하게 유지) + 조건 옵션 목록.
+  var QUESTION_OPTIONS = {
+    Q5: ['처음이에요', '가끔 참여해요', '자주 참여해요'],
+    Q6: ['온라인 베이킹', '드로잉', '가죽공예', '향수·캔들'],
+    Q7: ['1', '2', '3', '4', '5'],
+    Q8: ['SNS', '지인추천', '포털검색', '플랫폼 앱']
+  };
+  var CONDITION_OPTIONS = ['~를 선택했을 때', '~를 선택하지 않았을 때'];
+
+  // ---------------- 우측 패널 문항/답변/조건/이동 필드 드롭다운 ----------------
+  // 메뉴는 document.body에 직접 붙이고 position:fixed로 필드 아래에 배치한다.
+  // (logic-detail, right-panel 모두 overflow:hidden/auto라서 그 내부에 넣으면 잘린다.)
+  function closeFieldDropdown(){
+    var existing = document.querySelector('.ld-dd-menu');
+    if (existing) existing.remove();
+    document.querySelectorAll('.dd-open').forEach(function(el){ el.classList.remove('dd-open'); });
+    window.removeEventListener('scroll', closeFieldDropdown, true);
+  }
+
+  function positionDropdownMenu(menu, fieldEl){
+    var r = fieldEl.getBoundingClientRect();
+    menu.style.width = r.width + 'px';
+    menu.style.left = r.left + 'px';
+    var menuHeight = menu.offsetHeight;
+    var top = r.bottom + 4;
+    if (top + menuHeight > window.innerHeight) top = Math.max(4, r.top - menuHeight - 4);
+    menu.style.top = top + 'px';
+  }
+
+  function buildDropdownItem(text, checked, onSelect){
+    var item = document.createElement('div');
+    item.className = 'ld-dd-item' + (checked ? ' checked' : '');
+    item.innerHTML = '<span class="ld-dd-check"></span><span></span>';
+    item.querySelector('span:last-child').textContent = text;
+    item.addEventListener('click', function(e){
+      e.stopPropagation();
+      onSelect(item);
+    });
+    return item;
+  }
+
+  // "이동" 대상 선택 전용 항목: 체크박스 없이 문항 배지(아이콘+Qn)만 보여준다.
+  function buildMoveDropdownItem(qid, selected, onSelect){
+    var item = document.createElement('div');
+    item.className = 'ld-dd-item-move' + (selected ? ' selected' : '');
+    item.innerHTML = '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + qid + '</b></div>';
+    item.addEventListener('click', function(e){
+      e.stopPropagation();
+      onSelect(item);
+    });
+    return item;
+  }
+
+  function getAnswerChipsWrap(block){
+    return block.querySelector('.ld-answer-chips');
+  }
+  function getSelectedAnswerTexts(block){
+    var wrap = getAnswerChipsWrap(block);
+    if (!wrap) return [];
+    return Array.from(wrap.querySelectorAll('.ans-chip span')).map(function(s){ return s.textContent; });
+  }
+  // "조건" 필드가 "~를 선택하지 않았을 때"(부정)로 설정돼 있으면, 실제로 이 로직을
+  // 발동시키는 답변은 답변 칩에 나열된 것들이 아니라 그 나머지(보완집합)다.
+  // 예를 들어 옵션이 3개인데 답변 칩에 1,2를 고르고 조건을 "선택 안 했을 때"로
+  // 하면, 실제로 이 로직이 걸리는 건 3이다. 배지/칩/그 외 계산 등 "이 로직이
+  // 실제로 어떤 답변에 걸리는지"를 다루는 곳은 전부 이 값을 써야 헷갈리지 않는다.
+  function getBlockConditionText(block){
+    var condEl = block.querySelector('.ld-select:not(.ld-question-field) p');
+    return condEl ? condEl.textContent.trim() : CONDITION_OPTIONS[0];
+  }
+  function isBlockNegated(block){
+    return getBlockConditionText(block) === CONDITION_OPTIONS[1];
+  }
+  function getEffectiveAnswerTexts(qid, block){
+    var raw = getSelectedAnswerTexts(block);
+    if (!isBlockNegated(block)) return raw;
+    return getQuestionOptionTexts(qid).filter(function(o){ return raw.indexOf(o) === -1; });
+  }
+  // block의 "실제로 걸리는 답변" 목록에서 answerText 하나만 빠지도록 raw 답변
+  // 칩을 조정한다. 긍정 조건이면 칩에서 그 답변을 빼면 되고, 부정 조건이면
+  // 반대로 그 답변을 칩에 넣어야(=제외 목록에 넣어야) 실제 적용 대상에서 빠진다.
+  // 답변 칩만 조용히(동기화 없이) 고쳐 쓴다 -- renderAnswerChips를 쓰면 그 안에서
+  // 바로 syncOptionLogicPills가 돌아서, 방금 떨어져 나간 답변이 자동 "그 외"
+  // 블록으로 갔다가 원래 블록과 같은 대상(주로 다음 문항 기본값)을 공유한다는
+  // 이유로 즉시 다시 합쳐져 버릴 수 있다. 이 답변을 새 블록으로 완전히 옮기는
+  // 작업이 다 끝난 뒤 호출하는 쪽에서 딱 한 번만 동기화해야 안전하다.
+  function removeAnswerFromEffectiveCoverage(block, answerText){
+    var raw = getSelectedAnswerTexts(block);
+    var newRaw;
+    if (isBlockNegated(block)){
+      newRaw = raw.indexOf(answerText) === -1 ? raw.concat([answerText]) : raw;
+    } else {
+      newRaw = raw.filter(function(a){ return a !== answerText; });
+    }
+    var wrap = getAnswerChipsWrap(block);
+    if (wrap){
+      wrap.innerHTML = newRaw.length
+        ? newRaw.map(function(opt){
+            return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+          }).join('')
+        : '<p class="ld-placeholder">답변을 선택해주세요</p>';
+    }
+  }
+  function renderAnswerChips(block, selected){
+    // 사용자가 자동 "그 외" 블록의 답변을 직접 건드리면, 더 이상 leftover로
+    // 자동 재계산되는 블록이 아니라 사용자가 편집한 명시적 로직으로 승격시킨다.
+    // 안 그러면 이 함수가 끝나자마자 실행되는 syncAutoElseLogic이 leftover
+    // 기준으로 답변을 다시 계산해서 방금 한 수정을 곧바로 덮어써 버린다.
+    // 이렇게 승격된 뒤에도 여전히 남는 답변이 있으면, 그건 새 자동 블록으로
+    // 다시 자연스럽게 묶인다.
+    if (block.getAttribute('data-auto') === 'true') block.removeAttribute('data-auto');
+    var wrap = getAnswerChipsWrap(block);
+    if (!wrap) return;
+    if (!selected.length){
+      wrap.innerHTML = '<p class="ld-placeholder">답변을 선택해주세요</p>';
+    } else {
+      wrap.innerHTML = selected.map(function(opt){
+        return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+      }).join('');
+    }
+    syncOptionLogicPills(block);
+    syncOpenAnswerDropdown(block);
+    updateAllFlowNodes();
+  }
+  // 답변 드롭다운이 열려 있는 채로 칩이 추가/삭제되면(드롭다운 항목 클릭이든, 필드에 남아있는
+  // 칩의 X 버튼 클릭이든) 드롭다운의 체크박스도 실제 선택 상태와 항상 일치시킨다.
+  function syncOpenAnswerDropdown(block){
+    var aField = block.querySelector('.ld-answer');
+    var menu = document.querySelector('.ld-dd-menu');
+    if (!aField || !menu || !aField.classList.contains('dd-open')) return;
+    var qid = getBlockQuestionRefId(block);
+    var opts = getQuestionOptionTexts(qid);
+    var selected = getSelectedAnswerTexts(block);
+    menu.querySelectorAll('.ld-dd-item').forEach(function(item, i){
+      if (opts[i] === undefined) return;
+      item.classList.toggle('checked', selected.indexOf(opts[i]) !== -1);
+    });
+  }
+  function toggleAnswerOption(block, optionText){
+    var selected = getSelectedAnswerTexts(block);
+    var i = selected.indexOf(optionText);
+    if (i === -1){
+      // 이 답변이 이미 같은 문항의 다른 로직 블록에 걸려 있으면 먼저 그
+      // 블록에서 빼야 한다 -- 안 그러면 답변 하나가 로직 두 개에 동시에
+      // 걸려서(예: 로직1은 Q8로, 로직2는 Q6로) 실제로 어디로 가는지 알 수
+      // 없는 모순된 상태가 된다. removeAnswerFromEffectiveCoverage는 조용히
+      // (동기화 없이) DOM만 고쳐 쓰므로, 뒤이은 renderAnswerChips의 단
+      // 한 번뿐인 동기화가 최종 상태를 한 번에 맞춘다.
+      var qid = getBlockQuestionRefId(block);
+      var owner = findLogicBlockForOption(qid, optionText);
+      if (owner && owner !== block) removeAnswerFromEffectiveCoverage(owner, optionText);
+      selected.push(optionText);
+    } else {
+      selected.splice(i, 1);
+    }
+    renderAnswerChips(block, selected);
+  }
+  function removeAnswerChip(imgEl){
+    var block = imgEl.closest('.logic-detail');
+    var selected = getSelectedAnswerTexts(block).filter(function(t){
+      return t !== imgEl.previousElementSibling.textContent;
+    });
+    renderAnswerChips(block, selected);
+  }
+
+  // ---------------- 옵션 → 로직 이동 표시(qep-dest-pill) 동기화 ----------------
+  // 우측 패널 로직 블록의 답변 선택 + 이동 대상을 훑어서, 중앙 편집 패널의 해당
+  // 옵션에 "→ Qn" 아이콘+텍스트를 붙이거나 뗀다. 매번 전부 지우고 다시 그려서
+  // 로직 추가/삭제/문항 변경/답변 변경 어느 경로로 와도 항상 실제 상태와 일치시킨다.
+  function getBlockMoveTargetId(block){
+    var badge = block.querySelector('.ld-move-select-left .q-label b');
+    return badge ? badge.textContent : '';
+  }
+  function findOptionEl(qid, answerText){
+    var qBlock = document.querySelector('.qep-block[data-question="' + qid + '"]');
+    if (!qBlock) return null;
+    var opts = qBlock.querySelectorAll('.qep-option');
+    for (var i = 0; i < opts.length; i++){
+      var textEl = opts[i].querySelector('.qep-option-edit');
+      if (textEl && textEl.textContent.trim() === answerText) return opts[i];
+    }
+    return null;
+  }
+  function setOptionPill(optionEl, moveTarget){
+    var pill = optionEl.querySelector('.qep-dest-pill');
+    if (!pill){
+      pill = document.createElement('div');
+      pill.className = 'qep-dest-pill';
+      pill.innerHTML =
+        '<img class="route-icon" src="assets/icon-route.svg" alt="">' +
+        '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b></b></div>';
+      optionEl.insertBefore(pill, optionEl.querySelector('.qep-option-actions'));
+    }
+    pill.querySelector('b').textContent = moveTarget;
+  }
+  function syncOptionLogicPills(preferBlock){
+    // "그 외" 재계산을 병합보다 먼저 한다 -- 어떤 답변이 방금 다른 명시적 블록으로
+    // 옮겨갔다면, 그 답변을 아직 붙들고 있는 낡은 자동 블록을 먼저 지워야 한다.
+    // 순서가 바뀌면(병합이 먼저면) 그 낡은 자동 블록이 우연히 다른 블록과 같은
+    // 대상을 가리키고 있을 때 병합돼서 답변이 되살아나 버린다.
+    syncAutoElseLogic(); // 옵션 중 하나라도 로직이 걸리면, 나머지 옵션은 자동으로 "다음 문항으로" 블록에 묶인다.
+    mergeLogicBlocksByTarget(preferBlock); // 이동 대상이 같아진 로직 블록들을 하나로 합친다.
+    document.querySelectorAll('.qep-option .qep-dest-pill').forEach(function(p){ p.remove(); });
+    document.querySelectorAll('#rpLogicList .logic-detail').forEach(function(block){
+      var qid = getBlockQuestionRefId(block);
+      var moveTarget = getBlockMoveTargetId(block);
+      if (!moveTarget) return;
+      // 이동 대상이 바로 다음 문항이면(=로직 없이도 원래 흘러가는 기본 경로)
+      // 아이콘+Qn 배지를 아예 붙이지 않는다 -- 실제로 흐름을 건너뛰는 옵션만
+      // 눈에 띄게 표시한다.
+      if (moveTarget === nextQuestionAfter(qid)) return;
+      getEffectiveAnswerTexts(qid, block).forEach(function(answerText){
+        var optionEl = findOptionEl(qid, answerText);
+        if (!optionEl) return;
+        setOptionPill(optionEl, moveTarget);
+      });
+    });
+  }
+
+  // ---------------- 옵션 하나에라도 로직이 걸리면, 나머지 옵션은 자동으로
+  // "다음 문항으로" 로직 블록에 묶인다 (피그마 node 615:19122). ----------------
+  // 사용자가 이 자동 블록을 직접 삭제하면, 다음 변경 때 바로 다시 생겨서 삭제가
+  // 무의미해지지 않도록 그 문항에 대해서는 다시 만들지 않는다 (removeLogicBlock
+  // 에서 true로 설정). 그 문항의 실제 로직을 전부 지우면(제일 처음 상태로
+  // 돌아가면) 다시 자동으로 생길 수 있게 리셋한다.
+  var autoElseDismissed = {};
+  function syncAutoElseLogic(){
+    QUESTION_ORDER.forEach(function(qid){ syncAutoElseLogicForQuestion(qid); });
+    // 방금 새로 만들었거나 순서를 옮긴 블록이, 지금 보고 있는 문항이 아니면 다시 숨긴다.
+    if (currentQuestionId) refreshRpLogicListForQuestion(currentQuestionId);
+  }
+  function syncAutoElseLogicForQuestion(qid){
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!rpLogicList) return;
+    var autoBlock = rpLogicList.querySelector('.logic-detail[data-auto="true"][data-question="' + qid + '"]');
+    var explicitConfigured = getConfiguredLogicBlocks(qid); // data-auto 블록은 이미 제외되어 있다.
+    // 삭제 기록의 리셋은 여기서 하지 않는다 -- 답변 체크박스를 텄다 껐다만 해도
+    // 순간적으로 explicitConfigured가 0이 되는데, 그때마다 리셋하면 답변을
+    // 잠깐 껐다 다시 켜는 것만으로 방금 지운 자동 블록이 되살아나 버린다.
+    // 리셋은 명시적 로직 블록을 실제로 삭제할 때만(removeLogicBlock) 한다.
+    var leftover = [];
+    if (explicitConfigured.length){
+      var covered = {};
+      explicitConfigured.forEach(function(b){
+        getEffectiveAnswerTexts(qid, b).forEach(function(a){ covered[a] = true; });
+      });
+      leftover = getQuestionOptionTexts(qid).filter(function(o){ return !covered[o]; });
+    }
+    if (!leftover.length || autoElseDismissed[qid]){
+      if (autoBlock) autoBlock.remove();
+    } else {
+      if (!autoBlock){
+        autoBlock = buildLogicDetailElement(qid, 0, nextQuestionAfter(qid));
+        autoBlock.setAttribute('data-auto', 'true');
+        autoBlock.classList.add('collapsed');
+      }
+      rpLogicList.appendChild(autoBlock); // 항상 목록 맨 아래("그 외 나머지")에 오도록 매번 끝으로 옮긴다.
+      var wrap = getAnswerChipsWrap(autoBlock);
+      if (wrap){
+        wrap.innerHTML = leftover.map(function(opt){
+          return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+        }).join('');
+      }
+    }
+    renumberLogicBlocks(qid);
+  }
+
+  // 로직 블록이 우측 패널의 어느 문항 목록에 속하는지는 data-question(블록 소유 문항)이
+  // 결정하고, 이 함수는 건드리지 않는다. "문항" 필드는 그 로직의 조건이 참조하는
+  // 문항(예: "Q5의 답변이 ~일 때")을 바꾸는 것일 뿐, 블록 자체를 다른 문항 목록으로
+  // 옮기는 게 아니다 -- 예전엔 data-question까지 같이 바꿔서, 유일한 로직 블록의 문항을
+  // 바꾸면 현재 보고 있는 문항 목록이 통째로 비어 보이는 버그가 있었다.
+  function setBlockQuestion(block, qid){
+    var badge = block.querySelector('.ld-question-badge');
+    var title = block.querySelector('.ld-question-title');
+    if (badge) badge.textContent = qid;
+    if (title) title.textContent = getQuestionTitle(qid);
+    var headBadge = block.querySelector('.ld-head-chips .q-label b');
+    if (headBadge) headBadge.textContent = qid;
+    renderAnswerChips(block, []); // 참조 문항이 바뀌면 이전 문항의 답변 선택은 더 이상 유효하지 않다.
+  }
+
+  function getBlockQuestionRefId(block){
+    var badge = block.querySelector('.ld-question-badge');
+    return (badge && badge.textContent) || block.getAttribute('data-question') || currentQuestionId;
+  }
+
+  // "이동" 드롭다운에서 대상 문항을 고르면, 로직 블록 헤더의 "로직n" 라벨 옆에도
+  // 화살표 + 대상 문항 배지를 보여준다. 기존 정적 블록은 이미 그 자리가 있어 텍스트만
+  // 갱신하면 되지만, "새 로직 추가"로 만든 블록은 처음엔 그 자리가 없어서 여기서
+  // 처음 만들어 붙여준다.
+  function setBlockMoveTarget(block, qid){
+    var badge = block.querySelector('.ld-move-select-left .q-label b');
+    var title = block.querySelector('.ld-move-select-left p');
+    if (badge) badge.textContent = qid;
+    if (title) title.textContent = getQuestionTitle(qid);
+
+    var headChips = block.querySelector('.ld-head-chips');
+    if (headChips){
+      var headBadges = headChips.querySelectorAll('.q-label b');
+      if (headBadges.length > 1){
+        headBadges[1].textContent = qid;
+      } else {
+        var arrow = document.createElement('img');
+        arrow.src = 'assets/icon-arrow-flow-2.svg';
+        arrow.alt = '';
+        var targetLabel = document.createElement('div');
+        targetLabel.className = 'q-label';
+        targetLabel.innerHTML = '<div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + qid + '</b>';
+        headChips.appendChild(arrow);
+        headChips.appendChild(targetLabel);
+      }
+    }
+    syncOptionLogicPills(block);
+    updateAllFlowNodes();
+  }
+
+  // 이동 대상이 서로 같아진 사용자 로직 블록들(자동 "그 외" 블록은 제외)을
+  // 문항마다 하나로 합친다. syncOptionLogicPills 맨 앞에서 항상 호출되므로,
+  // 답변 변경/블록 추가삭제/이동 대상 변경 등 어느 경로로 상태가 바뀌든 실시간
+  // 으로 반영된다. preferBlock이 주어지고 그 블록이 합쳐질 그룹에 속해 있으면
+  // 그 블록을 살려두고(방금 사용자가 보고 있던 블록이 사라지지 않도록), 아니면
+  // 그냥 목록에서 먼저 나오는 블록을 살려둔다.
+  function mergeLogicBlocksByTarget(preferBlock){
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!rpLogicList) return;
+    QUESTION_ORDER.forEach(function(qid){
+      // 자동 "그 외" 블록도 병합 대상에 포함한다 -- 사용자가 만든 로직과 이동
+      // 대상이 같아지면(예: 로직1도 Q8, 남은 답변 전부인 그 외도 Q8), 그
+      // 문항의 모든 답변이 결국 같은 곳으로 가는 것이므로 굳이 따로 둘 이유가
+      // 없다.
+      var blocks = Array.from(rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]'));
+      var byTarget = {};
+      blocks.forEach(function(b){
+        // 아직 답변을 하나도 안 고른 블록(예: 방금 "새 로직 추가"로 막 만든 빈
+        // 블록)은 병합 대상에서 제외한다 -- 안 그러면 다른 블록과 우연히 같은
+        // 기본 대상을 가진 것만으로 사용자가 손대기도 전에 사라져 버린다.
+        if (getSelectedAnswerTexts(b).length === 0) return;
+        var target = getBlockMoveTargetId(b);
+        if (!target) return;
+        // 이동 대상이 바로 다음 문항이면 병합 대상에서 뺀다 -- 새로 만든 로직
+        // 블록과 그 순간 자동 생성되는 "그 외" 블록은 둘 다 기본값이 바로
+        // 다음 문항이라, 이 조건이 없으면 로직1에서 답변을 하나만 골라도
+        // 사용자가 이동 대상을 바꾸기도 전에 그 외의 나머지 답변까지 즉시
+        // 합쳐져 들어와 버린다(체크한 적 없는 답변까지 골라진 것처럼 보임).
+        // 실제로 흐름을 건너뛰는 target끼리만 합치는 게 맞다.
+        if (target === nextQuestionAfter(qid)) return;
+        (byTarget[target] = byTarget[target] || []).push(b);
+      });
+      Object.keys(byTarget).forEach(function(target){
+        var group = byTarget[target];
+        if (group.length < 2) return;
+        // 자동 블록이 섞여 있으면 항상 사용자가 만든(비자동) 블록을 살려둔다 --
+        // 합쳐진 결과는 더 이상 "그 외"라는 자동 개념이 아니라 명시적인 로직이다.
+        var keep;
+        if (preferBlock && group.indexOf(preferBlock) !== -1 && preferBlock.getAttribute('data-auto') !== 'true'){
+          keep = preferBlock;
+        } else {
+          keep = group.filter(function(b){ return b.getAttribute('data-auto') !== 'true'; })[0] || group[0];
+        }
+        if (keep.getAttribute('data-auto') === 'true') keep.removeAttribute('data-auto');
+        var mergedAnswers = [];
+        group.forEach(function(b){
+          getSelectedAnswerTexts(b).forEach(function(a){
+            if (mergedAnswers.indexOf(a) === -1) mergedAnswers.push(a);
+          });
+        });
+        var wrap = getAnswerChipsWrap(keep);
+        if (wrap){
+          wrap.innerHTML = mergedAnswers.length
+            ? mergedAnswers.map(function(opt){
+                return '<div class="ans-chip"><span>' + opt + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+              }).join('')
+            : '<p class="ld-placeholder">답변을 선택해주세요</p>';
+        }
+        group.forEach(function(b){ if (b !== keep) b.remove(); });
+      });
+      renumberLogicBlocks(qid);
+    });
+  }
+
+  function openFieldDropdown(evt, fieldEl, type){
+    evt.stopPropagation();
+    var wasOpen = fieldEl.classList.contains('dd-open');
+    closeFieldDropdown();
+    if (wasOpen) return; // 같은 필드를 다시 클릭하면 토글로 닫기만 한다.
+
+    var block = fieldEl.closest('.logic-detail');
+    var menu = document.createElement('div');
+    menu.className = 'ld-dd-menu';
+
+    if (type === 'question'){
+      var refQid = getBlockQuestionRefId(block);
+      QUESTION_ORDER.forEach(function(qid){
+        var item = buildDropdownItem(qid + '. ' + getQuestionTitle(qid), refQid === qid, function(){
+          setBlockQuestion(block, qid);
+          closeFieldDropdown();
+        });
+        menu.appendChild(item);
+      });
+    } else if (type === 'condition'){
+      var currentText = fieldEl.querySelector('p') ? fieldEl.querySelector('p').textContent : '';
+      CONDITION_OPTIONS.forEach(function(cond){
+        var item = buildDropdownItem(cond, cond === currentText, function(){
+          fieldEl.querySelector('p').textContent = cond;
+          closeFieldDropdown();
+          // "선택했을 때"/"선택하지 않았을 때"가 바뀌면 이 로직이 실제로 어떤
+          // 답변에 걸리는지(getEffectiveAnswerTexts)가 통째로 뒤집히므로, 배지·
+          // 캔버스 카드·그 외 응답 계산·옵션 표시를 전부 다시 맞춘다.
+          syncOptionLogicPills(block);
+          updateAllFlowNodes();
+        });
+        menu.appendChild(item);
+      });
+    } else if (type === 'move'){
+      var ownQid = block.getAttribute('data-question');
+      var currentMoveTarget = getBlockMoveTargetId(block);
+      QUESTION_ORDER.filter(function(q){ return q !== ownQid; }).forEach(function(qid){
+        var item = buildMoveDropdownItem(qid, qid === currentMoveTarget, function(){
+          setBlockMoveTarget(block, qid);
+          closeFieldDropdown();
+        });
+        menu.appendChild(item);
+      });
+    } else if (type === 'answer'){
+      var qid2 = getBlockQuestionRefId(block);
+      var opts = getQuestionOptionTexts(qid2);
+      var selected = getSelectedAnswerTexts(block);
+      opts.forEach(function(opt, i){
+        var item = buildDropdownItem((i + 1) + '. ' + opt, selected.indexOf(opt) !== -1, function(){
+          toggleAnswerOption(block, opt); // renderAnswerChips가 이 항목을 포함한 전체 체크박스 상태를 다시 맞춰준다.
+        });
+        menu.appendChild(item);
+      });
+      // 답변은 다중 선택이라, 항목을 골라도 메뉴를 닫지 않고 바깥을 클릭할 때만 닫는다.
+    }
+
+    if (!menu.children.length) return;
+    fieldEl.classList.add('dd-open');
+    document.body.appendChild(menu);
+    positionDropdownMenu(menu, fieldEl);
+    window.addEventListener('scroll', closeFieldDropdown, true);
+  }
+
+  document.addEventListener('click', function(evt){
+    if (evt.target.closest('.ld-dd-menu')) return;
+    closeFieldDropdown();
+  });
+
+  // ---------------- 중앙 편집 패널: 옵션 호버 시 나오는 "이동" 아이콘으로 그 옵션의
+  // 이동 대상을 오른쪽 패널을 거치지 않고 바로 바꾼다 (피그마 node 600:7295). ----------------
+  function findLogicBlockForOption(qid, answerText){
+    // data-auto 블록(자동 "다음 문항으로" 묶음)은 제외한다 -- 안 그러면 그 안에 같이
+    // 묶여있던 다른 옵션들까지 통째로 새 이동 대상으로 바뀌어 버린다. 이 옵션 하나만
+    // 명시적으로 지정하려면 항상 별도의 새 블록으로 분리돼야 한다.
+    var blocks = document.querySelectorAll('#rpLogicList .logic-detail:not([data-auto="true"])');
+    for (var i = 0; i < blocks.length; i++){
+      if (getBlockQuestionRefId(blocks[i]) !== qid) continue;
+      if (getEffectiveAnswerTexts(qid, blocks[i]).indexOf(answerText) !== -1) return blocks[i];
+    }
+    return null;
+  }
+  // 답변이 하나도 안 골라진, 아직 아무 데도 안 쓰인 로직 블록을 찾는다. 캔버스에서
+  // 문항을 클릭하면 빈 로직1이 자동으로 만들어지는데, 이 블록을 재사용하지 않으면
+  // 편집 뷰의 이동 아이콘을 쓸 때마다 빈 블록은 그대로 두고 새 블록만 계속 늘어난다.
+  function findEmptyLogicBlock(qid){
+    var blocks = document.querySelectorAll('#rpLogicList .logic-detail:not([data-auto="true"])');
+    for (var i = 0; i < blocks.length; i++){
+      if (getBlockQuestionRefId(blocks[i]) !== qid) continue;
+      if (getSelectedAnswerTexts(blocks[i]).length === 0) return blocks[i];
+    }
+    return null;
+  }
+  function positionOptionDropdown(menu, optionEl){
+    var r = optionEl.getBoundingClientRect();
+    var width = 220;
+    menu.style.width = width + 'px';
+    menu.style.left = Math.max(4, r.right - width) + 'px';
+    var top = r.bottom + 4;
+    var menuHeight = menu.offsetHeight;
+    if (top + menuHeight > window.innerHeight) top = Math.max(4, r.top - menuHeight - 4);
+    menu.style.top = top + 'px';
+  }
+  // 이 옵션을 답변으로 선택해둔 로직 블록을 찾아 이동 대상을 바꾸고, 그런 블록이
+  // 아직 없으면 새로 만들어서(이 옵션을 답변으로 선택한 채) 이동 대상을 지정한다.
+  function setOptionMoveTarget(qid, answerText, targetQid){
+    var block = findLogicBlockForOption(qid, answerText);
+    if (block && getEffectiveAnswerTexts(qid, block).length > 1){
+      // 이 옵션이 속한 블록에 다른 옵션도 같이 묶여 있다(예: 옵션이 전부 같은
+      // 문항으로 몰려 하나로 합쳐진 경우). 이 옵션 하나만 이동 대상을 바꿔야
+      // 하므로, 블록의 이동 대상을 통째로 바꾸는 대신 이 옵션만 그 블록에서
+      // 분리해서 새 블록으로 만든다 -- 안 그러면 같이 묶인 다른 옵션들까지
+      // 전부 새 대상으로 따라가 버린다.
+      removeAnswerFromEffectiveCoverage(block, answerText);
+      block = null;
+    }
+    if (!block){
+      // 이미 이 옵션이 답변으로 선택된 블록은 없다 -- 재사용할 만한 빈 블록(예: 캔버스에서
+      // 문항을 클릭해 자동으로 만들어진, 아직 아무 답변도 안 고른 로직1)이 있으면 그걸 쓰고,
+      // 그것도 없을 때만 새 블록을 만든다. 그러지 않으면 편집 뷰에서 이동을 지정할 때마다
+      // 빈 블록은 그대로 남겨둔 채 새 블록만 계속 늘어나서 로직 데이터가 어긋난다.
+      block = findEmptyLogicBlock(qid);
+      if (!block){
+        var logicNum = document.querySelectorAll('#rpLogicList .logic-detail[data-question="' + qid + '"]').length + 1;
+        // buildLogicDetailElement에 처음부터 targetQid를 넘긴다 -- addNewLogic처럼
+        // 기본 대상(다음 문항)으로 만든 뒤 나중에 바꾸면, 그 사이에 같은 기본
+        // 대상을 쓰는 다른 블록과 먼저 합쳐져(mergeLogicBlocksByTarget) 버릴 수
+        // 있다. 답변과 이동 대상을 둘 다 정해둔 채로 딱 한 번만 동기화해야
+        // 이 옵션만 정확히 새 블록으로 분리된다.
+        block = buildLogicDetailElement(qid, logicNum, targetQid);
+        document.getElementById('rpLogicList').appendChild(block);
+        refreshRpLogicListForQuestion(qid);
+      }
+      var wrap = getAnswerChipsWrap(block);
+      if (wrap){
+        wrap.innerHTML = '<div class="ans-chip"><span>' + answerText + '</span><img src="assets/icon-cancel-x.svg" alt="" onclick="event.stopPropagation(); removeAnswerChip(this)"></div>';
+      }
+      collapseAllLogicBlocks();
+      block.classList.remove('collapsed');
+    }
+    setBlockMoveTarget(block, targetQid);
+
+    // 우측 패널을 이 문항의 로직 탭으로 열고, 방금 고친 블록만 펼쳐서 바로 보여준다.
+    setRpMode(true);
+    revealLogicPanelForQuestion(qid);
+    collapseAllLogicBlocks();
+    block.classList.remove('collapsed');
+  }
+  function openOptionMoveDropdown(evt, iconEl){
+    evt.stopPropagation();
+    var wasOpen = iconEl.classList.contains('dd-open');
+    closeFieldDropdown();
+    if (wasOpen) return;
+
+    var optionEl = iconEl.closest('.qep-option');
+    var qBlock = iconEl.closest('.qep-block');
+    if (!optionEl || !qBlock) return;
+    var qid = qBlock.getAttribute('data-question');
+    var answerText = optionEl.querySelector('.qep-option-edit').textContent.trim();
+    var existingBlock = findLogicBlockForOption(qid, answerText);
+    var currentTarget = existingBlock ? getBlockMoveTargetId(existingBlock) : null;
+
+    var menu = document.createElement('div');
+    menu.className = 'ld-dd-menu';
+    var head = document.createElement('div');
+    head.className = 'ld-dd-menu-head';
+    head.innerHTML = '<span>어디로 이동 할까요</span><img src="assets/icon-dropdown-chevron.svg" alt="">';
+    menu.appendChild(head);
+
+    // 바로 다음 문항은 목록에서 뺀다 -- 이동 로직을 따로 걸지 않아도 이미
+    // 그 문항으로 넘어가므로, 굳이 "이동"으로 골라야 하는 실제 스킵 대상만
+    // 보여준다.
+    var skipNextQid = nextQuestionAfter(qid);
+    QUESTION_ORDER.filter(function(q){ return q !== qid && q !== skipNextQid; }).forEach(function(targetQid){
+      var item = buildMoveDropdownItem(targetQid, targetQid === currentTarget, function(){
+        setOptionMoveTarget(qid, answerText, targetQid);
+        closeFieldDropdown();
+      });
+      menu.appendChild(item);
+    });
+
+    iconEl.classList.add('dd-open');
+    document.body.appendChild(menu);
+    positionOptionDropdown(menu, optionEl);
+    window.addEventListener('scroll', closeFieldDropdown, true);
+  }
+
+  function nextQuestionAfter(qid){
+    var idx = QUESTION_ORDER.indexOf(qid);
+    if (idx === -1) return QUESTION_ORDER[0];
+    return QUESTION_ORDER[(idx + 1) % QUESTION_ORDER.length];
+  }
+
+  // 로직 편집 블록 하나의 DOM을 만든다. addNewLogic(사용자가 직접 추가)과
+  // syncAutoElseLogicForQuestion(나머지 옵션을 자동으로 묶는 블록) 둘 다 이 템플릿을 쓴다.
+  function buildLogicDetailElement(qid, logicNum, moveTarget){
+    var qTitle = getQuestionTitle(qid);
+    var moveTitle = getQuestionTitle(moveTarget);
+
+    var block = document.createElement('div');
+    block.className = 'logic-detail';
+    block.setAttribute('data-question', qid);
+    block.innerHTML =
+      '<div class="ld-head" onclick="toggleLogicBlock(this)">' +
+        '<div class="ld-head-left">' +
+          '<div class="ld-arrow-icon"><img src="assets/icon-arrow-header.svg" alt=""></div>' +
+          '<div class="ld-head-num-inner"><span>로직' + logicNum + '</span></div>' +
+          '<div class="ld-head-chips">' +
+            '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + qid + '</b></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ld-trash" onclick="event.stopPropagation(); removeLogicBlock(this)"><img src="assets/icon-trash.svg" alt=""></div>' +
+      '</div>' +
+      '<div class="ld-spacer" style="height:12px;"></div>' +
+      '<div class="ld-content">' +
+        '<div class="ld-field-row">' +
+          '<p>문항</p>' +
+          '<div class="ld-select ld-question-field" onclick="openFieldDropdown(event,this,\'question\')">' +
+            '<div class="ld-select-left">' +
+              '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b class="ld-question-badge">' + qid + '</b></div>' +
+              '<p class="ld-question-title">' + qTitle + '</p>' +
+            '</div>' +
+            '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
+          '</div>' +
+        '</div>' +
+        '<div class="ld-field-row">' +
+          '<p>답변</p>' +
+          '<div class="ld-answer" onclick="openFieldDropdown(event,this,\'answer\')">' +
+            '<div class="ld-answer-chips"><p class="ld-placeholder">답변을 선택해주세요</p></div>' +
+            '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
+          '</div>' +
+        '</div>' +
+        '<div class="ld-field-row">' +
+          '<p>조건</p>' +
+          '<div class="ld-select" onclick="openFieldDropdown(event,this,\'condition\')">' +
+            '<p>~를 선택했을 때</p>' +
+            '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ld-add-condition">' +
+        '<img src="assets/icon-add-condition.svg" alt="">' +
+        '<span>조건 추가</span>' +
+      '</div>' +
+      '<div class="ld-move">' +
+        '<div class="ld-move-label">' +
+          '<img src="assets/icon-move-arrow.svg" alt="">' +
+          '<span>이동</span>' +
+        '</div>' +
+        '<div class="ld-move-select" onclick="openFieldDropdown(event,this,\'move\')">' +
+          '<div class="ld-move-select-left">' +
+            '<div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>' + moveTarget + '</b></div>' +
+            '<p>' + moveTitle + '</p>' +
+          '</div>' +
+          '<img src="assets/icon-dropdown-chevron.svg" alt="">' +
+        '</div>' +
+      '</div>';
+    return block;
+  }
+
+  // "새 로직 추가" 클릭 시, 현재 선택된 문항 기준으로 빈 로직 편집 블록을
+  // 우측 패널에 새로 만들어 붙인다 (피그마 node 538:12572 디자인 반영).
+  function addNewLogic(){
+    var qid = currentQuestionId;
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!rpLogicList) return;
+
+    var logicNum = rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]').length + 1;
+    var moveTarget = nextQuestionAfter(qid);
+    var block = buildLogicDetailElement(qid, logicNum, moveTarget);
+
+    rpLogicList.appendChild(block);
+    refreshRpLogicListForQuestion(qid);
+    collapseAllLogicBlocks(); // 새로 만든 로직은 바로 편집할 수 있게 펼친 채로 두고 나머지만 접는다.
+    block.classList.remove('collapsed');
+    syncOptionLogicPills(block);
+    updateAllFlowNodes();
+  }
+
+  function renumberLogicBlocks(qid){
+    document.querySelectorAll('#rpLogicList .logic-detail[data-question="' + qid + '"]').forEach(function(b, i){
+      var label = b.querySelector('.ld-head-num-inner span');
+      if (label) label.textContent = '로직' + (i + 1);
+    });
+  }
+
+  // 새로 추가된(또는 기존) 로직 블록 삭제. 해당 문항의 블록이 하나도 안 남으면
+  // 우측 패널을 다시 빈 상태로 되돌린다.
+  function removeLogicBlock(trashEl){
+    var block = trashEl.closest('.logic-detail');
+    var rpLogicList = document.getElementById('rpLogicList');
+    if (!block || !rpLogicList) return;
+    var qid = block.getAttribute('data-question') || currentQuestionId;
+    var isAuto = block.getAttribute('data-auto') === 'true';
+    // 자동으로 생성된 "그 외 응답" 블록을 사용자가 직접 지운 거라면, 다음 답변/이동
+    // 변경 때 syncAutoElseLogicForQuestion이 곧바로 되살리지 않도록 기억해둔다.
+    if (isAuto) autoElseDismissed[qid] = true;
+    block.remove();
+    renumberLogicBlocks(qid);
+
+    // 이 문항에 사용자가 만든 명시적 로직이 하나도 안 남았으면 완전히 처음
+    // 상태로 돌아간 것이므로, "그 외 응답" 삭제 기록도 같이 리셋해서 다음에
+    // 새로 로직을 걸면 자동 블록이 다시 생길 수 있게 한다.
+    if (!isAuto){
+      var remainingExplicit = rpLogicList.querySelectorAll('.logic-detail[data-question="' + qid + '"]:not([data-auto="true"])');
+      if (!remainingExplicit.length) autoElseDismissed[qid] = false;
+    }
+
+    refreshRpLogicListForQuestion(currentQuestionId);
+    syncOptionLogicPills();
+    updateAllFlowNodes();
+  }
+
+  // ---------------- 로직 설정 가이드 팝업: "가이드" 버튼으로 토글 ----------------
+  function setGuideExpanded(isExpanded){
+    var collapsed = document.getElementById('guideCollapsedBody');
+    var expanded = document.getElementById('guideExpandedBody');
+    if (collapsed) collapsed.classList.toggle('hidden', isExpanded);
+    if (expanded) expanded.classList.toggle('hidden', !isExpanded);
+  }
+  function closeGuidePopover(){
+    var popover = document.getElementById('guidePopover');
+    if (popover) popover.classList.remove('show');
+  }
+  function toggleGuidePopover(evt){
+    evt.stopPropagation();
+    var popover = document.getElementById('guidePopover');
+    var btn = evt.currentTarget;
+    if (!popover) return;
+    var wasShown = popover.classList.contains('show');
+    closeGuidePopover();
+    if (wasShown) return; // 같은 버튼을 다시 누르면 토글로 닫기만 한다.
+
+    setGuideExpanded(false); // 열 때마다 항상 요약(간단히 보기) 상태부터 시작한다.
+    popover.classList.add('show');
+    var r = btn.getBoundingClientRect();
+    var left = r.right - popover.offsetWidth;
+    popover.style.left = Math.max(4, left) + 'px';
+    popover.style.top = (r.bottom + 8) + 'px';
+  }
+  document.addEventListener('click', function(evt){
+    var popover = document.getElementById('guidePopover');
+    if (!popover || !popover.classList.contains('show')) return;
+    if (evt.target.closest('#guidePopover') || evt.target.closest('.guide-btn')) return;
+    closeGuidePopover();
+  });
+
+  // ---------------- 로직 미리보기 popover: hover (desktop) + tap (mobile) ----------------
+  (function(){
+    var infoIcon = document.getElementById('logicInfoIcon');
+    var legend = document.getElementById('flowLegend');
+    if (!infoIcon || !legend) return;
+
+    // 로직 탭(canvas-tabs)이 활성화되어 있을 때만 정보 아이콘이 반응한다.
+    // CSS pointer-events:none이 실제 마우스/터치 입력은 막아주지만,
+    // 여기서도 한 번 더 확인해서 이 조건을 명확한 단일 기준으로 유지한다.
+    function isLogicTabActive(){
+      var ctabs = document.querySelectorAll('.canvas-tabs .ctab');
+      return ctabs[1] && ctabs[1].classList.contains('active');
+    }
+
+    function show(){ if (isLogicTabActive()) legend.classList.add('show'); }
+    function hide(){ legend.classList.remove('show'); }
+
+    // Desktop: real mouse hover
+    infoIcon.addEventListener('mouseenter', show);
+    infoIcon.addEventListener('mouseleave', hide);
+
+    // Mobile/touch: tap to toggle (no hover event on touch devices).
+    // stopPropagation so the tap doesn't also trigger the parent 편집/로직 tab click.
+    infoIcon.addEventListener('click', function(evt){
+      evt.stopPropagation();
+      if (!isLogicTabActive()) return;
+      legend.classList.toggle('show');
+    });
+
+    // Tap/click anywhere else closes it.
+    document.addEventListener('click', function(evt){
+      if (evt.target !== infoIcon && !legend.contains(evt.target)) hide();
+    });
+  })();
+
+  // ---------------- 문항 옵션의 이동/삭제 버튼: 데스크톱은 순수 CSS hover로 처리되고,
+  // 여기서는 hover가 없는 터치 기기에서 탭으로 토글되도록 보조한다. ----------------
+  (function(){
+    if (!window.matchMedia || !window.matchMedia('(hover: none)').matches) return; // 데스크톱은 CSS hover만으로 충분
+
+    var options = document.querySelectorAll('.qep-option');
+    options.forEach(function(opt){
+      if (!opt.querySelector('.qep-option-actions')) return; // 이동 대상이 없는 옵션은 대상 아님
+      opt.addEventListener('click', function(evt){
+        if (evt.target.closest('.qep-action-btn')) return; // 버튼 자체 클릭은 그대로 동작하게 둠
+        var wasActive = opt.classList.contains('touch-active');
+        options.forEach(function(o){ o.classList.remove('touch-active'); });
+        if (!wasActive) opt.classList.add('touch-active');
+      });
+    });
+
+    document.addEventListener('click', function(evt){
+      if (!evt.target.closest('.qep-option')){
+        options.forEach(function(o){ o.classList.remove('touch-active'); });
+      }
+    });
+  })();
+
+  // ---------------- Pannable / zoomable center canvas ----------------
+  (function(){
+    var canvas = document.querySelector('.center-canvas');
+    var content = document.getElementById('canvasContent');
+    var panX = 0, panY = 0;
+    var scale = 1;
+    var dragging = false;
+    var locked = false;
+    var startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+    var PAN_LIMIT = 900;
+    var SCALE_MIN = 0.5, SCALE_MAX = 2, SCALE_STEP = 0.1;
+
+    var btnZoomIn = document.getElementById('btnZoomIn');
+    var btnZoomOut = document.getElementById('btnZoomOut');
+    var btnFitView = document.getElementById('btnFitView');
+    var btnToggleLock = document.getElementById('btnToggleLock');
+    var lockIcon = document.getElementById('lockIcon');
+
+    function applyPan(){
+      content.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + scale + ')';
+      canvas.style.backgroundPosition = panX + 'px ' + panY + 'px';
+    }
+
+    function clamp(v){
+      return Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, v));
+    }
+
+    function clampScale(v){
+      return Math.max(SCALE_MIN, Math.min(SCALE_MAX, Math.round(v * 100) / 100));
+    }
+
+    function setScale(v){
+      scale = clampScale(v);
+      applyPan();
+      if (btnZoomIn) btnZoomIn.classList.toggle('disabled', scale >= SCALE_MAX);
+      if (btnZoomOut) btnZoomOut.classList.toggle('disabled', scale <= SCALE_MIN);
+    }
+
+    function setLocked(v){
+      locked = v;
+      canvas.classList.toggle('locked', locked);
+      if (lockIcon) lockIcon.src = locked ? 'assets/icon-lock-closed.svg' : 'assets/icon-toggle-interactivity.svg';
+      if (btnToggleLock) btnToggleLock.title = locked ? '캔버스 이동/확대 잠금 해제' : '캔버스 이동/확대 잠금';
+      if (btnZoomIn) btnZoomIn.classList.toggle('disabled', locked || scale >= SCALE_MAX);
+      if (btnZoomOut) btnZoomOut.classList.toggle('disabled', locked || scale <= SCALE_MIN);
+    }
+
+    function startDrag(target, x, y){
+      if (locked) return false;
+      if (target !== canvas && target !== content) return false; // only pan on empty space
+      dragging = true;
+      canvas.classList.add('panning');
+      startX = x;
+      startY = y;
+      startPanX = panX;
+      startPanY = panY;
+      return true;
+    }
+
+    function moveDrag(x, y){
+      if (!dragging) return;
+      panX = clamp(startPanX + (x - startX));
+      panY = clamp(startPanY + (y - startY));
+      applyPan();
+    }
+
+    function endDrag(){
+      if (!dragging) return;
+      dragging = false;
+      canvas.classList.remove('panning');
+    }
+
+    // ---- Mouse ----
+    canvas.addEventListener('mousedown', function(e){
+      if (startDrag(e.target, e.clientX, e.clientY)) e.preventDefault();
+    });
+    window.addEventListener('mousemove', function(e){
+      moveDrag(e.clientX, e.clientY);
+    });
+    window.addEventListener('mouseup', endDrag);
+    canvas.addEventListener('mouseleave', endDrag);
+    canvas.addEventListener('wheel', function(e){
+      if (locked) return;
+      if (e.target.closest('.question-edit-panel')) return; // let the panel scroll natively
+      e.preventDefault();
+      panX = clamp(panX - e.deltaX);
+      panY = clamp(panY - e.deltaY);
+      applyPan();
+    }, { passive:false });
+
+    // ---- Touch (mobile) ----
+    canvas.addEventListener('touchstart', function(e){
+      if (e.touches.length !== 1) return;
+      var t = e.touches[0];
+      if (startDrag(e.target, t.clientX, t.clientY)) e.preventDefault();
+    }, { passive:false });
+
+    canvas.addEventListener('touchmove', function(e){
+      if (!dragging || e.touches.length !== 1) return;
+      var t = e.touches[0];
+      moveDrag(t.clientX, t.clientY);
+      e.preventDefault();
+    }, { passive:false });
+
+    canvas.addEventListener('touchend', endDrag);
+    canvas.addEventListener('touchcancel', endDrag);
+
+    // ---- Bottom-left control panel ----
+    if (btnZoomIn) btnZoomIn.addEventListener('click', function(){
+      if (locked) return;
+      setScale(scale + SCALE_STEP);
+    });
+    if (btnZoomOut) btnZoomOut.addEventListener('click', function(){
+      if (locked) return;
+      setScale(scale - SCALE_STEP);
+    });
+    if (btnFitView) btnFitView.addEventListener('click', function(){
+      panX = 0;
+      panY = 0;
+      scale = 1;
+      applyPan();
+      if (btnZoomIn) btnZoomIn.classList.remove('disabled');
+      if (btnZoomOut) btnZoomOut.classList.remove('disabled');
+    });
+    if (btnToggleLock) btnToggleLock.addEventListener('click', function(){
+      setLocked(!locked);
+    });
+  })();
+
+  syncOptionLogicPills(); // 우측 패널의 초기 로직 상태를 기준으로 중앙 패널 옵션 표시를 맞춘다.
+  // Q5 연결선은 여기서 미리 계산하지 않는다 -- 로직 캔버스가 처음엔 display:none이라
+  // 이 시점엔 카드 높이를 잴 수 없다. setCanvasMode(true)가 캔버스를 보이게 할 때 계산한다.
+</script>
+
+</body>
+</html>
+
