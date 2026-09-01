@@ -1126,7 +1126,13 @@
     if (!rpLogicList) return;
     var anyVisible = false;
     rpLogicList.querySelectorAll('[data-question]').forEach(function(el){
-      var match = el.getAttribute('data-question') === qid;
+      // 자동 "그 외" 블록이 바로 다음 문항(기본 흐름)을 가리키고 있으면 우측
+      // 패널 목록에는 아예 보여주지 않는다 -- 그래프의 기본 연결선은 로직
+      // 설정 여부와 무관하게 항상 그려지므로 그쪽에서 이미 나타나고, 패널에는
+      // 아무 조작도 필요 없는 빈 "그 외 응답" 줄만 남아 잡음이 된다. 실제로
+      // 건너뛰는 대상으로 바뀌면 다시 나타난다.
+      var isDefaultAuto = el.getAttribute('data-auto') === 'true' && getBlockMoveTargetId(el) === nextQuestionAfter(qid);
+      var match = el.getAttribute('data-question') === qid && !isDefaultAuto;
       el.classList.toggle('hidden', !match);
       if (match) anyVisible = true;
     });
