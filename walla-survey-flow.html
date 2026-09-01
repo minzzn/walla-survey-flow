@@ -519,6 +519,12 @@
      점 3개가 세로 막대처럼 찌그러지던 버그 수정 (비율 유지) */
   .qep-more-btn img{width:16px;height:3.75px;}
 
+  /* Q9/Q10 주관식(자유 서술형) -- 답변 옵션이 없으므로 입력창 미리보기만 보여준다. */
+  .qep-text-preview{
+    background:#fbfbfb;height:50px;border-radius:14px;padding:12px 10px;box-sizing:border-box;
+    display:flex;align-items:center;font-size:16px;color:var(--grey-13);width:100%;
+  }
+
   /* Q7 rating scale */
   .qep-rating{display:flex;flex-direction:column;gap:16px;width:100%;}
   .qep-rating-range{display:flex;justify-content:space-between;width:100%;}
@@ -609,7 +615,7 @@
 
       <!-- 시작 / 제출하기 -->
       <div class="terminal-node" style="left:618px;top:54px;"><span>시작</span></div>
-      <div class="terminal-node" id="submitNode" style="left:618px;top:865px;"><span>제출하기</span></div>
+      <div class="terminal-node" id="submitNode" style="left:618px;top:1231px;"><span>제출하기</span></div>
 
       <!-- connectors: 로직이 하나도 없으면 문항들이 분기 없이 한 줄로 곧게 이어지고,
            Q5에 로직이 설정되면(updateFlowLayout) Q6/Q7이 옆으로 비켜나고 Q5->Q8
@@ -623,6 +629,8 @@
         <path id="q6ExtraPath" d="M 710 356 V 499" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
         <path id="q7LinePath" d="M 710 539 V 682" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q8LinePath" d="M 710 722 V 865" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q9LinePath" d="M 710 905 V 1048" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path id="q10LinePath" d="M 710 1088 V 1231" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
       </svg>
       <div class="branch-num-badge" id="q5ExtraBadge" style="display:none;">1</div>
       <div class="branch-num-badge" id="q5ElseBadge" style="display:none;"></div>
@@ -669,6 +677,24 @@
         <div class="flow-pill-head">
           <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
           <span class="q-text">보통 어떤 경로로 클래스를 찾나요</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
+      </div>
+      <div class="flow-pill" data-question="Q9" onclick="activateLogicForQuestion('Q9')" style="left:520px;top:865px;">
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q9</b></div>
+          <span class="q-text">불만족 하신 이유는 무엇인가요?</span>
+          <span class="q-tag">→ 다음 질문</span>
+          <span class="flow-pill-edit-link">문항 편집</span>
+        </div>
+        <div class="flow-pill-body"></div>
+      </div>
+      <div class="flow-pill" data-question="Q10" onclick="activateLogicForQuestion('Q10')" style="left:520px;top:1048px;">
+        <div class="flow-pill-head">
+          <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q10</b></div>
+          <span class="q-text">만족하신 이유는 무엇인가요?</span>
           <span class="q-tag">→ 다음 질문</span>
           <span class="flow-pill-edit-link">문항 편집</span>
         </div>
@@ -833,6 +859,43 @@
             </div>
           </div>
 
+          <!-- Q9: 주관식(자유 서술형) -- 답변 옵션이 없어 로직을 걸 수 없고, 다음
+               문항으로 이동만 가능하다. -->
+          <div class="qep-block" data-question="Q9" onclick="selectQuestion('Q9')">
+            <div class="qep-title-row">
+              <p class="qep-title"><span class="qep-num">Q9.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q9" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">불만족 하신 이유는 무엇인가요?</span></p>
+              <span class="qep-badge">주관식</span>
+            </div>
+            <div class="qep-options">
+              <div class="qep-text-preview">주관식 입력</div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
+          <!-- Q10: 주관식(자유 서술형) -->
+          <div class="qep-block" data-question="Q10" onclick="selectQuestion('Q10')">
+            <div class="qep-title-row">
+              <p class="qep-title"><span class="qep-num">Q10.</span> <span class="qep-title-text" contenteditable="true" spellcheck="false" data-question="Q10" onfocus="captureOldText(this)" onblur="commitTitleEdit(this)" onkeydown="handleEditableKeydown(event)" onclick="event.stopPropagation()">만족하신 이유는 무엇인가요?</span></p>
+              <span class="qep-badge">주관식</span>
+            </div>
+            <div class="qep-options">
+              <div class="qep-text-preview">주관식 입력</div>
+            </div>
+            <div class="qep-row-actions">
+              <div class="qep-add-group">
+                <div class="qep-add-btn"><img src="assets/icon-option-add.svg" alt=""><span>옵션 추가</span></div>
+                <div class="qep-add-btn"><img src="assets/icon-option-add-other.svg" alt=""><span>'기타' 옵션 추가</span></div>
+              </div>
+              <div class="qep-more-btn"><img src="assets/icon-more-horizontal.svg" alt=""></div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -862,6 +925,14 @@
               <div class="fp-row" data-question="Q8" onclick="selectQuestion('Q8')">
                 <div class="q-label"><div class="icon-chip"><img src="assets/icon-lock.svg" alt=""></div><b>Q8</b></div>
                 <p>보통 어떤 경로로 클래스를...</p>
+              </div>
+              <div class="fp-row" data-question="Q9" onclick="selectQuestion('Q9')">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q9</b></div>
+                <p>불만족 하신 이유는 무엇인가요?</p>
+              </div>
+              <div class="fp-row" data-question="Q10" onclick="selectQuestion('Q10')">
+                <div class="q-label"><div class="icon-chip"><img src="assets/icon-question-type.svg" alt=""></div><b>Q10</b></div>
+                <p>만족하신 이유는 무엇인가요?</p>
               </div>
             </div>
           </div>
@@ -899,6 +970,7 @@
       </div>
 
       <p class="rp-empty-hint" id="rpEmptyHint">문항을 선택해 주세요</p>
+      <p class="rp-empty-hint hidden" id="rpNoLogicHint">주관식 문항은 로직을 설정할 수 없어요.<br>다음 문항으로만 이동해요.</p>
 
       <div class="rp-logic-list hidden" id="rpLogicList">
       </div>
@@ -995,9 +1067,15 @@
     Q5: '원데이 클래스 참여 경험이 어느 정도인가요?',
     Q6: '아래 분야의 선호도를 알려주세요.',
     Q7: '지금까지 참여한 클래스는 전반에 얼마나 만족하시나요',
-    Q8: '보통 어떤 경로로 클래스를 찾나요?'
+    Q8: '보통 어떤 경로로 클래스를 찾나요?',
+    Q9: '불만족 하신 이유는 무엇인가요?',
+    Q10: '만족하신 이유는 무엇인가요?'
   };
-  var QUESTION_ORDER = ['Q5', 'Q6', 'Q7', 'Q8'];
+  var QUESTION_ORDER = ['Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10'];
+  // Q9/Q10은 주관식(자유 서술형)이라 답변을 몇 가지로 나눌 수 없어 로직 자체를
+  // 걸 수 없다 -- 다른 문항의 이동 대상(스킵 목적지)으로는 그대로 쓰일 수 있고,
+  // 자기 자신은 항상 다음 문항으로만 넘어간다.
+  var NO_LOGIC_QUESTIONS = ['Q9', 'Q10'];
   // 각 문항 핀 바로 아래에서 다음 문항으로 뻗어나가는 연결선의 id.
   // Q5는 분기 카드로 펼쳐지면 선이 두 개(q5LinePath: 그 외 응답, q5ExtraPath: Q8로
   // 바로 가는 로직1 직행선)로 갈라져서, 이 단순한 "선택된 문항이면 파란색" 규칙
@@ -1005,7 +1083,9 @@
   var QUESTION_OUTGOING_PATHS = {
     Q6: ['q6LinePath'],
     Q7: ['q7LinePath'],
-    Q8: ['q8LinePath']
+    Q8: ['q8LinePath'],
+    Q9: ['q9LinePath'],
+    Q10: ['q10LinePath']
   };
   var currentQuestionId = 'Q5';
 
@@ -1150,8 +1230,18 @@
     if (labelWrap) labelWrap.classList.remove('hidden');
     var hint = document.getElementById('rpEmptyHint');
     if (hint) hint.classList.add('hidden');
+    var noLogicHint = document.getElementById('rpNoLogicHint');
+    var isNoLogic = NO_LOGIC_QUESTIONS.indexOf(qid) !== -1;
+    if (noLogicHint) noLogicHint.classList.toggle('hidden', !isNoLogic);
+    // 주관식(Q9/Q10)은 답변을 나눌 수 없어 로직 자체를 걸 수 없으므로, 목록과
+    // "새 로직 추가" 버튼 대신 안내 문구만 보여준다.
     var rpCta = document.getElementById('rpCta');
-    if (rpCta) rpCta.classList.remove('hidden');
+    if (rpCta) rpCta.classList.toggle('hidden', isNoLogic);
+    if (isNoLogic){
+      var rpLogicList = document.getElementById('rpLogicList');
+      if (rpLogicList) rpLogicList.classList.add('hidden');
+      return;
+    }
     refreshRpLogicListForQuestion(qid); // 이 문항의 실제 로직 유무에 따라 rpLogicList는 알아서 보이거나 숨는다.
   }
 
@@ -1176,6 +1266,8 @@
     if (rpCta) rpCta.classList.add('hidden');
     var hint = document.getElementById('rpEmptyHint');
     if (hint) hint.classList.remove('hidden');
+    var noLogicHint = document.getElementById('rpNoLogicHint');
+    if (noLogicHint) noLogicHint.classList.add('hidden');
     updateAllFlowNodes();
   }
 
@@ -1190,10 +1282,15 @@
     setRpMode(true);
     revealLogicPanelForQuestion(qid);
 
-    // 이 문항에 로직이 하나도 없으면, "새 로직 추가"를 한 번 더 누르지 않아도 바로
-    // 편집할 수 있도록 첫 로직 블록을 자동으로 만들어서 펼쳐둔다.
-    var hasExistingLogic = document.querySelectorAll('#rpLogicList .logic-detail[data-question="' + qid + '"]').length > 0;
-    if (!hasExistingLogic) addNewLogic();
+    // 주관식(Q9/Q10)은 로직을 걸 수 없으므로 빈 로직 블록을 자동으로
+    // 만들어주지 않는다 -- revealLogicPanelForQuestion이 이미 안내 문구로
+    // 대체해 보여준다.
+    if (NO_LOGIC_QUESTIONS.indexOf(qid) === -1){
+      // 이 문항에 로직이 하나도 없으면, "새 로직 추가"를 한 번 더 누르지 않아도 바로
+      // 편집할 수 있도록 첫 로직 블록을 자동으로 만들어서 펼쳐둔다.
+      var hasExistingLogic = document.querySelectorAll('#rpLogicList .logic-detail[data-question="' + qid + '"]').length > 0;
+      if (!hasExistingLogic) addNewLogic();
+    }
 
     // 문항 바로 아래에서 다음 문항으로 나가는 연결선 -- 그 문항이 활성화됐을 때만
     // 파란색으로 켜지고, 나머지는 전부 회색으로 되돌아간다.
@@ -1500,8 +1597,10 @@
     var q6 = document.querySelector('.flow-pill[data-question="Q6"]');
     var q7 = document.querySelector('.flow-pill[data-question="Q7"]');
     var q8 = document.querySelector('.flow-pill[data-question="Q8"]');
-    if (!q5 || !q6 || !q7 || !q8) return;
-    var allPills = { Q5: q5, Q6: q6, Q7: q7, Q8: q8 };
+    var q9 = document.querySelector('.flow-pill[data-question="Q9"]');
+    var q10 = document.querySelector('.flow-pill[data-question="Q10"]');
+    if (!q5 || !q6 || !q7 || !q8 || !q9 || !q10) return;
+    var allPills = { Q5: q5, Q6: q6, Q7: q7, Q8: q8, Q9: q9, Q10: q10 };
     var Q5_SLOTS = [
       { path: 'q5LinePath', badge: 'q5ElseBadge' },
       { path: 'q5ExtraPath', badge: 'q5ExtraBadge' },
@@ -1527,24 +1626,31 @@
     drawBranchLines('Q5', allPills, Q5_SLOTS, q5Result);
     drawBranchLines('Q6', allPills, Q6_SLOTS, q6Result);
 
-    // Q7->Q8 연결선은 실제 좌표를 따라간다 -- 같은 컬럼에 있으면 직선, 컬럼이
-    // 바뀌는 지점(건너뛴 문항 -> 목표 문항)이면 자동으로 곡선이 된다.
-    var q7Bottom = q7.offsetTop + q7.offsetHeight;
-    var q7to8 = document.getElementById('q7LinePath');
-    if (q7to8){
-      q7to8.setAttribute('d', connectorPath(
-        svgX(parseInt(q7.style.left, 10)), q7Bottom,
-        svgX(parseInt(q8.style.left, 10)), q8.offsetTop
+    // Q7->Q8->Q9->Q10 연결선은 실제 좌표를 따라간다 -- 같은 컬럼에 있으면
+    // 직선, 컬럼이 바뀌는 지점(건너뛴 문항 -> 목표 문항)이면 자동으로 곡선이
+    // 된다. Q9/Q10은 주관식이라 스스로 분기하지 않지만, Q5/Q6의 분기가 이
+    // 둘을 건너뛰거나 목표로 삼을 수는 있으므로 위치는 매번 다시 읽는다.
+    function drawPlainSegment(fromEl, toEl, pathId){
+      var pathEl = document.getElementById(pathId);
+      if (!pathEl) return;
+      var fromBottom = fromEl.offsetTop + fromEl.offsetHeight;
+      pathEl.setAttribute('d', connectorPath(
+        svgX(parseInt(fromEl.style.left, 10)), fromBottom,
+        svgX(parseInt(toEl.style.left, 10)), toEl.offsetTop
       ));
     }
-    // "제출하기" 종료 노드도 865px에 고정해두면 Q8이 로직으로 펼쳐졌을 때 겹친다.
-    // Q8의 실제 아랫변 기준으로 같은 간격만큼 띄워서 이어 붙인다.
-    var q8Bottom = q8.offsetTop + q8.offsetHeight;
-    var submitTop = q8Bottom + CARD_GAP;
+    drawPlainSegment(q7, q8, 'q7LinePath');
+    drawPlainSegment(q8, q9, 'q8LinePath');
+    drawPlainSegment(q9, q10, 'q9LinePath');
+
+    // "제출하기" 종료 노드도 고정 좌표에 두면 앞선 문항이 로직으로 펼쳐졌을 때
+    // 겹친다. 마지막 문항(Q10)의 실제 아랫변 기준으로 같은 간격만큼 띄운다.
+    var q10Bottom = q10.offsetTop + q10.offsetHeight;
+    var submitTop = q10Bottom + CARD_GAP;
     var submitNode = document.getElementById('submitNode');
     if (submitNode) submitNode.style.top = submitTop + 'px';
-    var q8to9 = document.getElementById('q8LinePath');
-    if (q8to9) q8to9.setAttribute('d', 'M 710 ' + q8Bottom + ' V ' + submitTop);
+    var q10toSubmit = document.getElementById('q10LinePath');
+    if (q10toSubmit) q10toSubmit.setAttribute('d', 'M ' + svgX(parseInt(q10.style.left, 10)) + ' ' + q10Bottom + ' V ' + submitTop);
 
     updateBranchLineColors('Q5', q5, q5Result, Q5_SLOTS);
     updateBranchLineColors('Q6', q6, q6Result, Q6_SLOTS);
