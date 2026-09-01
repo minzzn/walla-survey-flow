@@ -107,6 +107,7 @@ https://walla-survey-flow.netlify.app
 | 81 | 2026-08-31 19:20:39 | [`0776c04`](https://github.com/minzzn/walla-survey-flow/commit/0776c04) | `fix` | 이동 대상이 바로 다음 문항이면 편집/로직 탭 모두에서 아이콘+Qn 배지를 아예 표시하지 않도록 수정 |
 | 82 | 2026-09-01 09:47:08 | [`e6d612c`](https://github.com/minzzn/walla-survey-flow/commit/e6d612c) | `fix` | 우측 로직 패널에서 답변이 로직 블록 두 개에 동시에 배정되던 오류 및 새 로직에서 답변 하나만 골라도 나머지가 즉시 딸려 들어오던 오류 수정 |
 | 83 | 2026-09-01 11:21:06 | [`e35faf3`](https://github.com/minzzn/walla-survey-flow/commit/e35faf3) | `fix` | 자동 "그 외" 블록이 바로 다음 문항을 가리키면 우측 패널 목록에서 숨기고, 그래프(캔버스)에는 그대로 표시 |
+| 84 | 2026-09-01 11:37:12 | [`f731a20`](https://github.com/minzzn/walla-survey-flow/commit/f731a20) | `feat` | 주관식 문항 Q9, Q10 추가 (피그마 node 773:28758 기준, 로직 설정 불가·다음 문항 이동만 가능) |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
