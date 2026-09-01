@@ -110,6 +110,7 @@ https://walla-survey-flow.netlify.app
 | 84 | 2026-09-01 11:37:12 | [`f731a20`](https://github.com/minzzn/walla-survey-flow/commit/f731a20) | `feat` | 주관식 문항 Q9, Q10 추가 (피그마 node 773:28758 기준, 로직 설정 불가·다음 문항 이동만 가능) |
 | 85 | 2026-09-01 11:45:09 | [`3a7a7bc`](https://github.com/minzzn/walla-survey-flow/commit/3a7a7bc) | `feat` | Q7, Q8에 로직을 설정하면 그래프에도 분기가 반영되도록 분기 시스템 확장 |
 | 86 | 2026-09-01 11:52:06 | [`a192ea5`](https://github.com/minzzn/walla-survey-flow/commit/a192ea5) | `feat` | 그래프 연결선에 실선(실제 분기)/점선(기본 흐름·그 외) 구분 적용 |
+| 87 | 2026-09-01 12:05:15 | [`7d75437`](https://github.com/minzzn/walla-survey-flow/commit/7d75437) | `fix` | 점선 제거하고 전부 실선으로 통일, 7번이 9/10번으로 갈리면 각자 제출하기로 종료되도록 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
