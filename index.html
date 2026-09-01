@@ -621,7 +621,7 @@
            Q5에 로직이 설정되면(updateFlowLayout) Q6/Q7이 옆으로 비켜나고 Q5->Q8
            직행선(q5ExtraPath)이 추가로 나타난다. -->
       <svg class="connectors">
-        <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
+        <path d="M 710 98 V 133" stroke="#d1d5dc" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
         <path id="q5LinePath" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none"/>
         <path id="q5ExtraPath" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
         <path id="q5ExtraPath2" d="M 710 173 V 316" stroke="#d1d5dc" stroke-width="1.5" fill="none" style="display:none;"/>
@@ -1553,6 +1553,9 @@
         var badgeEl = document.getElementById(slot.badge);
         if (i === 0 && pathEl && nextEl){
           pathEl.style.display = '';
+          // 로직이 하나도 없는 기본 흐름이므로, 로직 미리보기 범례("기본 흐름 /
+          // 그 외 응답" = 점선)와 맞춰 점선으로 그린다.
+          pathEl.setAttribute('stroke-dasharray', '4 4');
           var nextX = svgX(parseInt(nextEl.style.left, 10));
           pathEl.setAttribute('d', connectorPath(sourceX, sourceBottom, nextX, nextEl.offsetTop));
         } else if (pathEl){
@@ -1576,6 +1579,12 @@
         // lane(i)을 넘겨주면 branchPath가 같은 컬럼이든 다른 컬럼이든 알아서
         // 카드에 가리지 않고 서로 겹치지 않게 그린다.
         pathEl.setAttribute('d', branchPath(sourceX, sourceBottom, targetX, targetTop, i));
+        // 로직 미리보기 범례와 맞춰, 사용자가 실제로 지정한 로직(explicit)은
+        // 실선으로, 나머지 답변이 자동으로 모이는 "그 외" 응답은 점선으로
+        // 그려서 굳이 블록을 펼쳐보지 않아도 어떤 선이 "그 외"인지 한눈에
+        // 구분되게 한다.
+        if (branch.isAuto) pathEl.setAttribute('stroke-dasharray', '4 4');
+        else pathEl.removeAttribute('stroke-dasharray');
       }
       if (badgeEl && pathEl){
         badgeEl.style.display = 'flex';
@@ -1658,6 +1667,7 @@
     var q9to10 = document.getElementById('q9LinePath');
     if (q9to10){
       var q9Bottom = q9.offsetTop + q9.offsetHeight;
+      q9to10.setAttribute('stroke-dasharray', '4 4'); // 주관식은 로직이 없어 항상 기본 흐름이다.
       q9to10.setAttribute('d', connectorPath(
         svgX(parseInt(q9.style.left, 10)), q9Bottom,
         svgX(parseInt(q10.style.left, 10)), q10.offsetTop
@@ -1671,7 +1681,10 @@
     var submitNode = document.getElementById('submitNode');
     if (submitNode) submitNode.style.top = submitTop + 'px';
     var q10toSubmit = document.getElementById('q10LinePath');
-    if (q10toSubmit) q10toSubmit.setAttribute('d', 'M ' + svgX(parseInt(q10.style.left, 10)) + ' ' + q10Bottom + ' V ' + submitTop);
+    if (q10toSubmit){
+      q10toSubmit.setAttribute('stroke-dasharray', '4 4');
+      q10toSubmit.setAttribute('d', 'M ' + svgX(parseInt(q10.style.left, 10)) + ' ' + q10Bottom + ' V ' + submitTop);
+    }
 
     updateBranchLineColors('Q5', q5, q5Result, Q5_SLOTS);
     updateBranchLineColors('Q6', q6, q6Result, Q6_SLOTS);
