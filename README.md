@@ -105,6 +105,7 @@ https://walla-survey-flow.netlify.app
 | 79 | 2026-08-31 19:12:52 | [`a1e7643`](https://github.com/minzzn/walla-survey-flow/commit/a1e7643) | `fix` | 편집 탭 옵션 이동 표시 및 로직 탭 캔버스 카드에서 "다음 문항으로" 텍스트를 없애고 항상 Qn 배지로 표시 |
 | 80 | 2026-08-31 19:16:25 | [`6688681`](https://github.com/minzzn/walla-survey-flow/commit/6688681) | `fix` | 편집 탭 옵션 이동 드롭다운 목록에서 바로 다음 문항 선택지 제거 |
 | 81 | 2026-08-31 19:20:39 | [`0776c04`](https://github.com/minzzn/walla-survey-flow/commit/0776c04) | `fix` | 이동 대상이 바로 다음 문항이면 편집/로직 탭 모두에서 아이콘+Qn 배지를 아예 표시하지 않도록 수정 |
+| 82 | 2026-09-01 09:47:08 | [`e6d612c`](https://github.com/minzzn/walla-survey-flow/commit/e6d612c) | `fix` | 우측 로직 패널에서 답변이 로직 블록 두 개에 동시에 배정되던 오류 및 새 로직에서 답변 하나만 골라도 나머지가 즉시 딸려 들어오던 오류 수정 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
