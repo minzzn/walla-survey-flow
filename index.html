@@ -1755,7 +1755,20 @@
   function toggleAnswerOption(block, optionText){
     var selected = getSelectedAnswerTexts(block);
     var i = selected.indexOf(optionText);
-    if (i === -1) selected.push(optionText); else selected.splice(i, 1);
+    if (i === -1){
+      // 이 답변이 이미 같은 문항의 다른 로직 블록에 걸려 있으면 먼저 그
+      // 블록에서 빼야 한다 -- 안 그러면 답변 하나가 로직 두 개에 동시에
+      // 걸려서(예: 로직1은 Q8로, 로직2는 Q6로) 실제로 어디로 가는지 알 수
+      // 없는 모순된 상태가 된다. removeAnswerFromEffectiveCoverage는 조용히
+      // (동기화 없이) DOM만 고쳐 쓰므로, 뒤이은 renderAnswerChips의 단
+      // 한 번뿐인 동기화가 최종 상태를 한 번에 맞춘다.
+      var qid = getBlockQuestionRefId(block);
+      var owner = findLogicBlockForOption(qid, optionText);
+      if (owner && owner !== block) removeAnswerFromEffectiveCoverage(owner, optionText);
+      selected.push(optionText);
+    } else {
+      selected.splice(i, 1);
+    }
     renderAnswerChips(block, selected);
   }
   function removeAnswerChip(imgEl){
@@ -1941,6 +1954,13 @@
         if (getSelectedAnswerTexts(b).length === 0) return;
         var target = getBlockMoveTargetId(b);
         if (!target) return;
+        // 이동 대상이 바로 다음 문항이면 병합 대상에서 뺀다 -- 새로 만든 로직
+        // 블록과 그 순간 자동 생성되는 "그 외" 블록은 둘 다 기본값이 바로
+        // 다음 문항이라, 이 조건이 없으면 로직1에서 답변을 하나만 골라도
+        // 사용자가 이동 대상을 바꾸기도 전에 그 외의 나머지 답변까지 즉시
+        // 합쳐져 들어와 버린다(체크한 적 없는 답변까지 골라진 것처럼 보임).
+        // 실제로 흐름을 건너뛰는 target끼리만 합치는 게 맞다.
+        if (target === nextQuestionAfter(qid)) return;
         (byTarget[target] = byTarget[target] || []).push(b);
       });
       Object.keys(byTarget).forEach(function(target){
