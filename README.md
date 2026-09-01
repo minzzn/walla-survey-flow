@@ -112,7 +112,6 @@ https://walla-survey-flow.netlify.app
 | 86 | 2026-09-01 11:52:06 | [`a192ea5`](https://github.com/minzzn/walla-survey-flow/commit/a192ea5) | `feat` | 그래프 연결선에 실선(실제 분기)/점선(기본 흐름·그 외) 구분 적용 |
 | 87 | 2026-09-01 12:05:15 | [`7d75437`](https://github.com/minzzn/walla-survey-flow/commit/7d75437) | `fix` | 점선 제거하고 전부 실선으로 통일, 7번이 9/10번으로 갈리면 각자 제출하기로 종료되도록 수정 |
 | 88 | 2026-09-01 12:13:30 | [`004ff1c`](https://github.com/minzzn/walla-survey-flow/commit/004ff1c) | `fix` | 7번이 9/10번으로 갈릴 때 제출 직행선과 실제 분기선이 같은 lane에 겹쳐 보이던 문제 수정 |
-| 89 | 2026-09-01 13:48:58 | [`e03ded5`](https://github.com/minzzn/walla-survey-flow/commit/e03ded5) | `feat` | 그래프를 피그마 참고 디자인(node 784:29316) 기준 각진 연결선 + 형제 컬럼 나란히 배치 방식으로 재설계 |
 
 실제로 화면에서 작업이 진행된 날짜는 2026-08-28 저녁(1~4번, 배포/워처 설정) →
 2026-08-29 새벽(5~27번) → 2026-08-29 낮(28~34번) → 2026-08-31(35~48번)입니다.
