@@ -1670,17 +1670,29 @@
     if (q9to10){
       var q9Bottom = q9.offsetTop + q9.offsetHeight;
       var branchSources = [q5Result, q6Result, q7Result, q8Result];
-      var q9AndQ10BothTargeted = branchSources.some(function(r){
+      // 10번을 실제로 몇 번 lane에 그렸는지도 같이 찾아둔다 -- 아래에서 이
+      // 제출 직행선이 그 lane과 겹치지 않는 반대편으로 부풀도록 골라야
+      // 두 선이 같은 자리에 포개져 하나처럼 보이는 일이 없다.
+      var q10Lane = -1;
+      branchSources.some(function(r){
         if (!r.branching) return false;
         var targets = r.branches.map(function(b){ return b.target; });
-        return targets.indexOf('Q9') !== -1 && targets.indexOf('Q10') !== -1;
+        if (targets.indexOf('Q9') !== -1 && targets.indexOf('Q10') !== -1){
+          q10Lane = targets.indexOf('Q10');
+          return true;
+        }
+        return false;
       });
-      if (q9AndQ10BothTargeted){
+      if (q10Lane !== -1){
         // 10번 카드 위를 지나가야 하므로, 카드에 가리지 않도록 branchPath의
-        // lane 부풀리기를 그대로 재사용해 옆으로 피해가는 곡선을 그린다.
+        // lane 부풀리기를 재사용해 옆으로 피해가는 곡선을 그린다. 10번으로
+        // 들어오는 실제 분기선(q10Lane)과 같은 쪽으로 부풀리면 두 곡선이
+        // 겹쳐서 한 선처럼 보이므로, 그 반대쪽 lane을 쓴다.
+        var q10Side = q10Lane % 2 === 1 ? 'right' : (q10Lane === 0 ? 'straight' : 'left');
+        var overrideLane = q10Side === 'right' ? 2 : 1;
         q9to10.setAttribute('d', branchPath(
           svgX(parseInt(q9.style.left, 10)), q9Bottom,
-          svgX(parseInt(q10.style.left, 10)), submitTop, 1
+          svgX(parseInt(q10.style.left, 10)), submitTop, overrideLane
         ));
       } else {
         q9to10.setAttribute('d', connectorPath(
