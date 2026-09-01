@@ -1383,69 +1383,40 @@
   // 두 점을 잇는 연결선을 만든다. x좌표가 같으면 직선, 다르면(컬럼이 바뀌면)
   // 부드러운 S자 곡선이 된다 -- Q6/Q7이 실제로 어느 컬럼에 있는지에 따라
   // 연결선 모양이 자동으로 달라지게 하기 위한 공용 헬퍼.
-  function connectorPath(x1, y1, x2, y2){
+  // 두 점을 잇는 연결선을 만든다. x좌표가 같으면 직선, 다르면 모서리가
+  // 둥글게 한 번 꺾이는 직각(elbow) 연결선이 된다 -- 부드러운 S자 곡선
+  // 대신 각진(둥근 모서리) 연결선을 쓰는 피그마 참고 디자인(node
+  // 784:29316)에 맞춘 스타일이다. bendY를 안 주면 시작/끝의 중간 높이에서
+  // 꺾인다.
+  function elbowPath(x1, y1, x2, y2, bendY){
     if (x1 === x2) return 'M ' + x1 + ' ' + y1 + ' V ' + y2;
-    var ctrlY = y1 + (y2 - y1) / 2;
-    return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ctrlY + ', ' + x2 + ' ' + ctrlY + ', ' + x2 + ' ' + y2;
-  }
-  // 문항 카드(.flow-pill)는 폭이 380px이고 배경이 불투명한 흰색이라, 카드
-  // 중심(메인 컬럼 x)에서 살짝(수십 px)만 부풀린 곡선은 여전히 카드 폭
-  // 안쪽이라 그 카드 뒤로 완전히 숨어버린다 -- 선이 카드에 가려 어디로
-  // 가는 선인지 안 보인다는 문제가 바로 이것이다. 카드 뒤에 숨지 않으려면
-  // 카드 가장자리(중심에서 190px)를 확실히 넘어서야 한다.
-  var CARD_HALF_WIDTH = 190; // .flow-pill width(380px)의 절반
-  // 분기 선 하나를 그린다. 답변이 세 곳 이상으로 나뉘어도 그중 여러 target이
-  // 전부 메인 컬럼(같은 x)에 남아있을 수 있다(예: 5->6, 5->7, 5->8이 동시에
-  // 걸리면 Q6/Q7/Q8 모두 건너뛰는 문항이 없어 셋 다 메인 컬럼에 그대로
-  // 남는다) -- 이때 x가 같다고 그냥 세로 직선을 그으면 여러 선이 완전히
-  // 겹치고, 조금만 부풀리면 카드 뒤에 숨는다. lane(0이면 직선, 1이면 카드
-  // 폭을 완전히 벗어날 만큼 오른쪽으로, 2면 왼쪽으로) 순서로 카드 바깥의
-  // 빈 공간을 지나가게 해서 항상 눈에 보이도록 한다.
-  //
-  // 시작점과 도착점의 x가 다른 경우(옆 컬럼으로 밀려난 문항에서 나가는
-  // 선)도 마찬가지 문제가 있다 -- 그 문항 자신도 답변이 여러 target으로
-  // 나뉘면(예: Q5의 분기 때문에 옆으로 밀려난 Q6가 스스로도 Q7/Q8로 갈리면),
-  // 두 선이 똑같은 지점에서 시작해 똑같은 높이(y1+57)에서 꺾이므로 갈라지는
-  // target까지 도착하기 전까지는 사실상 겹쳐 보인다. lane마다 꺾이는 높이를
-  // 다르게 줘서 시작하자마자 눈에 띄게 갈라지게 한다.
-  function branchPath(x1, y1, x2, y2, lane){
-    if (x1 !== x2){
-      var bendY = y1 + 57 + lane * 45;
-      return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + bendY + ', ' + x2 + ' ' + bendY + ', ' + x2 + ' ' + y2;
-    }
-    if (!lane) return 'M ' + x1 + ' ' + y1 + ' V ' + y2;
-    var side = (lane % 2 === 1) ? 1 : -1; // 홀수 lane은 오른쪽, 짝수 lane은 왼쪽으로 번갈아 카드를 피한다.
-    var magnitude = CARD_HALF_WIDTH + 30 + Math.floor((lane - 1) / 2) * 60;
-    var bendX = x1 + side * magnitude;
-    var ctrlY1 = y1 + 57;
-    var ctrlY2 = y2 - 40;
-    return 'M ' + x1 + ' ' + y1 + ' C ' + bendX + ' ' + ctrlY1 + ', ' + bendX + ' ' + ctrlY2 + ', ' + x1 + ' ' + y2;
+    if (bendY === undefined || bendY === null) bendY = y1 + (y2 - y1) / 2;
+    var r = Math.min(16, Math.abs(bendY - y1), Math.abs(y2 - bendY), Math.abs(x2 - x1) / 2);
+    var dir = x2 > x1 ? 1 : -1;
+    return 'M ' + x1 + ' ' + y1 +
+      ' V ' + (bendY - r) +
+      ' Q ' + x1 + ' ' + bendY + ' ' + (x1 + dir * r) + ' ' + bendY +
+      ' H ' + (x2 - dir * r) +
+      ' Q ' + x2 + ' ' + bendY + ' ' + x2 + ' ' + (bendY + r) +
+      ' V ' + y2;
   }
   function svgX(cssLeftPx){ return cssLeftPx + 190; }
+
+  var CARD_HALF_WIDTH = 190; // .flow-pill width(380px)의 절반
+  var CARD_WIDTH = CARD_HALF_WIDTH * 2;
+  // 형제 분기 카드끼리(같은 줄에 나란히 놓일 때) 벌어지는 간격.
+  var SIBLING_GAP = 16;
 
   // 카드 사이의 기본 간격 -- 접힌 카드 높이(42px)를 포함해 인접한 두 카드의
   // top이 183px씩 벌어지도록 맞춘 값(183-42=141)이라, 어떤 카드가 로직으로
   // 펼쳐져 실제 높이가 커져도 이 간격을 그 카드의 진짜 아랫변에 더하기만
   // 하면 다음 카드와 항상 정확히 떨어진다.
   var CARD_GAP = 141;
+  // 분기가 갈라지는 지점(문항 바로 아래)에서 형제 카드들이 나란히 놓이는
+  // 줄까지의 간격 -- 일반 CARD_GAP보다 좁다. 분기 카드는 펼쳐진 소스 바로
+  // 밑에 붙어야 "여기서 갈린다"는 느낌이 살기 때문이다.
+  var BRANCH_ROW_GAP = 40;
 
-  // qid(Q5 또는 Q6)에 실제로 설정된 로직1의 이동 대상이 바로 다음 문항이 아니면
-  // (건너뛰는 경우), 그 사이에 있는 문항들만 옆 컬럼으로 비켜나고 목표 문항부터
-  // 다시 메인 컬럼으로 합류한다. 예를 들어 6->8이면 Q7만 비켜나고 Q8이 목표
-  // 지점이 된다.
-  //
-  // Q5와 Q6가 동시에 분기할 수도 있다(예: 5->8이면서 6도 따로 8로 건너뜀).
-  // 이 경우 Q6 자신의 분기가 항상 우선한다 -- Q5가 이미 정해둔 Q7/Q8 위치
-  // 위에서, Q6 입장에서 다시 "Q7을 건너뛰고 Q8로" 재배치한다. 다만 Q6가
-  // 자기 분기가 없을 때는(가장 흔한 경우) forceLayout이 false면(Q5가 이미
-  // 분기 중이라 Q6 스스로 메인 레이아웃을 책임질 필요가 없을 때) 아무것도
-  // 건드리지 않고 Q5가 정해둔 위치를 그대로 둔다 -- 안 그러면 Q6가 옆
-  // 컬럼에 있으면서도 자기 아래에 새 메인 컬럼을 만들어버려 Q5의 분기를
-  // 덮어써 버린다.
-  //
-  // 실제 직행선(extraPath)은 여기서 바로 그리지 않는다 -- Q6의 분기가 Q5의
-  // 목표(Q8) 위치를 더 내릴 수도 있으므로, 모든 위치 계산이 끝난 뒤 별도로
-  // drawExtraPath를 호출해서 최종 위치 기준으로 그린다.
   // qid의 답변이 실제로 나뉘어 가는 곳(로직1, 로직2, ... + 그 외)을 전부 모은다.
   // mergeLogicBlocksByTarget이 이동 대상이 같은 블록은 항상 하나로 합쳐주므로,
   // 여기 담기는 블록들은 서로 target이 겹치지 않는 게 보장된다 -- 즉 이 배열의
@@ -1461,11 +1432,18 @@
     return explicit.filter(function(b){ return !!b.target; });
   }
 
-  // qid 이후 문항들의 위치를 정한다. qid의 답변이 여러 target으로 나뉠 수
-  // 있으므로(예: 5->6, 5->7, 5->8 동시), 각 target이 아닌(=아무도 가지 않는)
-  // 문항만 옆 컬럼(297px)으로 비켜나고, 실제 target인 문항은 전부 메인 컬럼에
-  // 남는다. 곁다리로 비켜난 구간(연속된 "아무도 안 가는" 문항들)이 하나 끝날
-  // 때마다 메인 컬럼으로 다시 합류하는 지점에서 더 큰 간격을 준다.
+  // qid 이후 문항들의 위치를 정한다.
+  //
+  // target이 하나뿐이면(단순 스킵, 예: 5->8) 건너뛰는 문항들만 옆 컬럼
+  // (297px)으로 비켜나고 target은 건너뛴 만큼 아래에서 메인 컬럼에
+  // 합류한다.
+  //
+  // target이 둘 이상이면(형제 분기, 예: 7이 9 또는 10으로 갈릴 때) 모든
+  // target을 문항 바로 아래 같은 줄에 나란히 가운데 정렬해서 배치한다 --
+  // 순서상 더 뒤에 있는 target이라고 더 아래로 내려가지 않고, "여기서
+  // 이렇게 갈린다"는 게 한눈에 보이게 한다(피그마 참고 디자인과 동일한
+  // 구성). 어느 target도 아닌 문항들은 가장 가까운(lane 0) target의
+  // 컬럼에서 그대로 순서대로 이어진다.
   function resolveBranchPositions(qid, allPills, forceLayout){
     var sourceEl = allPills[qid];
     var sourceIdx = QUESTION_ORDER.indexOf(qid);
@@ -1490,6 +1468,10 @@
       return { branching: false, branches: [] };
     }
 
+    branches = branches.slice().sort(function(a, b){
+      return QUESTION_ORDER.indexOf(a.target) - QUESTION_ORDER.indexOf(b.target);
+    });
+
     var targetIdxSet = {};
     var maxTargetIdx = sourceIdx;
     branches.forEach(function(b){
@@ -1498,39 +1480,99 @@
       if (idx > maxTargetIdx) maxTargetIdx = idx;
     });
 
-    var prevBottom = sourceBottom;      // 방금 배치한 요소(메인이든 사이드든)의 아랫변
-    var runAnchorBottom = sourceBottom; // 지금 진행 중인(또는 다음에 시작할) 사이드 구간의 시작 기준점
-    var inSideRun = false;
-    for (var i = sourceIdx + 1; i <= maxTargetIdx; i++){
-      var dqid = QUESTION_ORDER[i];
-      var el = allPills[dqid];
-      if (targetIdxSet[i]){
-        var top = inSideRun ? Math.max(prevBottom + 90, runAnchorBottom + 190) : (prevBottom + CARD_GAP);
-        el.style.left = '520px';
-        el.style.top = top + 'px';
-        prevBottom = el.offsetTop + el.offsetHeight;
-        runAnchorBottom = prevBottom;
-        inSideRun = false;
-      } else {
-        var sideTop = inSideRun ? (prevBottom + 57) : (runAnchorBottom + 120);
-        el.style.left = '297px';
-        el.style.top = sideTop + 'px';
-        prevBottom = el.offsetTop + el.offsetHeight;
-        inSideRun = true;
+    var lane0Left, afterBottom;
+
+    if (branches.length === 1){
+      // 단일 스킵: 건너뛰는 문항은 옆 컬럼, target은 메인 컬럼에서 건너뛴
+      // 만큼 아래로 내려가 합류한다(기존 동작 그대로).
+      var prevBottom2 = sourceBottom;
+      var runAnchorBottom = sourceBottom;
+      var inSideRun = false;
+      for (var i = sourceIdx + 1; i <= maxTargetIdx; i++){
+        var dqid = QUESTION_ORDER[i];
+        var el = allPills[dqid];
+        if (targetIdxSet[i]){
+          var top = inSideRun ? Math.max(prevBottom2 + 90, runAnchorBottom + 190) : (prevBottom2 + CARD_GAP);
+          el.style.left = '520px';
+          el.style.top = top + 'px';
+          prevBottom2 = el.offsetTop + el.offsetHeight;
+          runAnchorBottom = prevBottom2;
+          inSideRun = false;
+        } else {
+          var sideTop = inSideRun ? (prevBottom2 + 57) : (runAnchorBottom + 120);
+          el.style.left = '297px';
+          el.style.top = sideTop + 'px';
+          prevBottom2 = el.offsetTop + el.offsetHeight;
+          inSideRun = true;
+        }
       }
+      lane0Left = 520;
+      afterBottom = prevBottom2;
+    } else {
+      // 형제 분기: 모든 target을 소스 바로 아래 한 줄에, 소스 중심을
+      // 기준으로 가운데 정렬해서 나란히 배치한다. 다만 가장 가까운
+      // (lane 0) target보다도 앞에 있어서 그 어떤 분기도 향하지 않는
+      // 문항이 있으면(예: 7->9,10인데 8이 그 사이에 있는 경우), 그 문항은
+      // 모두에게 그냥 건너뛰이는 것이므로 기존 단일 스킵과 같은 옆 컬럼
+      // (297px)으로 비켜난다 -- 공유 줄에 끼워 넣으면 순서가 뒤죽박죽으로
+      // 보인다.
+      var nearestTargetIdx = QUESTION_ORDER.indexOf(branches[0].target);
+      var prevSideBottom = sourceBottom;
+      for (var k = sourceIdx + 1; k < nearestTargetIdx; k++){
+        var skipEl = allPills[QUESTION_ORDER[k]];
+        skipEl.style.left = '297px';
+        skipEl.style.top = (prevSideBottom + (k === sourceIdx + 1 ? 120 : 57)) + 'px';
+        prevSideBottom = skipEl.offsetTop + skipEl.offsetHeight;
+      }
+
+      var sourceCenterX = parseInt(sourceEl.style.left, 10) + CARD_HALF_WIDTH;
+      var n = branches.length;
+      var totalWidth = n * CARD_WIDTH + (n - 1) * SIBLING_GAP;
+      var rowLeft = sourceCenterX - totalWidth / 2;
+      // 옆으로 비켜난 문항이 있으면(hasPreSkip) 공유 줄은 그 스택 아랫변보다
+      // 아래여야 한다 -- 안 그러면 "8번을 건너뛰고 9번/10번으로 갈린다"인데
+      // 실제로는 옆 컬럼의 8번이 9번보다 아래로 내려가 버려 순서가 거꾸로
+      // 보인다.
+      var hasPreSkip = nearestTargetIdx > sourceIdx + 1;
+      var sharedRowTop = hasPreSkip
+        ? Math.max(sourceBottom + BRANCH_ROW_GAP, prevSideBottom + 90)
+        : (sourceBottom + BRANCH_ROW_GAP);
+      branches.forEach(function(b, i){
+        var el = allPills[b.target];
+        el.style.left = (rowLeft + i * (CARD_WIDTH + SIBLING_GAP)) + 'px';
+        el.style.top = sharedRowTop + 'px';
+      });
+
+      // lane 0(가장 가까운 target)의 컬럼이 이 그룹의 "본 줄기"다. lane 0
+      // target 다음부터, 아무도 target으로 삼지 않는 문항들은 전부 그
+      // 컬럼에서 순서대로 이어진다.
+      lane0Left = parseInt(allPills[branches[0].target].style.left, 10);
+      var laneBottom = allPills[branches[0].target].offsetTop + allPills[branches[0].target].offsetHeight;
+      for (var j = nearestTargetIdx + 1; j <= maxTargetIdx; j++){
+        if (targetIdxSet[j]) continue;
+        var dqid2 = QUESTION_ORDER[j];
+        var el2 = allPills[dqid2];
+        el2.style.left = lane0Left + 'px';
+        el2.style.top = (laneBottom + CARD_GAP) + 'px';
+        laneBottom = el2.offsetTop + el2.offsetHeight;
+      }
+
+      afterBottom = laneBottom;
+      branches.forEach(function(b){
+        var el3 = allPills[b.target];
+        afterBottom = Math.max(afterBottom, el3.offsetTop + el3.offsetHeight);
+      });
     }
-    // 가장 먼 target 이후로는 더 이상 아무도 갈라지지 않으므로 그냥 평범하게 이어 붙인다.
+
+    // 가장 먼 target 이후로는 더 이상 아무도 갈라지지 않으므로 본 줄기
+    // (lane 0) 컬럼에서 평범하게 이어 붙인다.
     QUESTION_ORDER.slice(maxTargetIdx + 1).forEach(function(dqid){
       var el = allPills[dqid];
-      el.style.left = '520px';
-      el.style.top = (prevBottom + CARD_GAP) + 'px';
-      prevBottom = el.offsetTop + el.offsetHeight;
+      el.style.left = lane0Left + 'px';
+      el.style.top = (afterBottom + CARD_GAP) + 'px';
+      afterBottom = el.offsetTop + el.offsetHeight;
     });
 
-    // 선 그리기(lane 배정)는 가까운 target부터 순서대로 하는 게 자연스러우므로 정렬해둔다.
-    branches = branches.slice().sort(function(a, b){
-      return QUESTION_ORDER.indexOf(a.target) - QUESTION_ORDER.indexOf(b.target);
-    });
     return { branching: true, branches: branches };
   }
 
@@ -1548,13 +1590,19 @@
       var sourceIdx = QUESTION_ORDER.indexOf(qid);
       var nextQid = QUESTION_ORDER[sourceIdx + 1];
       var nextEl = nextQid ? allPills[nextQid] : null;
+      // qid 자신이 다른 문항의 분기로 인해 형제 줄에 놓였는데 그 바로 다음
+      // 문항도(우연히) 같은 형제 줄에 있으면(예: 5가 6/7/8로 동시에
+      // 갈리는 경우), "다음 문항으로"는 더 이상 사실이 아니다 -- 둘 다
+      // 나란히 있는 서로 다른 분기 결과일 뿐 순서상 이어지는 게 아니므로
+      // 선을 그리지 않는다.
+      var nextIsSibling = nextEl && sourceEl.style.top === nextEl.style.top;
       slots.forEach(function(slot, i){
         var pathEl = document.getElementById(slot.path);
         var badgeEl = document.getElementById(slot.badge);
-        if (i === 0 && pathEl && nextEl){
+        if (i === 0 && pathEl && nextEl && !nextIsSibling){
           pathEl.style.display = '';
           var nextX = svgX(parseInt(nextEl.style.left, 10));
-          pathEl.setAttribute('d', connectorPath(sourceX, sourceBottom, nextX, nextEl.offsetTop));
+          pathEl.setAttribute('d', elbowPath(sourceX, sourceBottom, nextX, nextEl.offsetTop));
         } else if (pathEl){
           pathEl.style.display = 'none';
         }
@@ -1573,21 +1621,14 @@
       var targetTop = targetEl.offsetTop; // 다른 문항의 분기가 이 위치를 더 내렸을 수 있어 지금 다시 읽는다.
       if (pathEl){
         pathEl.style.display = '';
-        // lane(i)을 넘겨주면 branchPath가 같은 컬럼이든 다른 컬럼이든 알아서
-        // 카드에 가리지 않고 서로 겹치지 않게 그린다.
-        pathEl.setAttribute('d', branchPath(sourceX, sourceBottom, targetX, targetTop, i));
+        pathEl.setAttribute('d', elbowPath(sourceX, sourceBottom, targetX, targetTop));
       }
       if (badgeEl && pathEl){
         badgeEl.style.display = 'flex';
-        // 실제 길이의 절반 지점에 찍으면, target이 멀어서 선이 길어질수록
-        // 그 중간 지점이 아래쪽의 다른 문항 카드 줄과 겹쳐버린다(예: Q7로
-        // 가는 선의 중점이 그 사이에 있는 Q6 카드 위에 찍히는 문제). 분기가
-        // 갈라지는 지점(문항 바로 아래) 근처에 찍으면 몇 번을 건너뛰든 배지가
-        // 항상 첫 카드가 시작되기 전 여백에 놓인다. 다만 전부 같은 길이에서
-        // 찍으면 여러 선이 갈라지는 초입에는 아직 서로 가까워서 배지끼리
-        // 겹친다 -- lane마다 조금씩 더 먼 지점에서 찍어 세로로도 살짝 벌려둔다.
-        var badgeLen = Math.min(60 + i * 32, pathEl.getTotalLength() / 2);
-        var midPoint = pathEl.getPointAtLength(badgeLen);
+        // 형제 target이 여러 개여도 전부 같은 줄에 나란히 있어서 꺾이는
+        // 지점(가로 구간)도 다 같은 높이다 -- 실제 경로 길이의 중간
+        // 지점이 항상 그 가로 구간 위에 자연스럽게 찍힌다.
+        var midPoint = pathEl.getPointAtLength(pathEl.getTotalLength() / 2);
         badgeEl.style.left = midPoint.x + 'px';
         badgeEl.style.top = midPoint.y + 'px';
       }
@@ -1652,54 +1693,31 @@
     drawBranchLines('Q8', allPills, Q8_SLOTS, q8Result);
 
     // "제출하기" 종료 노드도 고정 좌표에 두면 앞선 문항이 로직으로 펼쳐졌을 때
-    // 겹친다. 마지막 문항(Q10)의 실제 아랫변 기준으로 같은 간격만큼 띄운다.
+    // 겹친다. 9번/10번 중 실제로 더 아래에 있는 쪽의 아랫변 기준으로 같은
+    // 간격만큼 띄운다 -- 둘이 같은 분기의 형제로 나란히 있을 때는 높이가
+    // 같으므로 아무 쪽을 기준으로 해도 같은 값이 나온다.
+    var q9Bottom = q9.offsetTop + q9.offsetHeight;
     var q10Bottom = q10.offsetTop + q10.offsetHeight;
-    var submitTop = q10Bottom + CARD_GAP;
+    var submitTop = Math.max(q9Bottom, q10Bottom) + CARD_GAP;
     var submitNode = document.getElementById('submitNode');
     if (submitNode) submitNode.style.top = submitTop + 'px';
-    var q10toSubmit = document.getElementById('q10LinePath');
-    if (q10toSubmit) q10toSubmit.setAttribute('d', 'M ' + svgX(parseInt(q10.style.left, 10)) + ' ' + q10Bottom + ' V ' + submitTop);
+    var submitX = svgX(parseInt(submitNode ? submitNode.style.left : '618', 10));
 
-    // Q5~Q8 중 어떤 문항이든 하나의 로직이 9번과 10번을 동시에 이동 대상으로
-    // 삼으면(예: 7번 응답에 따라 9번 또는 10번으로 갈리는 경우), 그 둘은 서로
-    // 이어서 물어보는 다음 문항이 아니라 답변에 따라 둘 중 하나로만 끝나는
-    // 별도의 마무리 질문이다. 이때는 9번 자신의 기본 연결선도 10번이 아니라
-    // 제출하기로 곧장 이어지게 한다 -- 로직이 없는 평소에는(9->10->제출
-    // 순서를 그대로 물어보는 게 자연스러우므로) 이 처리를 하지 않는다.
+    // 9번과 10번이 같은 분기의 형제로 나란히 배치됐는지는 top이 같은지로
+    // 판단한다(resolveBranchPositions가 형제 target을 전부 같은 줄에
+    // 놓으므로). 형제라면 서로 이어지는 "다음 문항"이 아니라 답변에 따라
+    // 둘 중 하나로만 끝나는 별도의 마무리 질문이므로, 각자 곧장
+    // 제출하기로 이어진다. 로직이 없는 평소에는(9->10->제출 순서를 그대로
+    // 물어보는 게 자연스러우므로) 9번이 10번으로 바로 이어진다.
+    var siblingRow = q9.style.top === q10.style.top;
     var q9to10 = document.getElementById('q9LinePath');
-    if (q9to10){
-      var q9Bottom = q9.offsetTop + q9.offsetHeight;
-      var branchSources = [q5Result, q6Result, q7Result, q8Result];
-      // 10번을 실제로 몇 번 lane에 그렸는지도 같이 찾아둔다 -- 아래에서 이
-      // 제출 직행선이 그 lane과 겹치지 않는 반대편으로 부풀도록 골라야
-      // 두 선이 같은 자리에 포개져 하나처럼 보이는 일이 없다.
-      var q10Lane = -1;
-      branchSources.some(function(r){
-        if (!r.branching) return false;
-        var targets = r.branches.map(function(b){ return b.target; });
-        if (targets.indexOf('Q9') !== -1 && targets.indexOf('Q10') !== -1){
-          q10Lane = targets.indexOf('Q10');
-          return true;
-        }
-        return false;
-      });
-      if (q10Lane !== -1){
-        // 10번 카드 위를 지나가야 하므로, 카드에 가리지 않도록 branchPath의
-        // lane 부풀리기를 재사용해 옆으로 피해가는 곡선을 그린다. 10번으로
-        // 들어오는 실제 분기선(q10Lane)과 같은 쪽으로 부풀리면 두 곡선이
-        // 겹쳐서 한 선처럼 보이므로, 그 반대쪽 lane을 쓴다.
-        var q10Side = q10Lane % 2 === 1 ? 'right' : (q10Lane === 0 ? 'straight' : 'left');
-        var overrideLane = q10Side === 'right' ? 2 : 1;
-        q9to10.setAttribute('d', branchPath(
-          svgX(parseInt(q9.style.left, 10)), q9Bottom,
-          svgX(parseInt(q10.style.left, 10)), submitTop, overrideLane
-        ));
-      } else {
-        q9to10.setAttribute('d', connectorPath(
-          svgX(parseInt(q9.style.left, 10)), q9Bottom,
-          svgX(parseInt(q10.style.left, 10)), q10.offsetTop
-        ));
-      }
+    var q10toSubmit = document.getElementById('q10LinePath');
+    if (siblingRow){
+      if (q9to10) q9to10.setAttribute('d', elbowPath(svgX(parseInt(q9.style.left, 10)), q9Bottom, submitX, submitTop));
+      if (q10toSubmit) q10toSubmit.setAttribute('d', elbowPath(svgX(parseInt(q10.style.left, 10)), q10Bottom, submitX, submitTop));
+    } else {
+      if (q9to10) q9to10.setAttribute('d', elbowPath(svgX(parseInt(q9.style.left, 10)), q9Bottom, svgX(parseInt(q10.style.left, 10)), q10.offsetTop));
+      if (q10toSubmit) q10toSubmit.setAttribute('d', elbowPath(svgX(parseInt(q10.style.left, 10)), q10Bottom, submitX, submitTop));
     }
 
     updateBranchLineColors('Q5', q5, q5Result, Q5_SLOTS);
